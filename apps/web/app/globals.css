@@ -2,4 +2,6 @@
 @import "@repo/tailwind-config/theme.css";
 @import "@repo/tailwind-config/tailwind-animate.css";
 
+@source "../modules";
+
 @variant dark (&:where(.dark, .dark *));

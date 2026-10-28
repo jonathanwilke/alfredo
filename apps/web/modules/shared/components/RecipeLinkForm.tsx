@@ -15,7 +15,8 @@ export function RecipeLinkForm() {
 
 	return (
 		<form
-			className="flex flex-col gap-4"
+			className="flex flex-col gap-3"
+			noValidate
 			onSubmit={(event) => {
 				event.preventDefault();
 				let parsed: URL;
@@ -47,7 +48,7 @@ export function RecipeLinkForm() {
 				<div className="relative min-w-0 flex-1">
 					<LinkIcon
 						aria-hidden
-						className="pointer-events-none absolute top-1/2 left-5 size-5 -translate-y-1/2 text-foreground"
+						className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-foreground"
 					/>
 					<Input
 						id={inputId}
@@ -61,26 +62,26 @@ export function RecipeLinkForm() {
 						placeholder={t("placeholder")}
 						onChange={(event) => {
 							setUrl(event.target.value);
-							if (invalid) {
+							if (message) {
 								setInvalid(false);
 								setMessage(null);
 							}
 						}}
-						className="h-16 rounded-full pr-5 pl-14 text-lg placeholder:text-muted-foreground"
+						className="h-10 rounded-full pr-4 pl-10 text-base placeholder:text-muted-foreground aria-invalid:border-destructive aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-destructive"
 					/>
 				</div>
 				<Button
 					type="submit"
 					variant="primary"
-					size="lg"
-					className="h-16 rounded-full px-8 text-lg"
+					size="md"
+					className="h-10 rounded-full px-4 text-base"
 				>
 					{t("submit")}
 				</Button>
 			</div>
 			{message ? (
 				<p
-					role="alert"
+					role={invalid ? "alert" : "status"}
 					className={
 						invalid
 							? "text-base text-destructive"

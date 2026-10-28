@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import type { PropsWithChildren } from "react";
+import "../../globals.css";
 
 export function generateStaticParams() {
 	return routing.locales.map((locale) => ({ locale }));
