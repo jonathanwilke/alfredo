@@ -1,0 +1,21 @@
+{
+	"name": "@repo/i18n",
+	"version": "0.0.0",
+	"private": true,
+	"main": "./index.ts",
+	"types": "./index.ts",
+	"exports": {
+		".": "./index.ts"
+	},
+	"scripts": {
+		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@repo/config": "workspace:*",
+		"deepmerge": "^4.3.1"
+	},
+	"devDependencies": {
+		"@repo/tsconfig": "workspace:*",
+		"typescript": "5.9.2"
+	}
+}

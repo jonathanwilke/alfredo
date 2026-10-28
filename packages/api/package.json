@@ -1,0 +1,29 @@
+{
+	"name": "@repo/api",
+	"version": "0.0.0",
+	"private": true,
+	"main": "./index.ts",
+	"types": "./index.ts",
+	"exports": {
+		".": "./index.ts",
+		"./client": "./client.ts"
+	},
+	"scripts": {
+		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@orpc/client": "^1.16.1",
+		"@orpc/openapi": "^1.16.1",
+		"@orpc/server": "^1.16.1",
+		"@orpc/zod": "^1.16.1",
+		"@repo/auth": "workspace:*",
+		"@repo/config": "workspace:*",
+		"@repo/icons": "workspace:*",
+		"next": "15.5.13",
+		"zod": "^4.1.11"
+	},
+	"devDependencies": {
+		"@repo/tsconfig": "workspace:*",
+		"typescript": "5.9.2"
+	}
+}
