@@ -1,0 +1,32 @@
+{
+	"name": "alfredo",
+	"private": true,
+	"scripts": {
+		"build": "dotenv -c -- turbo build",
+		"dev": "dotenv -c -- turbo dev",
+		"start": "dotenv -c -- turbo start",
+		"lint": "biome check .",
+		"format": "biome check --write .",
+		"type-check": "turbo type-check",
+		"clean": "turbo clean"
+	},
+	"engines": {
+		"node": ">=22"
+	},
+	"packageManager": "pnpm@10.33.4",
+	"devDependencies": {
+		"@biomejs/biome": "2.6.3",
+		"@repo/tsconfig": "workspace:*",
+		"@types/node": "^24.6.0",
+		"dotenv-cli": "^10.0.0",
+		"turbo": "^2.11.10",
+		"typescript": "5.9.2"
+	},
+	"pnpm": {
+		"onlyBuiltDependencies": [
+			"@tailwindcss/oxide",
+			"esbuild",
+			"sharp"
+		]
+	}
+}

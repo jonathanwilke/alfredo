@@ -1,0 +1,26 @@
+{
+	"name": "@repo/auth",
+	"version": "0.0.0",
+	"private": true,
+	"main": "./index.ts",
+	"types": "./index.ts",
+	"exports": {
+		".": "./index.ts",
+		"./client": "./client.ts"
+	},
+	"scripts": {
+		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@better-auth/drizzle-adapter": "^1.7.14",
+		"@repo/config": "workspace:*",
+		"@repo/database": "workspace:*",
+		"better-auth": "^1.7.14",
+		"react": "19.1.1"
+	},
+	"devDependencies": {
+		"@repo/tsconfig": "workspace:*",
+		"@types/react": "19.1.16",
+		"typescript": "5.9.2"
+	}
+}

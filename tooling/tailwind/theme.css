@@ -1,0 +1,154 @@
+@theme {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-success: var(--success);
+	--color-success-foreground: var(--success-foreground);
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+	--color-highlight: var(--highlight);
+	--color-highlight-foreground: var(--highlight-foreground);
+	--radius-lg: var(--radius);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-sm: calc(var(--radius) - 4px);
+
+	--font-sans: var(--font-source-sans), ui-sans-serif, system-ui, sans-serif;
+	--font-heading: var(--font-fraunces), ui-serif, Georgia, serif;
+
+	--animation-accordion-down: accordion-down 0.2s ease-out;
+	--animation-accordion-up: accordion-up 0.2s ease-out;
+
+	@keyframes accordion-down {
+		from {
+			height: 0;
+		}
+		to {
+			height: var(--radix-accordion-content-height);
+		}
+	}
+	@keyframes accordion-up {
+		from {
+			height: var(--radix-accordion-content-height);
+		}
+		to {
+			height: 0;
+		}
+	}
+}
+
+@layer base {
+	:root {
+		color-scheme: light;
+		--border: #e4d9c8;
+		--input: #d9cdb8;
+		--ring: #6a7147;
+		--background: #f3ede3;
+		--foreground: #40442a;
+		--primary: #40442a;
+		--primary-foreground: #f6f9e8;
+		--secondary: #6a7147;
+		--secondary-foreground: #f6f9e8;
+		--destructive: #8c2f24;
+		--destructive-foreground: #fffaf3;
+		--success: #2f6b45;
+		--success-foreground: #f6f9e8;
+		--muted: #f6f9e8;
+		--muted-foreground: #5b5b5b;
+		--accent: #d4e28d;
+		--accent-foreground: #40442a;
+		--popover: #ffffff;
+		--popover-foreground: #40442a;
+		--card: #ffffff;
+		--card-foreground: #40442a;
+		--highlight: #d4e28d;
+		--highlight-foreground: #40442a;
+		--radius: 0.75rem;
+	}
+
+	.dark {
+		color-scheme: dark;
+		--border: #3a4030;
+		--input: #4a5240;
+		--ring: #d4e28d;
+		--background: #1a1d14;
+		--foreground: #f3ede3;
+		--primary: #d4e28d;
+		--primary-foreground: #1a1d14;
+		--secondary: #f3ede3;
+		--secondary-foreground: #1a1d14;
+		--destructive: #e7b2a8;
+		--destructive-foreground: #1a1d14;
+		--success: #b7d7a8;
+		--success-foreground: #1a1d14;
+		--muted: #24281c;
+		--muted-foreground: #c8c2b4;
+		--accent: #d4e28d;
+		--accent-foreground: #1a1d14;
+		--popover: #24281c;
+		--popover-foreground: #f3ede3;
+		--card: #24281c;
+		--card-foreground: #f3ede3;
+		--highlight: #d4e28d;
+		--highlight-foreground: #1a1d14;
+	}
+
+	*,
+	::after,
+	::before,
+	::backdrop,
+	::file-selector-button {
+		@apply border-border;
+	}
+
+	body {
+		@apply bg-background text-foreground font-sans antialiased;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		@apply font-heading text-foreground;
+	}
+
+	::selection {
+		background: var(--accent);
+		color: var(--accent-foreground);
+	}
+
+	input,
+	textarea {
+		caret-color: var(--ring);
+	}
+}
+
+@utility container {
+	margin-inline: auto;
+	padding-inline: 1.5rem;
+	width: 100%;
+	max-width: var(--container-7xl);
+}
+
+@utility no-scrollbar {
+	&::-webkit-scrollbar {
+		display: none;
+	}
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}

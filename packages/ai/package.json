@@ -1,0 +1,21 @@
+{
+	"name": "@repo/ai",
+	"version": "0.0.0",
+	"private": true,
+	"main": "./index.ts",
+	"types": "./index.ts",
+	"exports": {
+		".": "./index.ts"
+	},
+	"scripts": {
+		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"ai": "^7.0.155",
+		"zod": "^4.1.11"
+	},
+	"devDependencies": {
+		"@repo/tsconfig": "workspace:*",
+		"typescript": "5.9.2"
+	}
+}

@@ -1,0 +1,105 @@
+{
+	"schemaVersion": 2,
+	"generatedAt": "2026-10-28T15:50:00.000Z",
+	"title": "Design System: alfredo",
+	"extensions": {
+		"colorMeta": {
+			"cream": {
+				"role": "neutral",
+				"displayName": "Warm cream",
+				"canonical": "#F3EDE3"
+			},
+			"ink": {
+				"role": "primary",
+				"displayName": "Dark olive ink",
+				"canonical": "#40442A"
+			},
+			"olive": {
+				"role": "secondary",
+				"displayName": "Olive",
+				"canonical": "#6A7147"
+			},
+			"lime": {
+				"role": "tertiary",
+				"displayName": "Light lime",
+				"canonical": "#D4E28D"
+			},
+			"body": {
+				"role": "neutral",
+				"displayName": "Body gray",
+				"canonical": "#5B5B5B"
+			}
+		},
+		"typographyMeta": {
+			"display": {
+				"displayName": "Display",
+				"purpose": "Page headings in Fraunces."
+			},
+			"body": {
+				"displayName": "Body",
+				"purpose": "Source Sans 3 for reading at counter distance."
+			}
+		},
+		"shadows": [
+			{
+				"name": "card",
+				"value": "0 16px 40px -28px rgba(64, 68, 42, 0.55)",
+				"purpose": "Link card on the cream page."
+			}
+		],
+		"motion": [],
+		"breakpoints": [
+			{ "name": "sm", "value": "640px" }
+		]
+	},
+	"components": [
+		{
+			"name": "Primary Button",
+			"kind": "button",
+			"refersTo": "button-primary",
+			"description": "Dark olive pill used for the import action.",
+			"html": "<button class=\"ds-btn-primary\">Make the guide</button>",
+			"css": ".ds-btn-primary { background: #40442A; color: #F6F9E8; height: 4rem; padding: 0 2rem; border: 0; border-radius: 9999px; font-family: 'Source Sans 3', sans-serif; font-size: 1.125rem; font-weight: 600; } .ds-btn-primary:hover { background: rgba(64, 68, 42, 0.9); } .ds-btn-primary:focus-visible { outline: 2px solid #6A7147; outline-offset: 2px; }"
+		},
+		{
+			"name": "Link input",
+			"kind": "input",
+			"refersTo": "input-link",
+			"description": "Pill field for a recipe URL.",
+			"html": "<input class=\"ds-input\" placeholder=\"Paste a recipe link\" />",
+			"css": ".ds-input { width: 100%; height: 4rem; padding: 0 1.25rem 0 3.5rem; border: 1px solid #D9CDB8; border-radius: 9999px; background: #FFFFFF; color: #40442A; font-family: 'Source Sans 3', sans-serif; font-size: 1.125rem; } .ds-input::placeholder { color: #5B5B5B; } .ds-input:focus-visible { outline: 1px solid #6A7147; border-color: #6A7147; }"
+		},
+		{
+			"name": "Icon tile",
+			"kind": "custom",
+			"refersTo": "icon-tile",
+			"description": "Pending clay placeholder until a WebP icon is ready.",
+			"html": "<div class=\"ds-icon\" role=\"img\" aria-label=\"Icon is on its way\"></div>",
+			"css": ".ds-icon { width: 7rem; height: 7rem; border-radius: 1.75rem; background: #F6F9E8; box-shadow: 0 14px 28px -18px rgba(64, 68, 42, 0.7); display: grid; place-items: center; } .ds-icon::before { content: ''; width: 4rem; height: 4rem; border-radius: 9999px; background: #D4E28D; }"
+		}
+	],
+	"narrative": {
+		"northStar": "A clay figure on the counter",
+		"overview": "Warm cream page, olive ink, lime used in small amounts, Fraunces headings, large pill controls.",
+		"keyCharacteristics": [
+			"Cream ground and white cards",
+			"Fraunces plus Source Sans 3",
+			"4rem import controls",
+			"Clay icon tiles"
+		],
+		"rules": [
+			{
+				"name": "The Distance Rule",
+				"body": "Controls and body text stay large enough to read from 1 to 2 meters.",
+				"section": "typography"
+			}
+		],
+		"dos": [
+			"Use cream #F3EDE3 as the page background."
+		],
+		"donts": [
+			"Do not set small olive text on cream.",
+			"Do not count icon generation as an import."
+		]
+	}
+}

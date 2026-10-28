@@ -1,0 +1,16 @@
+{
+	"home": {
+		"title": "Was kochen wir?",
+		"subtitle": "Füg einen Rezept-Link ein. Daraus wird eine werbefreie Anleitung, ein Schritt pro Bildschirm.",
+		"placeholder": "Rezept-Link einfügen",
+		"submit": "Anleitung erstellen",
+		"invalidUrl": "Das sieht nicht nach einem Link aus. Die Adresse braucht http oder https.",
+		"notConnected": "Der Import ist noch nicht angeschlossen. Der Link bleibt hier, bis die Anleitung gebaut ist.",
+		"theme": "Darstellung wechseln",
+		"locale": "Sprache",
+		"iconsCaption": "Die Figuren kommen nach dem Import. Bis dahin bleibt der Platz frei.",
+		"iconPending": "Icon wird erstellt",
+		"iconFailed": "Icon konnte nicht erstellt werden",
+		"iconReady": "Rezept-Icon"
+	}
+}
