@@ -4,12 +4,30 @@ import { fileURLToPath } from "node:url";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getBaseUrl } from "@repo/config";
 
+/**
+ * Neon Object Storage speaks the S3 API and injects AWS-standard env vars.
+ * Path-style addressing is required. The client is created on first upload,
+ * so a build without credentials never opens a connection.
+ */
+function storageEnv() {
+	return {
+		endpoint: process.env.AWS_ENDPOINT_URL_S3,
+		accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+		secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+		region: process.env.AWS_REGION,
+		bucket: process.env.S3_BUCKET,
+		publicBaseUrl: process.env.S3_PUBLIC_URL,
+	};
+}
+
 export function isRemoteStorageConfigured() {
+	const env = storageEnv();
 	return Boolean(
-		process.env.S3_ENDPOINT &&
-			process.env.S3_ACCESS_KEY_ID &&
-			process.env.S3_SECRET_ACCESS_KEY &&
-			process.env.S3_BUCKET,
+		env.endpoint &&
+			env.accessKeyId &&
+			env.secretAccessKey &&
+			env.region &&
+			env.bucket,
 	);
 }
 
@@ -29,17 +47,29 @@ function s3() {
 		return client;
 	}
 
+	const env = storageEnv();
 	client = new S3Client({
-		region: process.env.S3_REGION || "auto",
-		endpoint: process.env.S3_ENDPOINT,
+		region: env.region,
+		endpoint: env.endpoint,
 		forcePathStyle: true,
 		credentials: {
-			accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",
-			secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
+			accessKeyId: env.accessKeyId ?? "",
+			secretAccessKey: env.secretAccessKey ?? "",
 		},
 	});
 
 	return client;
+}
+
+function publicUrl(bucket: string, key: string) {
+	const env = storageEnv();
+	const publicBase = env.publicBaseUrl?.replace(/\/$/, "");
+	if (publicBase) {
+		return `${publicBase}/${key}`;
+	}
+
+	const endpoint = (env.endpoint ?? "").replace(/\/$/, "");
+	return `${endpoint}/${bucket}/${key}`;
 }
 
 export async function putPublicObject(input: {
@@ -54,7 +84,7 @@ export async function putPublicObject(input: {
 		return { url: `${getBaseUrl()}/icons/${input.key}` };
 	}
 
-	const bucket = process.env.S3_BUCKET as string;
+	const bucket = storageEnv().bucket as string;
 	await s3().send(
 		new PutObjectCommand({
 			Bucket: bucket,
@@ -65,11 +95,5 @@ export async function putPublicObject(input: {
 		}),
 	);
 
-	const publicBase = process.env.S3_PUBLIC_URL?.replace(/\/$/, "");
-	if (publicBase) {
-		return { url: `${publicBase}/${input.key}` };
-	}
-
-	const endpoint = (process.env.S3_ENDPOINT ?? "").replace(/\/$/, "");
-	return { url: `${endpoint}/${bucket}/${input.key}` };
+	return { url: publicUrl(bucket, input.key) };
 }
