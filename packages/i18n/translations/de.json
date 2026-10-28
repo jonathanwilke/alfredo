@@ -9,7 +9,10 @@
 		"theme": "Darstellung wechseln",
 		"locale": "Sprache",
 		"iconsCaption": "Die Figuren kommen nach dem Import. Bis dahin bleibt der Platz frei.",
+		"iconEmpty": "Noch kein Icon",
 		"iconPending": "Icon wird erstellt",
+		"iconError": "Die Icons konnten nicht geladen werden.",
+		"iconRetry": "Nochmal versuchen",
 		"iconFailed": "Icon konnte nicht erstellt werden",
 		"iconReady": "Rezept-Icon"
 	}

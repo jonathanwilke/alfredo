@@ -10,7 +10,7 @@ export async function LocaleSwitch() {
 	return (
 		<nav
 			aria-label={t("locale")}
-			className="flex items-center gap-2 text-base"
+			className="flex flex-wrap items-center gap-2 text-base"
 		>
 			{Object.entries(config.i18n.locales).map(([code, { label }]) => (
 				<LocaleLink
@@ -18,8 +18,9 @@ export async function LocaleSwitch() {
 					href="/"
 					locale={code}
 					hrefLang={code}
+					aria-current={code === locale ? "page" : undefined}
 					className={cn(
-						"rounded-full px-3 py-2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+						"inline-flex min-h-12 items-center rounded-full px-4 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
 						code === locale
 							? "bg-accent text-accent-foreground"
 							: "text-foreground hover:bg-muted",

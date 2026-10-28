@@ -34,7 +34,7 @@ export default async function HomePage({
 			className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-8 py-8"
 			style={{ paddingInline: "2rem" }}
 		>
-			<header className="flex items-center justify-between gap-4">
+			<header className="flex flex-wrap items-center justify-between gap-4">
 				<p className="font-heading text-3xl leading-none">alfredo</p>
 				<div className="flex items-center gap-2">
 					<LocaleSwitch />
@@ -43,18 +43,18 @@ export default async function HomePage({
 			</header>
 			<section className="flex flex-1 flex-col justify-center gap-8 py-16">
 				<div className="flex max-w-[22ch] flex-col gap-4">
-					<h1 className="text-balance text-5xl leading-[1.05] font-medium sm:text-6xl">
+					<h1 className="text-6xl leading-[1.05] font-medium">
 						{t("title")}
 					</h1>
 					<p className="max-w-[42ch] text-lg leading-relaxed text-muted-foreground">
 						{t("subtitle")}
 					</p>
 				</div>
-				<Card className="flex flex-col gap-5 p-4 shadow-[0_16px_40px_-28px_rgba(64,68,42,0.55)] sm:p-6">
+				<Card className="flex flex-col gap-5 p-4 shadow-card sm:p-6">
 					<IconTile
 						size="hero"
 						status="pending"
-						label={t("iconPending")}
+						label={t("iconEmpty")}
 					/>
 					<p className="max-w-[48ch] text-base leading-relaxed text-muted-foreground">
 						{t("iconsCaption")}

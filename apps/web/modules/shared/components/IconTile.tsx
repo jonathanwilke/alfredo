@@ -18,7 +18,7 @@ export function IconTile({
 	return (
 		<div
 			className={cn(
-				"relative shrink-0 overflow-hidden rounded-[1.75rem] bg-muted shadow-[0_14px_28px_-18px_rgba(64,68,42,0.7)]",
+				"relative shrink-0 overflow-hidden rounded-[1.75rem] bg-muted shadow-icon",
 				dimension,
 			)}
 			aria-hidden={decorative || undefined}
@@ -28,6 +28,9 @@ export function IconTile({
 				<img
 					src={url}
 					alt={decorative ? "" : label}
+					width={size === "hero" ? 112 : 64}
+					height={size === "hero" ? 112 : 64}
+					decoding="async"
 					className="size-full object-cover"
 				/>
 			) : decorative ? (

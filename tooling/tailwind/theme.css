@@ -28,6 +28,8 @@
 
 	--font-sans: var(--font-source-sans), ui-sans-serif, system-ui, sans-serif;
 	--font-heading: var(--font-fraunces), ui-serif, Georgia, serif;
+	--shadow-card: var(--elevation-card);
+	--shadow-icon: var(--elevation-icon);
 
 	--animation-accordion-down: accordion-down 0.2s ease-out;
 	--animation-accordion-up: accordion-up 0.2s ease-out;
@@ -77,6 +79,8 @@
 		--highlight: #d4e28d;
 		--highlight-foreground: #40442a;
 		--radius: 0.75rem;
+		--elevation-card: 0 16px 40px -28px rgb(64 68 42 / 0.55);
+		--elevation-icon: 0 14px 28px -18px rgb(64 68 42 / 0.7);
 	}
 
 	.dark {
@@ -104,6 +108,8 @@
 		--card-foreground: #f3ede3;
 		--highlight: #d4e28d;
 		--highlight-foreground: #1a1d14;
+		--elevation-card: 0 16px 40px -28px rgb(0 0 0 / 0.55);
+		--elevation-icon: 0 14px 28px -18px rgb(0 0 0 / 0.65);
 	}
 
 	*,
@@ -124,7 +130,22 @@
 	h4,
 	h5,
 	h6 {
-		@apply font-heading text-foreground;
+		@apply font-heading text-foreground text-balance;
+	}
+
+	p {
+		text-wrap: pretty;
+	}
+
+	.dark p {
+		letter-spacing: 0.01em;
+		line-height: 1.65;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		html {
+			scroll-behavior: auto;
+		}
 	}
 
 	::selection {

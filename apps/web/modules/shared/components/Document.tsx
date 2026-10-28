@@ -6,8 +6,10 @@ import type { PropsWithChildren } from "react";
 
 const fraunces = Fraunces({
 	subsets: ["latin"],
+	weight: ["500", "600"],
 	variable: "--font-fraunces",
 	display: "swap",
+	adjustFontFallback: true,
 });
 
 const sourceSans = Source_Sans_3({
@@ -15,6 +17,7 @@ const sourceSans = Source_Sans_3({
 	weight: ["400", "600"],
 	variable: "--font-source-sans",
 	display: "swap",
+	adjustFontFallback: true,
 });
 
 export function Document({

@@ -9,7 +9,10 @@
 		"theme": "Switch appearance",
 		"locale": "Language",
 		"iconsCaption": "The figures show up after an import. Until then this space stays empty.",
+		"iconEmpty": "No icon yet",
 		"iconPending": "Icon is on its way",
+		"iconError": "The icons could not be loaded.",
+		"iconRetry": "Try again",
 		"iconFailed": "Icon could not be created",
 		"iconReady": "Recipe icon"
 	}

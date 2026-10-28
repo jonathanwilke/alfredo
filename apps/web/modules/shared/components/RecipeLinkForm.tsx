@@ -9,6 +9,7 @@ import { useId, useState } from "react";
 export function RecipeLinkForm() {
 	const t = useTranslations("home");
 	const inputId = useId();
+	const messageId = useId();
 	const [url, setUrl] = useState("");
 	const [message, setMessage] = useState<string | null>(null);
 	const [invalid, setInvalid] = useState(false);
@@ -16,11 +17,13 @@ export function RecipeLinkForm() {
 	return (
 		<form
 			className="flex flex-col gap-4"
+			noValidate
 			onSubmit={(event) => {
 				event.preventDefault();
+				const trimmed = url.trim();
 				let parsed: URL;
 				try {
-					parsed = new URL(url);
+					parsed = new URL(trimmed);
 				} catch {
 					setInvalid(true);
 					setMessage(t("invalidUrl"));
@@ -58,6 +61,7 @@ export function RecipeLinkForm() {
 						required
 						value={url}
 						aria-invalid={invalid}
+						aria-describedby={message ? messageId : undefined}
 						placeholder={t("placeholder")}
 						onChange={(event) => {
 							setUrl(event.target.value);
@@ -73,18 +77,19 @@ export function RecipeLinkForm() {
 					type="submit"
 					variant="primary"
 					size="lg"
-					className="h-16 rounded-full px-8 text-lg"
+					className="h-16 shrink-0 rounded-full px-8 text-lg sm:w-auto"
 				>
 					{t("submit")}
 				</Button>
 			</div>
 			{message ? (
 				<p
-					role="alert"
+					id={messageId}
+					role={invalid ? "alert" : "status"}
 					className={
 						invalid
-							? "text-base text-destructive"
-							: "text-base text-muted-foreground"
+							? "text-base text-pretty break-words text-destructive"
+							: "text-base text-pretty break-words text-foreground"
 					}
 				>
 					{message}
