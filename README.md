@@ -1,6 +1,6 @@
-# alfredo
+# ulivo
 
-alfredo turns a recipe URL into an ad-free, step-by-step cooking guide. Paste a link to import a recipe, then cook one step at a time. Billing uses Dodo Payments and stays disabled until its env vars are set.
+ulivo turns a recipe URL into an ad-free, step-by-step cooking guide. Paste a link to import a recipe, then cook one step at a time. Billing uses Dodo Payments and stays disabled until its env vars are set.
 
 ## Stack
 
@@ -12,7 +12,7 @@ alfredo turns a recipe URL into an ad-free, step-by-step cooking guide. Paste a 
 - `packages/payments`: Dodo Payments checkout, customer portal, quota, and webhooks
 - `packages/ai`: Vercel AI SDK through AI Gateway, plus the recipe schema
 
-UI follows the supastarter Next.js setup: tokens in `tooling/tailwind/theme.css`, `cn` in `@ui/lib`, components in `apps/web/modules/ui`, and dark mode with `next-themes` (`class` on `html`). The palette is alfredo's: cream background, olive and lime, Fraunces headings, Source Sans 3 for body text.
+UI follows the supastarter Next.js setup: tokens in `tooling/tailwind/theme.css`, `cn` in `@ui/lib`, components in `apps/web/modules/ui`, and dark mode with `next-themes` (`class` on `html`). The palette is ulivo's: cream background, olive and lime, Fraunces headings, Source Sans 3 for body text.
 
 ## Setup
 

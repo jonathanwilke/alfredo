@@ -198,7 +198,7 @@ export async function fetchRecipeSource(url: URL) {
 				signal: AbortSignal.timeout(12_000),
 				headers: {
 					accept: "text/html,application/xhtml+xml;q=0.9",
-					"user-agent": "alfredo-recipe-import",
+					"user-agent": "ulivo-recipe-import",
 				},
 			});
 		} catch {

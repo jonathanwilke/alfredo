@@ -1,5 +1,5 @@
 ---
-name: alfredo
+name: ulivo
 description: Warm kitchen UI for turning a recipe link into a step-by-step guide.
 colors:
   cream: "#F3EDE3"
@@ -60,13 +60,13 @@ components:
     rounded: "{rounded.icon}"
 ---
 
-# Design System: alfredo
+# Design System: ulivo
 
 ## Overview
 
 **Creative North Star: "A clay figure on the counter"**
 
-alfredo is read from across a kitchen counter. The page is a warm cream field, type is large, and the one action is a pill-shaped link field. Icons are soft clay toys on the same cream, not photographs and not flat pictograms.
+ulivo is read from across a kitchen counter. The page is a warm cream field, type is large, and the one action is a pill-shaped link field. Icons are soft clay toys on the same cream, not photographs and not flat pictograms.
 
 Components come from the supastarter setup: `tooling/tailwind/theme.css` holds the CSS variables, `@ui/lib` exposes `cn`, and `apps/web/modules/ui` holds Button, Input, and Label. Dark mode is the `dark` class from `next-themes`, and those tokens are the cooking-mode surface.
 

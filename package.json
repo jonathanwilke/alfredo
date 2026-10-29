@@ -1,5 +1,5 @@
 {
-	"name": "alfredo",
+	"name": "ulivo",
 	"private": true,
 	"scripts": {
 		"build": "dotenv -c -- turbo build",

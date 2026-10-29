@@ -1,4 +1,5 @@
 import { BillingReturn } from "@billing/components/BillingReturn";
+import { config } from "@repo/config";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
@@ -11,7 +12,7 @@ export async function generateMetadata({
 	const t = await getTranslations({ locale, namespace: "billing" });
 
 	return {
-		title: `alfredo · ${t("pageTitle")}`,
+		title: `${config.appName} · ${t("pageTitle")}`,
 	};
 }
 

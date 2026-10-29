@@ -16,7 +16,7 @@ Home cooks. They read the screen from about 1–2 meters away, usually in the ki
 
 ## Product Purpose
 
-alfredo turns a recipe URL into an ad-free, step-by-step cooking guide. Success is a cook who can follow one step at a time without leaving the app for a blog, a video, or an ad.
+ulivo turns a recipe URL into an ad-free, step-by-step cooking guide. Success is a cook who can follow one step at a time without leaving the app for a blog, a video, or an ad.
 
 ## Positioning
 
@@ -42,7 +42,7 @@ Locales now: German and English. The locale follows the browser language. German
 
 ## Brand Commitments
 
-The name is alfredo. Binding visual constraints from the brief, recorded here and specified in DESIGN.md: warm cream background, olive and lime palette, Fraunces for headings, the supastarter UI component setup.
+The name is ulivo. Binding visual constraints from the brief, recorded here and specified in DESIGN.md: warm cream background, olive and lime palette, Fraunces for headings, the supastarter UI component setup.
 
 ## Evidence on Hand
 
