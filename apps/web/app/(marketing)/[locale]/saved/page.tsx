@@ -1,4 +1,3 @@
-import { CreditBadge } from "@billing/components/CreditBadge";
 import { LocaleLink } from "@i18n/routing";
 import { config } from "@repo/config";
 import { LoginButton } from "@shared/components/LoginButton";
@@ -38,7 +37,6 @@ export default async function SavedPage({
 					<Wordmark />
 				</LocaleLink>
 				<div className="flex flex-wrap items-center justify-end gap-2">
-					<CreditBadge />
 					<LoginButton />
 					<ThemeToggle />
 				</div>

@@ -1,4 +1,3 @@
-import { CreditBadge } from "@billing/components/CreditBadge";
 import { HomeImport } from "@billing/components/HomeImport";
 import { StarterRecipes } from "@billing/components/StarterRecipes";
 import { listStarterRecipes } from "@repo/api";
@@ -43,7 +42,6 @@ export default async function HomePage({
 					<Wordmark />
 				</p>
 				<div className="flex flex-wrap items-center justify-end gap-2">
-					<CreditBadge />
 					<LoginButton />
 					<ThemeToggle />
 				</div>

@@ -26,12 +26,15 @@ export default async function LoginPage({
 	searchParams,
 }: {
 	params: Promise<{ locale: string }>;
-	searchParams: Promise<{ next?: string }>;
+	searchParams: Promise<{ next?: string; error?: string }>;
 }) {
 	const { locale } = await params;
-	const { next } = await searchParams;
+	const { next, error } = await searchParams;
 	setRequestLocale(locale);
 	const t = await getTranslations("home");
+	const google =
+		Boolean(process.env.GOOGLE_CLIENT_ID) &&
+		Boolean(process.env.GOOGLE_CLIENT_SECRET);
 
 	return (
 		<main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-5 py-8 sm:px-8">
@@ -50,10 +53,14 @@ export default async function LoginPage({
 						{t("login")}
 					</h1>
 					<p className="text-center text-lg leading-relaxed text-muted-foreground">
-						{t("loginLead")}
+						{google ? t("loginLeadGoogle") : t("loginLead")}
 					</p>
 				</div>
-				<LoginForm next={typeof next === "string" ? next : null} />
+				<LoginForm
+					next={typeof next === "string" ? next : null}
+					google={google}
+					googleError={typeof error === "string"}
+				/>
 			</section>
 			<SiteFooter />
 		</main>

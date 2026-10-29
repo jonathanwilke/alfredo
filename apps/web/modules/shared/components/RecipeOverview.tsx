@@ -1,6 +1,5 @@
 "use client";
 
-import { CreditBadge } from "@billing/components/CreditBadge";
 import { LocaleLink } from "@i18n/routing";
 import { ThemeToggle } from "@shared/components/ThemeToggle";
 import { Button } from "@ui/components/button";
@@ -126,7 +125,6 @@ export function RecipeOverview({
 					<Wordmark />
 				</LocaleLink>
 				<div className="flex flex-wrap items-center justify-end gap-2">
-					<CreditBadge />
 					<LoginButton />
 					<ThemeToggle />
 				</div>

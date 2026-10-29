@@ -1,4 +1,3 @@
-import { CreditBadge } from "@billing/components/CreditBadge";
 import { CreditHistory } from "@billing/components/CreditHistory";
 import { LocaleLink } from "@i18n/routing";
 import { config } from "@repo/config";
@@ -37,7 +36,6 @@ export default async function BillingPage({
 					<Wordmark />
 				</LocaleLink>
 				<div className="flex flex-wrap items-center justify-end gap-2">
-					<CreditBadge />
 					<LoginButton />
 					<ThemeToggle />
 				</div>

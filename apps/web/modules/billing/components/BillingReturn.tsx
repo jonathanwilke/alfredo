@@ -9,7 +9,6 @@ import { Button } from "@ui/components/button";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useBilling } from "./BillingProvider";
-import { CreditBadge } from "./CreditBadge";
 
 export function BillingReturn({
 	checkoutStatus,
@@ -73,7 +72,6 @@ export function BillingReturn({
 					<Wordmark />
 				</LocaleLink>
 				<div className="flex flex-wrap items-center justify-end gap-2">
-					<CreditBadge />
 					<ThemeToggle />
 				</div>
 			</header>

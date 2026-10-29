@@ -71,8 +71,9 @@
 		--success-foreground: #f6f9e8;
 		--muted: #f6f9e8;
 		--muted-foreground: #6a655a;
-		--accent: #c3d56d;
-		--accent-foreground: #40442a;
+		--logo-leaf: #8e9c4a;
+		--accent: var(--logo-leaf);
+		--accent-foreground: #ffffff;
 		--popover: color-mix(in srgb, var(--background) 88%, white);
 		--popover-foreground: #40442a;
 		--card: #ffffff;
@@ -101,7 +102,8 @@
 		--success-foreground: #1a1d14;
 		--muted: #24281c;
 		--muted-foreground: #c8c2b4;
-		--accent: #c3d56d;
+		--logo-leaf: #c3d56d;
+		--accent: var(--logo-leaf);
 		--accent-foreground: #1a1d14;
 		--popover: color-mix(in srgb, var(--background) 88%, white);
 		--popover-foreground: #f3ede3;
