@@ -3,6 +3,7 @@ import { LocaleLink } from "@i18n/routing";
 import { config } from "@repo/config";
 import { LoginButton } from "@shared/components/LoginButton";
 import { SavedRecipes } from "@shared/components/SavedRecipes";
+import { SiteFooter } from "@shared/components/SiteFooter";
 import { ThemeToggle } from "@shared/components/ThemeToggle";
 import { Wordmark } from "@shared/components/Wordmark";
 import type { Metadata } from "next";
@@ -42,12 +43,13 @@ export default async function SavedPage({
 					<ThemeToggle />
 				</div>
 			</header>
-			<section className="flex flex-col gap-8 py-10">
+			<section className="flex flex-1 flex-col gap-8 py-10">
 				<h1 className="text-5xl leading-[1.05] font-semibold tracking-tight">
 					{t("savedRecipes")}
 				</h1>
 				<SavedRecipes />
 			</section>
+			<SiteFooter />
 		</main>
 	);
 }

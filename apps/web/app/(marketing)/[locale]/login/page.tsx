@@ -2,6 +2,7 @@ import { LocaleLink } from "@i18n/routing";
 import { config } from "@repo/config";
 import { LoginButton } from "@shared/components/LoginButton";
 import { LoginForm } from "@shared/components/LoginForm";
+import { SiteFooter } from "@shared/components/SiteFooter";
 import { ThemeToggle } from "@shared/components/ThemeToggle";
 import { Wordmark } from "@shared/components/Wordmark";
 import type { Metadata } from "next";
@@ -54,6 +55,7 @@ export default async function LoginPage({
 				</div>
 				<LoginForm next={typeof next === "string" ? next : null} />
 			</section>
+			<SiteFooter />
 		</main>
 	);
 }

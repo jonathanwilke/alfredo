@@ -95,5 +95,10 @@
 		"returnFailedBody": "No recipes were added. You can choose a pack again.",
 		"backHome": "Back to cooking",
 		"tryAgain": "Choose a pack again"
+	},
+	"footer": {
+		"builtBy": "Built by",
+		"broughtBy": "Brought to you by",
+		"language": "Language"
 	}
 }

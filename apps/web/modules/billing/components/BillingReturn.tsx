@@ -1,6 +1,7 @@
 "use client";
 
 import { LocaleLink } from "@i18n/routing";
+import { SiteFooter } from "@shared/components/SiteFooter";
 import { ThemeToggle } from "@shared/components/ThemeToggle";
 import { Wordmark } from "@shared/components/Wordmark";
 import { api } from "@shared/lib/api";
@@ -105,6 +106,7 @@ export function BillingReturn({
 					) : null}
 				</div>
 			</section>
+			<SiteFooter />
 		</main>
 	);
 }

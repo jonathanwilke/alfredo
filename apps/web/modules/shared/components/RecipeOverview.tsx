@@ -18,6 +18,7 @@ import {
 import { LoginButton } from "./LoginButton";
 import { DishImage, useRecipeIcons } from "./RecipeIcons";
 import { SaveRecipeButton } from "./SaveRecipeButton";
+import { SiteFooter } from "./SiteFooter";
 import { Wordmark } from "./Wordmark";
 
 interface RecipeContent {
@@ -261,6 +262,7 @@ export function RecipeOverview({
 					</ul>
 				</section>
 			</article>
+			<SiteFooter />
 		</main>
 	);
 }

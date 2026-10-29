@@ -95,5 +95,10 @@
 		"returnFailedBody": "Es wurden keine Rezepte gutgeschrieben. Du kannst ein Paket erneut wählen.",
 		"backHome": "Weiter kochen",
 		"tryAgain": "Paket erneut wählen"
+	},
+	"footer": {
+		"builtBy": "Gebaut von",
+		"broughtBy": "Präsentiert von",
+		"language": "Sprache"
 	}
 }
