@@ -42,7 +42,7 @@ Locales now: German and English. The locale follows the browser language. German
 
 ## Brand Commitments
 
-The name is ulivo. Binding visual constraints from the brief, recorded here and specified in DESIGN.md: warm cream background, olive and lime palette, Fraunces for headings, the supastarter UI component setup.
+The name is ulivo. Binding visual constraints from the brief, recorded here and specified in DESIGN.md: warm cream background, olive and lime palette, PT Serif for headings, the supastarter UI component setup.
 
 ## Evidence on Hand
 

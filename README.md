@@ -12,7 +12,7 @@ ulivo turns a recipe URL into an ad-free, step-by-step cooking guide. Paste a li
 - `packages/payments`: Dodo Payments checkout, customer portal, quota, and webhooks
 - `packages/ai`: Vercel AI SDK through AI Gateway, plus the recipe schema
 
-UI follows the supastarter Next.js setup: tokens in `tooling/tailwind/theme.css`, `cn` in `@ui/lib`, components in `apps/web/modules/ui`, and dark mode with `next-themes` (`class` on `html`). The palette is ulivo's: cream background, olive and lime, Fraunces headings, Source Sans 3 for body text.
+UI follows the supastarter Next.js setup: tokens in `tooling/tailwind/theme.css`, `cn` in `@ui/lib`, components in `apps/web/modules/ui`, and dark mode with `next-themes` (`class` on `html`). The palette is ulivo's: cream background, olive and lime, PT Serif headings, Source Sans 3 for body text.
 
 ## Setup
 
