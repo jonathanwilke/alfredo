@@ -13,6 +13,7 @@ import {
 	recipes,
 	recipeTranslations,
 	rejectedDomains,
+	savedRecipes,
 } from "@repo/database";
 import { enqueueRecipeIcons, processIconJobs } from "@repo/icons";
 import { and, eq } from "drizzle-orm";
@@ -44,6 +45,26 @@ async function rememberImport(input: {
 		userId: session.user.id,
 		type: input.type,
 	});
+}
+
+async function saveForSignedInUser(input: {
+	headers: Headers;
+	recipeId: string;
+}) {
+	const session = await auth.api.getSession({ headers: input.headers });
+	if (!session) {
+		return;
+	}
+
+	await db
+		.insert(savedRecipes)
+		.values({
+			userId: session.user.id,
+			recipeId: input.recipeId,
+		})
+		.onConflictDoNothing({
+			target: [savedRecipes.userId, savedRecipes.recipeId],
+		});
 }
 
 async function queueIcons(recipeId: string, content: ExtractedRecipe) {
@@ -272,6 +293,13 @@ async function saveTranslation(input: {
 
 	if (inserted[0]) {
 		await rememberImport({ headers: input.headers, type: input.event });
+	}
+
+	if (input.event === "import") {
+		await saveForSignedInUser({
+			headers: input.headers,
+			recipeId: input.recipeId,
+		});
 	}
 
 	const stored =
