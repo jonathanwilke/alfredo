@@ -66,7 +66,7 @@ Open http://localhost:3000. The locale follows the browser. German is the fallba
 
 The same procedures are available through `POST /api/rpc`, including `billing.status`, `billing.createCheckout`, `billing.portal`, and `recipes.import`.
 
-The first import is free and requires an account. A subscription is $2.99 per month for 30 imports in the current billing period. Importing the same recipe into another language counts as a translation. A recipe already stored for that language does not count. Icon generation does not write an `imports` row. When the quota is used up, import returns `QUOTA_EXCEEDED` (HTTP 402) and the home page shows the upgrade dialog.
+The first import is free and requires an account. A subscription is $3.99 per month for 30 imports in the current billing period. Importing the same recipe into another language counts as a translation. A recipe already stored for that language does not count. Icon generation does not write an `imports` row. When the quota is used up, import returns `QUOTA_EXCEEDED` (HTTP 402) and the home page shows the upgrade dialog.
 
 `@dodopayments/better-auth` and `@dodopayments/nextjs` mount their own checkout, portal, and webhook routes. This app needs the calls in the OpenAPI document and a `subscriptions` table, so billing uses the official `dodopayments` SDK directly. Signature checks use `standardwebhooks`, the same library the SDK uses.
 
@@ -113,13 +113,13 @@ Every variable is listed in `.env.example`. None are required for `pnpm type-che
 | `DODO_PAYMENTS_API_KEY`        | Dodo Payments API key. Empty disables checkout and the portal          |
 | `DODO_PAYMENTS_WEBHOOK_SECRET` | Signing secret for `POST /api/webhooks/dodo`                           |
 | `DODO_PAYMENTS_ENVIRONMENT`    | `test_mode` or `live_mode`. Any other value disables billing           |
-| `DODO_PAYMENTS_PRODUCT_ID`     | Monthly $2.99 subscription product id                                  |
+| `DODO_PAYMENTS_PRODUCT_ID`     | Monthly $3.99 subscription product id                                  |
 
 ## Billing
 
 In the Dodo Payments dashboard:
 
-1. Create a subscription product billed monthly at $2.99 USD. Copy its product id into `DODO_PAYMENTS_PRODUCT_ID`.
+1. Create a subscription product billed monthly at $3.99 USD. Copy its product id into `DODO_PAYMENTS_PRODUCT_ID`.
 2. Create an API key under Developer → API Keys. Use a test key with `DODO_PAYMENTS_ENVIRONMENT=test_mode`, or a live key with `live_mode`.
 3. Add a webhook endpoint under Developer → Webhooks. The URL is `https://<your-domain>/api/webhooks/dodo`. Copy the signing secret into `DODO_PAYMENTS_WEBHOOK_SECRET`.
 4. Subscribe that endpoint to `subscription.active`, `subscription.renewed`, `subscription.on_hold`, `subscription.cancelled`, `subscription.failed`, `subscription.expired`, `subscription.updated`, `payment.succeeded`, `payment.failed`, `payment.processing`, and `payment.cancelled`.

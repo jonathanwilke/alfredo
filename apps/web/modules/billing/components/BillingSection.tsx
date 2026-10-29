@@ -84,7 +84,7 @@ export function BillingSection({
 	}, [openPaywallToken]);
 
 	const price = formatPlanPrice(
-		status?.priceCents ?? 299,
+		status?.priceCents ?? 399,
 		status?.currency ?? "USD",
 		locale,
 	);

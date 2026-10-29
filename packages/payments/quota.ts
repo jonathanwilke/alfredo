@@ -1,6 +1,6 @@
 export const FREE_IMPORT_LIMIT = 1;
 export const MONTHLY_IMPORT_LIMIT = 30;
-export const PLAN_PRICE_CENTS = 299;
+export const PLAN_PRICE_CENTS = 399;
 export const PLAN_CURRENCY = "USD" as const;
 
 export type QuotaPlan = "free" | "monthly";
