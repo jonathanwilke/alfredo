@@ -130,56 +130,56 @@ export function BillingSection({
 
 	return (
 		<BillingDialog
-				open={dialog !== null}
-				title={dialogTitle}
-				description={dialogBody}
-				onClose={() => {
-					setDialog(null);
-					setActionError(null);
-				}}
-			>
-				<div className="flex flex-col gap-4">
-					{actionError ? (
-						<p role="alert" className="text-base text-destructive">
-							{actionError}
-						</p>
-					) : null}
-					<div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+			open={dialog !== null}
+			title={dialogTitle}
+			description={dialogBody}
+			onClose={() => {
+				setDialog(null);
+				setActionError(null);
+			}}
+		>
+			<div className="flex flex-col gap-4">
+				{actionError ? (
+					<p role="alert" className="text-base text-destructive">
+						{actionError}
+					</p>
+				) : null}
+				<div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+					<Button
+						type="button"
+						variant="ghost"
+						size="lg"
+						className="h-12 rounded-full px-6 text-lg"
+						onClick={() => setDialog(null)}
+					>
+						{t("close")}
+					</Button>
+					{status?.billingEnabled && status.plan !== "monthly" ? (
 						<Button
 							type="button"
-							variant="ghost"
+							variant="primary"
 							size="lg"
-							className="h-12 rounded-full px-6 text-lg"
-							onClick={() => setDialog(null)}
+							className={primaryButton}
+							loading={redirecting === "checkout"}
+							onClick={() => void startCheckout()}
 						>
-							{t("close")}
+							{t("checkoutPending")}
 						</Button>
-						{status?.billingEnabled && status.plan !== "monthly" ? (
-							<Button
-								type="button"
-								variant="primary"
-								size="lg"
-								className={primaryButton}
-								loading={redirecting === "checkout"}
-								onClick={() => void startCheckout()}
-							>
-								{t("checkoutPending")}
-							</Button>
-						) : null}
-						{status?.plan === "monthly" && status.hasCustomer ? (
-							<Button
-								type="button"
-								variant="primary"
-								size="lg"
-								className={primaryButton}
-								loading={redirecting === "portal"}
-								onClick={() => void openPortal()}
-							>
-								{t("manage")}
-							</Button>
-						) : null}
-					</div>
+					) : null}
+					{status?.plan === "monthly" && status.hasCustomer ? (
+						<Button
+							type="button"
+							variant="primary"
+							size="lg"
+							className={primaryButton}
+							loading={redirecting === "portal"}
+							onClick={() => void openPortal()}
+						>
+							{t("manage")}
+						</Button>
+					) : null}
 				</div>
+			</div>
 		</BillingDialog>
 	);
 }
