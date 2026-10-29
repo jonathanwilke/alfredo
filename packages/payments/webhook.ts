@@ -1,7 +1,14 @@
-import { billingEvents, creditBalances, db, user } from "@repo/database";
+import {
+	billingEvents,
+	creditBalances,
+	creditCheckouts,
+	db,
+	user,
+} from "@repo/database";
 import { eq, sql } from "drizzle-orm";
 import { getPaymentsConfig } from "./config";
 import { processVerifiedWebhook, type WebhookStore } from "./events";
+import type { CheckoutRecord } from "./grant";
 import { creditStore } from "./service";
 import { verifyWebhook } from "./verify";
 
@@ -55,6 +62,54 @@ function createStore(
 					set: { customerId, updatedAt: new Date() },
 				});
 		},
+		async findCheckoutById(id) {
+			const [row] = await tx
+				.select()
+				.from(creditCheckouts)
+				.where(eq(creditCheckouts.id, id))
+				.limit(1);
+			return row ? toCheckout(row) : null;
+		},
+		async findCheckoutBySession(sessionId) {
+			const [row] = await tx
+				.select()
+				.from(creditCheckouts)
+				.where(eq(creditCheckouts.dodoSessionId, sessionId))
+				.limit(1);
+			return row ? toCheckout(row) : null;
+		},
+		async flagCheckout(id, input) {
+			await tx
+				.update(creditCheckouts)
+				.set({
+					status: input.status,
+					paymentId: input.paymentId,
+					rejectReason: input.reason,
+					updatedAt: new Date(),
+				})
+				.where(eq(creditCheckouts.id, id));
+		},
+	};
+}
+
+function toCheckout(
+	row: typeof creditCheckouts.$inferSelect,
+): CheckoutRecord | null {
+	if (
+		row.status !== "pending" &&
+		row.status !== "granted" &&
+		row.status !== "rejected"
+	) {
+		return null;
+	}
+	return {
+		id: row.id,
+		userId: row.userId,
+		packId: row.packId,
+		credits: row.credits,
+		priceCents: row.priceCents,
+		status: row.status,
+		paymentId: row.paymentId,
 	};
 }
 

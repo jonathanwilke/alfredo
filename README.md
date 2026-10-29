@@ -117,29 +117,32 @@ Every variable is listed in `.env.example`. None are required for `pnpm type-che
 | `DODO_PAYMENTS_API_KEY`            | Dodo Payments API key. Empty disables checkout                         |
 | `DODO_PAYMENTS_WEBHOOK_SECRET`     | Signing secret for `POST /api/webhooks/dodo`                           |
 | `DODO_PAYMENTS_ENVIRONMENT`        | `test_mode` or `live_mode`. Any other value disables billing           |
-| `DODO_PAYMENTS_PRODUCT_ID_PACK_10` | One-time product id for 10 recipes at $5.00                            |
-| `DODO_PAYMENTS_PRODUCT_ID_PACK_20` | One-time product id for 20 recipes at $9.00                            |
-| `DODO_PAYMENTS_PRODUCT_ID_PACK_50` | One-time product id for 50 recipes at $20.00                           |
+| `DODO_PAYMENTS_CREDITS_PRODUCT_ID` | Pay What You Want one-time product used for every credit pack          |
 
 ## Billing
 
-Prices are USD, in `packages/payments/config.ts`. Checkout sends `billing_currency: USD`. Do not add a second currency price on these products. A converted EUR price would charge a different amount than the app shows.
+Prices are USD, in `packages/payments/config.ts`. Changing a pack price there does not require a new Dodo product. Checkout sends `billing_currency: USD` and sets the Pay What You Want amount in cents on `product_cart`.
+
+Dodo mechanism: one Pay What You Want one-time product. The Checkout Sessions API field `product_cart[].amount` is the price in the smallest currency unit (cents). Session `metadata` is copied onto the payment, so `payment.succeeded` includes `data.metadata`. Refund and dispute events identify `payment_id`; the credit reversal uses the purchase already stored for that payment.
+
+- [Dynamic pricing checkout](https://docs.dodopayments.com/developer-resources/dynamic-pricing-checkout)
+- [Pay What You Want](https://docs.dodopayments.com/features/pay-what-you-want)
+- [Checkout sessions](https://docs.dodopayments.com/developer-resources/checkout-session)
+- [Metadata](https://docs.dodopayments.com/api-reference/metadata)
+- [Payment webhooks](https://docs.dodopayments.com/developer-resources/webhooks/intents/payment)
 
 In the Dodo Payments dashboard:
 
-1. Create three **one-time** products (not subscriptions):
-   - 10 recipes at $5.00. Copy the product id into `DODO_PAYMENTS_PRODUCT_ID_PACK_10`.
-   - 20 recipes at $9.00. Copy the product id into `DODO_PAYMENTS_PRODUCT_ID_PACK_20`.
-   - 50 recipes at $20.00. Copy the product id into `DODO_PAYMENTS_PRODUCT_ID_PACK_50`.
+1. Create one **one-time** product (not a subscription) and turn on Pay What You Want. Set the minimum price to $0.50, which is at or below every pack in `packages/payments/config.ts`. A higher minimum rejects cheaper packs at checkout. Copy the product id into `DODO_PAYMENTS_CREDITS_PRODUCT_ID`. Leave the price in USD. Do not add a converted EUR price.
 2. Create an API key under Developer → API Keys. Use a test key with `DODO_PAYMENTS_ENVIRONMENT=test_mode`, or a live key with `live_mode`.
 3. Add a webhook endpoint under Developer → Webhooks. The URL is `https://<your-domain>/api/webhooks/dodo`. Copy the signing secret into `DODO_PAYMENTS_WEBHOOK_SECRET`.
 4. Subscribe that endpoint to `payment.succeeded`, `payment.failed`, `payment.processing`, `payment.cancelled`, `refund.succeeded`, `refund.failed`, `dispute.opened`, `dispute.expired`, `dispute.accepted`, `dispute.cancelled`, `dispute.challenged`, `dispute.won`, and `dispute.lost`.
 
-`payment.succeeded` grants the pack that matches the product id. The grant is stored once per payment id, and the webhook id is stored, so a retry does not grant twice. `refund.succeeded`, `dispute.lost`, `dispute.accepted`, and `dispute.expired` debit those credits once per payment. The other events are acknowledged and do not change the balance.
+Before checkout, the server writes a `credit_checkouts` row with the pack, credits, and price from config. `payment.succeeded` grants that row only when the metadata pack and credits match it and the amount paid before tax is at least that price. A mismatch is stored on the row and does not grant credits. The grant is stored once per payment id, and the webhook id is stored, so a retry does not grant twice. `refund.succeeded`, `dispute.lost`, `dispute.accepted`, and `dispute.expired` debit those credits once per payment. The other events are acknowledged and do not change the balance.
 
 Welcome credits are a ledger row of type `welcome`. The normalized email is stored in `welcome_emails`, which has no foreign key, so deleting the account does not free the email for another grant. Gmail addresses lose dots and `+tags`. Known disposable domains do not receive the grant.
 
-Set the API key, webhook secret, environment, and all three product ids in Vercel before charging cards. If any of the key, environment, or product ids is missing, checkout returns `BILLING_DISABLED` and the app still builds. Welcome credits still work.
+Set the API key, webhook secret, environment, and `DODO_PAYMENTS_CREDITS_PRODUCT_ID` in Vercel before charging cards. If any of those is missing, checkout returns `BILLING_DISABLED` and the app still builds. Welcome credits still work.
 
 ## Curated recipes
 

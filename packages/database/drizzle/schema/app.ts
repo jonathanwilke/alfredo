@@ -207,6 +207,35 @@ export const creditLedger = pgTable(
 	],
 );
 
+export const creditCheckouts = pgTable(
+	"credit_checkouts",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		userId: text("user_id")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		packId: text("pack_id").notNull(),
+		credits: integer("credits").notNull(),
+		priceCents: integer("price_cents").notNull(),
+		currency: text("currency").notNull().default("USD"),
+		dodoSessionId: text("dodo_session_id"),
+		paymentId: text("payment_id"),
+		status: text("status").notNull().default("pending"),
+		rejectReason: text("reject_reason"),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+	},
+	(table) => [
+		uniqueIndex("credit_checkouts_session_idx").on(table.dodoSessionId),
+		index("credit_checkouts_user_idx").on(table.userId),
+		index("credit_checkouts_payment_idx").on(table.paymentId),
+	],
+);
+
 export const creditBalances = pgTable(
 	"credit_balances",
 	{
@@ -252,6 +281,16 @@ export const creditLedgerRelations = relations(creditLedger, ({ one }) => ({
 		references: [user.id],
 	}),
 }));
+
+export const creditCheckoutsRelations = relations(
+	creditCheckouts,
+	({ one }) => ({
+		user: one(user, {
+			fields: [creditCheckouts.userId],
+			references: [user.id],
+		}),
+	}),
+);
 
 export const creditBalancesRelations = relations(creditBalances, ({ one }) => ({
 	user: one(user, {

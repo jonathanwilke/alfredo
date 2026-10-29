@@ -10,12 +10,6 @@ export const CREDIT_PACKS = [
 
 export type PackId = (typeof CREDIT_PACKS)[number]["id"];
 
-const PACK_ENV: Record<PackId, string> = {
-	pack_10: "DODO_PAYMENTS_PRODUCT_ID_PACK_10",
-	pack_20: "DODO_PAYMENTS_PRODUCT_ID_PACK_20",
-	pack_50: "DODO_PAYMENTS_PRODUCT_ID_PACK_50",
-};
-
 /** Credits granted once, on the first verified login for an email. */
 export const WELCOME_CREDITS = 3;
 
@@ -51,7 +45,7 @@ export type PaymentsConfig = {
 	apiKey: string;
 	webhookSecret: string;
 	environment: DodoEnvironment | null;
-	productIds: Record<PackId, string>;
+	creditsProductId: string;
 	enabled: boolean;
 };
 
@@ -76,8 +70,8 @@ export function packById(id: string) {
 	return CREDIT_PACKS.find((pack) => pack.id === id) ?? null;
 }
 
-export function packProductId(packId: PackId) {
-	return clean(process.env[PACK_ENV[packId]]);
+export function creditsProductId() {
+	return clean(process.env.DODO_PAYMENTS_CREDITS_PRODUCT_ID);
 }
 
 export function perRecipeCents(pack: { credits: number; priceCents: number }) {
@@ -89,13 +83,6 @@ export function savingsCents(pack: { credits: number; priceCents: number }) {
 	const base = CREDIT_PACKS[0];
 	const basePerCredit = base.priceCents / base.credits;
 	return pack.credits * basePerCredit - pack.priceCents;
-}
-
-export function packForProductId(productId: string) {
-	const match = CREDIT_PACKS.find(
-		(pack) => packProductId(pack.id) === productId,
-	);
-	return match ?? null;
 }
 
 export function listPacks() {
@@ -113,20 +100,13 @@ export function getPaymentsConfig(): PaymentsConfig {
 	const apiKey = clean(process.env.DODO_PAYMENTS_API_KEY);
 	const webhookSecret = clean(process.env.DODO_PAYMENTS_WEBHOOK_SECRET);
 	const environment = parseEnvironment(process.env.DODO_PAYMENTS_ENVIRONMENT);
-	const productIds = {
-		pack_10: packProductId("pack_10"),
-		pack_20: packProductId("pack_20"),
-		pack_50: packProductId("pack_50"),
-	} satisfies Record<PackId, string>;
-	const packsReady = CREDIT_PACKS.every(
-		(pack) => productIds[pack.id].length > 0,
-	);
+	const productId = creditsProductId();
 
 	return {
 		apiKey,
 		webhookSecret,
 		environment,
-		productIds,
-		enabled: Boolean(apiKey && environment && packsReady),
+		creditsProductId: productId,
+		enabled: Boolean(apiKey && environment && productId),
 	};
 }

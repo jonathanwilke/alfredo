@@ -36,7 +36,7 @@ Confirmed for the product, not all built in this foundation:
 - Optional accounts: email magic link and Google.
 - Credits via Dodo Payments. No subscription. Packs are 10 recipes for $5.00, 20 for $9.00, and 50 for $20.00. A new verified account gets 3 welcome credits once. Each generated import or translation costs 1 credit. Curated starter recipes are free. Icon generation does not count.
 
-Recipe import, cooking mode, and optional accounts are built. Magic-link delivery is not connected. Billing calls Dodo Payments only when its env vars are set. Pack product ids come from `DODO_PAYMENTS_PRODUCT_ID_PACK_10`, `DODO_PAYMENTS_PRODUCT_ID_PACK_20`, and `DODO_PAYMENTS_PRODUCT_ID_PACK_50`.
+Recipe import, cooking mode, and optional accounts are built. Magic-link delivery is not connected. Billing calls Dodo Payments only when its env vars are set. The single Pay What You Want product id comes from `DODO_PAYMENTS_CREDITS_PRODUCT_ID`. Pack prices come from `packages/payments/config.ts`.
 
 Locales now: German and English. The locale follows the browser language. German is the fallback.
 

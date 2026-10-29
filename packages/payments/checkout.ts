@@ -1,12 +1,12 @@
-import { creditBalances, db } from "@repo/database";
+import { creditBalances, creditCheckouts, db } from "@repo/database";
 import DodoPayments from "dodopayments";
 import { eq } from "drizzle-orm";
 import {
+	creditsProductId,
 	getPaymentsConfig,
 	isPackId,
 	PACK_CURRENCY,
-	type PackId,
-	packProductId,
+	packById,
 } from "./config";
 
 export class BillingDisabledError extends Error {
@@ -66,27 +66,78 @@ export async function createCheckoutSession(input: {
 	if (!isPackId(input.pack)) {
 		throw new UnknownPackError();
 	}
-	const pack: PackId = input.pack;
+	const pack = packById(input.pack);
+	if (!pack) {
+		throw new UnknownPackError();
+	}
 	const { client } = requireClient();
-	const productId = packProductId(pack);
+	const productId = creditsProductId();
 	if (!productId) {
 		throw new BillingDisabledError();
 	}
 
-	const customerId = await customerIdFor(input.userId);
-	const name = input.name.trim() || input.email;
-	const session = await client.checkoutSessions.create({
-		product_cart: [{ product_id: productId, quantity: 1 }],
-		customer: customerId
-			? { customer_id: customerId }
-			: { email: input.email, name },
-		return_url: input.returnUrl,
-		metadata: { user_id: input.userId, pack },
-		billing_currency: PACK_CURRENCY,
-	});
-
-	if (!session.checkout_url) {
+	const [checkout] = await db
+		.insert(creditCheckouts)
+		.values({
+			userId: input.userId,
+			packId: pack.id,
+			credits: pack.credits,
+			priceCents: pack.priceCents,
+			currency: PACK_CURRENCY,
+			status: "pending",
+		})
+		.returning({ id: creditCheckouts.id });
+	if (!checkout) {
 		throw new CheckoutUrlMissingError();
 	}
-	return session.checkout_url;
+
+	const customerId = await customerIdFor(input.userId);
+	const name = input.name.trim() || input.email;
+	try {
+		const session = await client.checkoutSessions.create({
+			product_cart: [
+				{ product_id: productId, quantity: 1, amount: pack.priceCents },
+			],
+			customer: customerId
+				? { customer_id: customerId }
+				: { email: input.email, name },
+			return_url: input.returnUrl,
+			metadata: {
+				checkout_id: checkout.id,
+				pack: pack.id,
+				credits: String(pack.credits),
+				user_id: input.userId,
+				price_cents: String(pack.priceCents),
+			},
+			billing_currency: PACK_CURRENCY,
+		});
+
+		await db
+			.update(creditCheckouts)
+			.set({
+				dodoSessionId: session.session_id,
+				updatedAt: new Date(),
+				...(session.checkout_url
+					? {}
+					: { status: "rejected", rejectReason: "missing-url" }),
+			})
+			.where(eq(creditCheckouts.id, checkout.id));
+
+		if (!session.checkout_url) {
+			throw new CheckoutUrlMissingError();
+		}
+		return session.checkout_url;
+	} catch (error) {
+		if (!(error instanceof CheckoutUrlMissingError)) {
+			await db
+				.update(creditCheckouts)
+				.set({
+					status: "rejected",
+					rejectReason: "checkout-failed",
+					updatedAt: new Date(),
+				})
+				.where(eq(creditCheckouts.id, checkout.id));
+		}
+		throw error;
+	}
 }

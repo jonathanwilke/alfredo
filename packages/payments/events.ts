@@ -1,10 +1,10 @@
-import { packForProductId } from "./config";
+import { getPaymentsConfig } from "./config";
 import {
-	applyGrant,
-	applyReversal,
-	type CreditStore,
-	type LedgerType,
-} from "./ledger";
+	type CheckoutRecord,
+	decideCreditGrant,
+	parseSucceededPayment,
+} from "./grant";
+import { applyGrant, applyReversal, type CreditStore } from "./ledger";
 
 const REVERSAL_EVENTS: Record<string, "refund" | "dispute"> = {
 	"refund.succeeded": "refund",
@@ -13,20 +13,8 @@ const REVERSAL_EVENTS: Record<string, "refund" | "dispute"> = {
 	"dispute.expired": "dispute",
 };
 
-export type ProductLine = {
-	productId: string;
-	quantity: number;
-};
-
 export type WebhookDecision =
-	| {
-			kind: "grant";
-			paymentId: string;
-			lines: ProductLine[];
-			userId: string | null;
-			email: string | null;
-			customerId: string | null;
-	  }
+	| { kind: "payment" }
 	| {
 			kind: "reversal";
 			paymentId: string;
@@ -40,6 +28,16 @@ export type WebhookStore = {
 	findUserIdByEmail(email: string): Promise<string | null>;
 	findUserIdByCustomer(customerId: string): Promise<string | null>;
 	rememberCustomer(userId: string, customerId: string): Promise<void>;
+	findCheckoutById(id: string): Promise<CheckoutRecord | null>;
+	findCheckoutBySession(sessionId: string): Promise<CheckoutRecord | null>;
+	flagCheckout(
+		id: string,
+		input: {
+			status: "granted" | "rejected";
+			paymentId: string;
+			reason: string | null;
+		},
+	): Promise<void>;
 	credits: CreditStore;
 };
 
@@ -60,34 +58,6 @@ function stringValue(value: unknown) {
 	return null;
 }
 
-function quantityValue(value: unknown) {
-	if (
-		typeof value === "number" &&
-		Number.isInteger(value) &&
-		value > 0 &&
-		value <= 20
-	) {
-		return value;
-	}
-	return 1;
-}
-
-function productLines(data: Record<string, unknown>) {
-	if (!Array.isArray(data.product_cart)) {
-		return [];
-	}
-	const lines: ProductLine[] = [];
-	for (const item of data.product_cart) {
-		const row = asRecord(item);
-		const productId = stringValue(row?.product_id);
-		if (!productId) {
-			continue;
-		}
-		lines.push({ productId, quantity: quantityValue(row?.quantity) });
-	}
-	return lines;
-}
-
 export function mapWebhookEvent(event: unknown): WebhookDecision {
 	const body = asRecord(event);
 	const eventType = stringValue(body?.type) ?? "unknown";
@@ -105,62 +75,11 @@ export function mapWebhookEvent(event: unknown): WebhookDecision {
 		return { kind: "reversal", paymentId, reversal };
 	}
 
-	if (eventType !== "payment.succeeded") {
-		return { kind: "ignore", eventType };
+	if (eventType === "payment.succeeded") {
+		return { kind: "payment" };
 	}
 
-	const paymentId = stringValue(data.payment_id);
-	const lines = productLines(data);
-	if (!paymentId || lines.length === 0) {
-		return { kind: "ignore", eventType };
-	}
-
-	const customer = asRecord(data.customer);
-	const metadata = asRecord(data.metadata);
-	return {
-		kind: "grant",
-		paymentId,
-		lines,
-		userId: stringValue(metadata?.user_id) ?? stringValue(metadata?.userId),
-		email: stringValue(customer?.email),
-		customerId:
-			stringValue(customer?.customer_id) ?? stringValue(data.customer_id),
-	};
-}
-
-async function resolveUserId(
-	decision: Extract<WebhookDecision, { kind: "grant" }>,
-	store: WebhookStore,
-) {
-	if (decision.userId) {
-		return decision.userId;
-	}
-	if (decision.email) {
-		const byEmail = await store.findUserIdByEmail(decision.email);
-		if (byEmail) {
-			return byEmail;
-		}
-	}
-	if (decision.customerId) {
-		return store.findUserIdByCustomer(decision.customerId);
-	}
-	return null;
-}
-
-function grantForLines(lines: ProductLine[]) {
-	let credits = 0;
-	let packId: string | null = null;
-	let productId: string | null = null;
-	for (const line of lines) {
-		const pack = packForProductId(line.productId);
-		if (!pack) {
-			continue;
-		}
-		credits += pack.credits * line.quantity;
-		packId = packId ?? pack.id;
-		productId = productId ?? line.productId;
-	}
-	return { credits, packId, productId };
+	return { kind: "ignore", eventType };
 }
 
 export async function processVerifiedWebhook(
@@ -188,28 +107,51 @@ export async function processVerifiedWebhook(
 			return outcome === "ignored" ? "ignored" : "applied";
 		}
 
-		const userId = await resolveUserId(decision, store);
-		if (!userId) {
-			throw new Error("unresolved-payment-user");
+		const payment = parseSucceededPayment(input.event);
+		if (!payment) {
+			return "ignored";
 		}
-
-		const grant = grantForLines(decision.lines);
-		if (grant.credits <= 0 || !grant.productId) {
+		const checkout = payment.checkoutId
+			? await store.findCheckoutById(payment.checkoutId)
+			: payment.sessionId
+				? await store.findCheckoutBySession(payment.sessionId)
+				: null;
+		const verdict = decideCreditGrant({
+			payment,
+			checkout,
+			productId: getPaymentsConfig().creditsProductId,
+		});
+		if (!verdict.ok) {
+			if (checkout?.status === "pending") {
+				await store.flagCheckout(checkout.id, {
+					status: "rejected",
+					paymentId: payment.paymentId,
+					reason: verdict.reason,
+				});
+			}
+			console.error("[billing] payment not granted", verdict.reason);
+			return "ignored";
+		}
+		if (!checkout) {
 			return "ignored";
 		}
 
 		await applyGrant(store.credits, {
-			userId,
-			amount: grant.credits,
-			type: "purchase" satisfies LedgerType,
-			idempotencyKey: `purchase:${decision.paymentId}`,
-			paymentId: decision.paymentId,
-			packId: grant.packId,
-			productId: grant.productId,
+			userId: verdict.userId,
+			amount: verdict.credits,
+			type: "purchase",
+			idempotencyKey: `purchase:${payment.paymentId}`,
+			paymentId: payment.paymentId,
+			packId: verdict.packId,
+			productId: getPaymentsConfig().creditsProductId,
 		});
-
-		if (decision.customerId) {
-			await store.rememberCustomer(userId, decision.customerId);
+		await store.flagCheckout(checkout.id, {
+			status: "granted",
+			paymentId: payment.paymentId,
+			reason: null,
+		});
+		if (payment.customerId) {
+			await store.rememberCustomer(checkout.userId, payment.customerId);
 		}
 		return "applied";
 	} catch (error) {
