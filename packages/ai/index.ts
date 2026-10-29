@@ -1,14 +1,32 @@
 import { generateText, Output } from "ai";
 import { z } from "zod";
 
+/**
+ * Visual icon forms. Keep in sync with `INGREDIENT_FORMS` in `@repo/icons`.
+ * Slicing is intentionally absent: it is a preparation, not its own icon.
+ */
+export const CANONICAL_KEY_FORMS = [
+	"ground",
+	"whole",
+	"fresh",
+	"dried",
+	"flakes",
+	"powder",
+	"smoked",
+] as const;
+
+export const CANONICAL_KEY_INSTRUCTION = [
+	"Set canonicalKey to an English kebab-case icon id, the same in every language.",
+	`Append one form suffix only when that form changes the picture: ${CANONICAL_KEY_FORMS.join(", ")}.`,
+	"The shape is <base> or <base>-<form>, for example black-pepper-ground, black-pepper-whole, basil-fresh, basil-dried, chili-flakes, garlic-powder, paprika-smoked.",
+	"Leave the suffix off when the form does not change the picture, such as onion, egg, or butter.",
+	"Do not encode chopping, slicing, cooking, or size in canonicalKey. Those stay in form.",
+].join(" ");
+
 export const ingredientSchema = z.object({
 	id: z.string().describe("Stable id referenced by steps."),
 	name: z.string(),
-	canonicalKey: z
-		.string()
-		.describe(
-			"English singular lowercase name used as the global icon cache key. onion, not onions or Zwiebel.",
-		),
+	canonicalKey: z.string().describe(CANONICAL_KEY_INSTRUCTION),
 	quantity: z
 		.number()
 		.nullable()
@@ -91,7 +109,8 @@ export async function extractRecipe(input: {
 			"Give each ingredient a stable id and reference those ids from steps.",
 			"In each step, use the ingredient's name exactly as written in the ingredient list.",
 			'Name is only the base ingredient. Put size, origin, variety, and preparation in form, in base form. "mittelgroße Zwiebel" is name "Zwiebel" and form "mittelgroß". "italienischer Pancetta" is name "Pancetta" and form "italienisch". "gehackte Petersilie" is name "Petersilie" and form "gehackt". Use null when there is no attribute.',
-			"Set canonicalKey to one English singular lowercase word or short hyphenated phrase, the same for every language.",
+			CANONICAL_KEY_INSTRUCTION,
+			"Put the visual icon form in canonicalKey, not in form.",
 			"Source:",
 			input.sourceText,
 		].join("\n\n"),

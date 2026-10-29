@@ -2,7 +2,13 @@ import { db, icons, recipeTranslations } from "@repo/database";
 import { putPublicObject } from "@repo/storage";
 import { and, eq, inArray } from "drizzle-orm";
 import { renderIcon, subjectPrompt } from "./render";
-import { imageModelId, normalizeIngredientKey } from "./style";
+import {
+	iconObjectKey,
+	imageModelId,
+	ingredientSubject,
+	nextIngredientVersion,
+	normalizeIngredientKey,
+} from "./style";
 
 export interface RecipeIconRequest {
 	recipeId: string;
@@ -88,7 +94,7 @@ export async function enqueueRecipeIcons(input: RecipeIconRequest) {
 				kind: "ingredient",
 				key,
 				recipeId: null,
-				subject: key.replaceAll("-", " "),
+				subject: ingredientSubject(key),
 			}),
 		),
 	]);
@@ -111,7 +117,7 @@ export async function processIconJobs(ids: string[]) {
 		try {
 			const label =
 				row.kind === "ingredient"
-					? row.key.replaceAll("-", " ")
+					? ingredientSubject(row.key)
 					: row.key;
 			const rendered = await renderIcon(
 				row.prompt,
@@ -119,7 +125,7 @@ export async function processIconJobs(ids: string[]) {
 				row.kind === "recipe" ? "wide" : "square",
 			);
 			const stored = await putPublicObject({
-				key: `${row.kind}/${row.key}-${Date.now()}.webp`,
+				key: iconObjectKey(row.kind, row.key),
 				body: rendered.webp,
 				contentType: "image/webp",
 			});
@@ -129,6 +135,10 @@ export async function processIconJobs(ids: string[]) {
 				.set({
 					status: "ready",
 					storageUrl: stored.url,
+					version:
+						row.kind === "ingredient"
+							? nextIngredientVersion(row)
+							: row.version,
 					model: rendered.model,
 					prompt: rendered.prompt,
 					updatedAt: new Date(),

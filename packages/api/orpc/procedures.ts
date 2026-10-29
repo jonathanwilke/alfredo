@@ -1,5 +1,6 @@
 import { ORPCError, os } from "@orpc/server";
 import { auth } from "@repo/auth";
+import { requireAdmin } from "./admin";
 
 export const publicProcedure = os.$context<{
 	headers: Headers;
@@ -21,5 +22,12 @@ export const protectedProcedure = publicProcedure.use(
 				user: session.user,
 			},
 		});
+	},
+);
+
+export const adminProcedure = protectedProcedure.use(
+	async ({ context, next }) => {
+		requireAdmin(context.user.email);
+		return next({ context });
 	},
 );

@@ -49,6 +49,9 @@ importers:
             "@repo/i18n":
                 specifier: workspace:*
                 version: link:../../packages/i18n
+            "@repo/icons":
+                specifier: workspace:*
+                version: link:../../packages/icons
             "@repo/payments":
                 specifier: workspace:*
                 version: link:../../packages/payments
@@ -187,6 +190,9 @@ importers:
             "@types/node":
                 specifier: 24.6.0
                 version: 24.6.0
+            tsx:
+                specifier: ^4.20.6
+                version: 4.23.15
             typescript:
                 specifier: 5.9.2
                 version: 5.9.2
@@ -290,6 +296,12 @@ importers:
             "@repo/tsconfig":
                 specifier: workspace:*
                 version: link:../../tooling/typescript
+            "@types/node":
+                specifier: 24.6.0
+                version: 24.6.0
+            tsx:
+                specifier: ^4.20.6
+                version: 4.23.15
             typescript:
                 specifier: 5.9.2
                 version: 5.9.2

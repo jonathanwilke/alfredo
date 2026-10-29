@@ -1,4 +1,5 @@
 import { listRecipeIcons } from "@repo/icons";
+import { publicIconUrl } from "@repo/icons/style";
 import { z } from "zod";
 import { publicProcedure } from "../../../orpc/procedures";
 
@@ -36,7 +37,11 @@ export const listIcons = publicProcedure
 						kind: recipeIcon.kind,
 						key: recipeIcon.key,
 						status: recipeIcon.status,
-						url: recipeIcon.storageUrl,
+						url: publicIconUrl(
+							recipeIcon.storageUrl,
+							recipeIcon.version,
+							recipeIcon.kind,
+						),
 					}
 				: null,
 			ingredients: ingredientIcons.map((icon) => ({
@@ -44,7 +49,7 @@ export const listIcons = publicProcedure
 				kind: icon.kind,
 				key: icon.key,
 				status: icon.status,
-				url: icon.storageUrl,
+				url: publicIconUrl(icon.storageUrl, icon.version, icon.kind),
 			})),
 		};
 	});

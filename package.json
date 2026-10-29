@@ -8,7 +8,9 @@
 		"lint": "biome check .",
 		"format": "biome check --write .",
 		"type-check": "turbo type-check",
-		"test": "pnpm --filter @repo/payments test",
+		"test": "pnpm --filter @repo/payments --filter @repo/icons --filter @repo/api test",
+		"icons:cleanup": "dotenv -c -- tsx packages/icons/cleanup.ts",
+		"icons:regenerate": "dotenv -c -- tsx packages/icons/regenerate.ts",
 		"clean": "turbo clean"
 	},
 	"engines": {
