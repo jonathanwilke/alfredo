@@ -1,19 +1,40 @@
 import { config } from "@repo/config";
 import { cn } from "@ui/lib";
-import { Fraunces, Source_Sans_3 } from "next/font/google";
+import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import { ThemeProvider } from "next-themes";
 import type { PropsWithChildren } from "react";
 
-const fraunces = Fraunces({
-	subsets: ["latin"],
-	variable: "--font-fraunces",
+const gambarino = localFont({
+	src: [
+		{
+			path: "../fonts/Gambarino-Regular.woff2",
+			weight: "400",
+			style: "normal",
+		},
+		{
+			path: "../fonts/Gambarino-Regular.woff2",
+			weight: "500",
+			style: "normal",
+		},
+		{
+			path: "../fonts/Gambarino-Regular.woff2",
+			weight: "600",
+			style: "normal",
+		},
+		{
+			path: "../fonts/Gambarino-Regular.woff2",
+			weight: "700",
+			style: "normal",
+		},
+	],
+	variable: "--font-gambarino",
 	display: "swap",
 });
 
-const sourceSans = Source_Sans_3({
+const inter = Inter({
 	subsets: ["latin"],
-	weight: ["400", "600"],
-	variable: "--font-source-sans",
+	variable: "--font-inter",
 	display: "swap",
 });
 
@@ -24,10 +45,10 @@ export function Document({
 	return (
 		<html
 			lang={locale}
-			className={cn(fraunces.variable, sourceSans.variable)}
+			className={cn(gambarino.variable, inter.variable)}
 			suppressHydrationWarning
 		>
-			<body className="min-h-screen bg-background text-foreground antialiased">
+			<body className="min-h-screen bg-background text-body antialiased">
 				<ThemeProvider
 					attribute="class"
 					disableTransitionOnChange

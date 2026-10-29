@@ -16,14 +16,18 @@
 		"@orpc/openapi": "^1.16.1",
 		"@orpc/server": "^1.16.1",
 		"@orpc/zod": "^1.16.1",
+		"@repo/ai": "workspace:*",
 		"@repo/auth": "workspace:*",
 		"@repo/config": "workspace:*",
+		"@repo/database": "workspace:*",
 		"@repo/icons": "workspace:*",
+		"drizzle-orm": "^0.45.1",
 		"next": "15.5.13",
 		"zod": "^4.1.11"
 	},
 	"devDependencies": {
 		"@repo/tsconfig": "workspace:*",
+		"@types/node": "24.6.0",
 		"typescript": "5.9.2"
 	}
 }

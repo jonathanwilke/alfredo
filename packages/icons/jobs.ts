@@ -17,7 +17,7 @@ async function ensureRow(input: {
 	subject: string;
 }) {
 	const model = imageModelId();
-	const prompt = subjectPrompt(input.subject);
+	const prompt = subjectPrompt(input.subject, input.kind);
 	const existing = await db.query.icons.findFirst({
 		where: and(eq(icons.kind, input.kind), eq(icons.key, input.key)),
 	});
@@ -113,9 +113,13 @@ export async function processIconJobs(ids: string[]) {
 				row.kind === "ingredient"
 					? row.key.replaceAll("-", " ")
 					: row.key;
-			const rendered = await renderIcon(row.prompt, label);
+			const rendered = await renderIcon(
+				row.prompt,
+				label,
+				row.kind === "recipe" ? "wide" : "square",
+			);
 			const stored = await putPublicObject({
-				key: `${row.kind}/${row.key}.webp`,
+				key: `${row.kind}/${row.key}-${Date.now()}.webp`,
 				body: rendered.webp,
 				contentType: "image/webp",
 			});

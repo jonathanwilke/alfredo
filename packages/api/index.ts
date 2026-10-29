@@ -3,6 +3,11 @@ import { generateOpenApiSpec } from "./lib/openapi";
 import { openApiHandler, rpcHandler } from "./orpc/handler";
 
 export { generateOpenApiSpec } from "./lib/openapi";
+export type { StoredRecipe } from "./modules/recipes/import-recipe";
+export {
+	ensureRecipeDescription,
+	loadRecipe,
+} from "./modules/recipes/import-recipe";
 export type { ApiRouterClient } from "./orpc/router";
 export { router } from "./orpc/router";
 

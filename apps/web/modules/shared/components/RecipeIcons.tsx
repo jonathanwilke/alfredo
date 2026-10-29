@@ -3,7 +3,6 @@
 import { api } from "@shared/lib/api";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { IconTile } from "./IconTile";
 
 interface IconRecord {
 	id: string;
@@ -13,7 +12,7 @@ interface IconRecord {
 	url: string | null;
 }
 
-export function RecipeIcons({ recipeId }: { recipeId: string }) {
+export function useRecipeIcons(recipeId: string) {
 	const t = useTranslations("home");
 	const [recipe, setRecipe] = useState<IconRecord | null>(null);
 	const [ingredients, setIngredients] = useState<IconRecord[]>([]);
@@ -60,24 +59,34 @@ export function RecipeIcons({ recipeId }: { recipeId: string }) {
 		return t("iconPending");
 	};
 
+	return { recipe, ingredients, labelFor };
+}
+
+export function DishImage({
+	status,
+	url,
+	label,
+}: {
+	status: IconRecord["status"];
+	url?: string | null;
+	label: string;
+}) {
 	return (
-		<div className="flex items-end gap-3">
-			<IconTile
-				size="hero"
-				status={recipe?.status ?? "pending"}
-				url={recipe?.url}
-				label={labelFor(recipe?.status ?? "pending")}
-			/>
-			<div className="flex gap-2">
-				{ingredients.map((icon) => (
-					<IconTile
-						key={icon.id}
-						status={icon.status}
-						url={icon.url}
-						label={labelFor(icon.status)}
+		<div className="relative aspect-video w-full overflow-hidden rounded-[1.75rem] bg-muted shadow-[0_14px_28px_-18px_rgba(64,68,42,0.7)]">
+			{status === "ready" && url ? (
+				// biome-ignore lint/performance/noImgElement: icon URLs are stored objects, not next/image assets
+				<img src={url} alt={label} className="size-full object-cover" />
+			) : (
+				<div
+					className="flex size-full items-center justify-center"
+					role="img"
+					aria-label={label}
+				>
+					<span
+						className={`block size-24 rounded-full ${status === "failed" ? "bg-destructive/30" : "bg-accent"}`}
 					/>
-				))}
-			</div>
+				</div>
+			)}
 		</div>
 	);
 }

@@ -5,6 +5,14 @@ export const ICON_STYLE_PROMPT = [
 	"No text, no label, no watermark, no extra props.",
 ].join(" ");
 
+const INGREDIENT_FORM_PROMPT = [
+	"Show the ingredient raw, as it is before any cooking.",
+	"Whole produce, a raw cut of meat or fish, an egg in its shell, a piece of dairy, or dry uncooked grains or pasta.",
+	"Do not cook, fry, bake, melt, sauce, or plate it as a meal.",
+	"If it is a spice, dried herb, seed, or ground seasoning, put only that raw spice in a small round unglazed terracotta pinch bowl, heaped in the bowl, centered on the cream background.",
+	"Fresh vegetables and fresh chilies stay whole and raw, not in a bowl. No spoon, jar, packet, or label.",
+].join(" ");
+
 export const DEFAULT_IMAGE_MODEL = "google/gemini-3.1-flash-image-preview";
 
 export function imageModelId() {
@@ -12,7 +20,20 @@ export function imageModelId() {
 }
 
 export function iconPrompt(subject: string) {
-	return `${ICON_STYLE_PROMPT} Subject: ${subject}.`;
+	return [
+		"A photorealistic cookbook photograph, wide 16:9 frame.",
+		"The finished dish is served and ready to eat, centered, filling most of the frame.",
+		"Serve it on a beautiful ceramic plate or bowl that suits the food.",
+		"The plate sits in a warm matching setting, such as a wooden table, linen, or stone, with soft natural window light and a gentle shadow.",
+		"Overhead or a slight three-quarter view. Editorial food photography, appetizing and real.",
+		"No text, no logo, no watermark, no people, no hands.",
+		"Not an illustration, not clay, not a toy, not a 3D icon.",
+		`Subject: the finished dish, ${subject}.`,
+	].join(" ");
+}
+
+export function ingredientIconPrompt(subject: string) {
+	return `${ICON_STYLE_PROMPT} ${INGREDIENT_FORM_PROMPT} Subject: raw ${subject}.`;
 }
 
 export function shouldMockIconGeneration() {

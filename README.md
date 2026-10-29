@@ -59,7 +59,7 @@ Open http://localhost:3000. The locale follows the browser. German is the fallba
 
 Magic-link emails are not sent. In development the link is printed in the server log. Google sign-in is registered only when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are both set.
 
-`extractRecipe` in `@repo/ai` calls AI Gateway with `AI_GATEWAY_MODEL`. It does not fetch a URL. Each ingredient includes `canonicalKey`, an English singular name used as the icon cache key.
+`extractRecipe` in `@repo/ai` calls AI Gateway. It uses `AI_GATEWAY_MODEL` when that is set, and `google/gemini-2.5-flash-lite` otherwise. It does not fetch a URL. Each ingredient includes `canonicalKey`, an English singular name used as the icon cache key.
 
 ## Icons
 
@@ -85,7 +85,7 @@ Every variable is listed in `.env.example`. None are required for `pnpm type-che
 | `GOOGLE_CLIENT_ID`       | Google OAuth client id. Both Google vars must be set together          |
 | `GOOGLE_CLIENT_SECRET`   | Google OAuth client secret                                             |
 | `AI_GATEWAY_API_KEY`     | Vercel AI Gateway key for local extraction and live icons              |
-| `AI_GATEWAY_MODEL`       | `provider/model` id for recipe extraction                              |
+| `AI_GATEWAY_MODEL`       | Optional extraction model. Default `google/gemini-2.5-flash-lite`     |
 | `AI_GATEWAY_IMAGE_MODEL` | Image model for icons. Default `google/gemini-3.1-flash-image-preview` |
 | `ICON_GENERATION_MODE`   | `mock`, `live`, or empty (mock when no gateway credential is present)  |
 | `VERCEL_OIDC_TOKEN`      | Gateway auth on Vercel. Injected there. Leave empty locally            |
