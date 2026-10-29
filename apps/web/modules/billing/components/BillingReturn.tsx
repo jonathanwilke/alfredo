@@ -93,7 +93,7 @@ export function BillingReturn({
 				<ThemeToggle />
 			</header>
 			<section className="flex flex-1 flex-col gap-6 py-10 sm:justify-center sm:py-16">
-				<h1 className="text-balance text-center text-5xl leading-[1.05] font-medium sm:text-6xl">
+				<h1 className="text-balance text-center text-5xl leading-[1.05] font-semibold tracking-tight sm:text-6xl">
 					{title}
 				</h1>
 				<p className="text-center text-lg leading-relaxed text-balance text-muted-foreground">

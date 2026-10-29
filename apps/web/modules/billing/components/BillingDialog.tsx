@@ -52,7 +52,7 @@ export function BillingDialog({
 				<div className="flex flex-col gap-3">
 					<h2
 						id={titleId}
-						className="text-balance text-3xl leading-tight font-medium"
+						className="text-balance text-3xl leading-tight font-semibold tracking-tight"
 					>
 						{title}
 					</h2>

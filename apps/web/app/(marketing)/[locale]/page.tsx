@@ -42,7 +42,7 @@ export default async function HomePage({
 			</header>
 			<section className="flex flex-1 flex-col justify-center gap-8 py-10 sm:py-16">
 				<div className="flex flex-col gap-5">
-					<h1 className="text-balance text-center text-5xl leading-[1.05] font-medium sm:text-6xl">
+					<h1 className="text-balance text-center text-5xl leading-[1.05] font-semibold tracking-tight sm:text-6xl">
 						{t("title")}
 					</h1>
 					<p className="text-center text-lg leading-relaxed text-balance text-muted-foreground">

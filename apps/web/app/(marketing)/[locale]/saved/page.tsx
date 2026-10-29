@@ -41,7 +41,7 @@ export default async function SavedPage({
 				</div>
 			</header>
 			<section className="flex flex-col gap-8 py-10">
-				<h1 className="text-5xl leading-[1.05] font-medium">
+				<h1 className="text-5xl leading-[1.05] font-semibold tracking-tight">
 					{t("savedRecipes")}
 				</h1>
 				<SavedRecipes />
