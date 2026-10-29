@@ -270,8 +270,8 @@ export function CookingGuide({
 	}
 
 	return (
-		<main className="dark flex min-h-screen flex-col bg-background text-foreground">
-			<header className="sticky top-0 z-20 flex items-center justify-between gap-4 bg-background px-5 py-6 sm:px-8">
+		<main className="dark flex h-dvh flex-col overflow-hidden bg-background text-foreground">
+			<header className="relative z-20 flex shrink-0 items-center justify-between gap-4 bg-background px-5 py-6 sm:px-8">
 				<button
 					type="button"
 					onClick={onExit}
@@ -303,7 +303,7 @@ export function CookingGuide({
 					{t("progress", { current: index + 1, total: steps.length })}
 				</p>
 			</header>
-			<div className="mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center gap-8 px-5 py-8 sm:px-8">
+			<div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col justify-center gap-8 overflow-y-auto px-5 py-8 sm:px-8">
 				<p className="text-3xl leading-snug sm:text-4xl">
 					{pieces.map((piece, pieceIndex) => {
 						if (piece.timer) {
@@ -381,7 +381,7 @@ export function CookingGuide({
 					) : null}
 				</p>
 			</div>
-			<div className="mx-auto flex w-full max-w-5xl gap-3 px-5 pb-8 sm:px-8">
+			<div className="mx-auto flex w-full max-w-5xl shrink-0 gap-3 bg-background px-5 pt-2 pb-8 sm:px-8">
 				{index > 0 ? (
 					<Button
 						type="button"
