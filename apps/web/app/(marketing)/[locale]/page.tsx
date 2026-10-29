@@ -40,7 +40,7 @@ export default async function HomePage({
 					<ThemeToggle />
 				</div>
 			</header>
-			<section className="flex flex-1 flex-col gap-8 py-10 sm:justify-center sm:py-16">
+			<section className="flex flex-1 flex-col justify-center gap-8 py-10 sm:py-16">
 				<div className="flex flex-col gap-5">
 					<h1 className="text-balance text-center text-5xl leading-[1.05] font-medium sm:text-6xl">
 						{t("title")}
@@ -49,9 +49,7 @@ export default async function HomePage({
 						{t("subtitle")}
 					</p>
 				</div>
-				<div className="flex flex-1 flex-col justify-center sm:flex-none">
-					<RecipeLinkForm />
-				</div>
+				<RecipeLinkForm />
 			</section>
 		</main>
 	);
