@@ -10,6 +10,7 @@
 		"type-check": "tsc --noEmit"
 	},
 	"dependencies": {
+		"@next/env": "16.4.3",
 		"@orpc/client": "^1.16.1",
 		"@radix-ui/react-label": "^2.1.17",
 		"@radix-ui/react-slot": "^1.5.0",

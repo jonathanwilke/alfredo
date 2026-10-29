@@ -11,5 +11,11 @@ allowBuilds:
     esbuild: true
     sharp: true
 
+# pnpm 12 ignores these in .npmrc. Without them the install falls back to the
+# isolated linker and apps cannot resolve transitive dependencies.
+nodeLinker: hoisted
+shamefullyHoist: true
+strictPeerDependencies: false
+
 # Today's releases are the versions we just pinned. The default one-day wait would reject them.
 minimumReleaseAge: 1
