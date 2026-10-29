@@ -8,10 +8,10 @@
 		".": "./index.ts"
 	},
 	"scripts": {
-		"db:generate": "drizzle-kit generate --config drizzle/drizzle.config.ts",
-		"db:migrate": "dotenv -c -e ../../.env -- drizzle-kit migrate --config drizzle/drizzle.config.ts",
-		"db:push": "dotenv -c -e ../../.env -- drizzle-kit push --config drizzle/drizzle.config.ts",
-		"db:studio": "dotenv -c -e ../../.env -- drizzle-kit studio --config drizzle/drizzle.config.ts",
+		"generate": "drizzle-kit generate --config drizzle/drizzle.config.ts",
+		"migrate": "dotenv -c -e ../../.env -- drizzle-kit migrate --config drizzle/drizzle.config.ts",
+		"push": "dotenv -c -e ../../.env -- drizzle-kit push --config drizzle/drizzle.config.ts",
+		"studio": "dotenv -c -e ../../.env -- drizzle-kit studio --config drizzle/drizzle.config.ts",
 		"type-check": "tsc --noEmit"
 	},
 	"dependencies": {

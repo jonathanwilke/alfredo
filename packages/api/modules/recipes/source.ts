@@ -57,6 +57,16 @@ export function normalizeRecipeUrl(raw: string) {
 	return url;
 }
 
+/** Hostname used for the reject list. `www` is folded into the parent domain. */
+export function recipeDomain(url: URL) {
+	const hostname = url.hostname
+		.replace(/^\[|\]$/g, "")
+		.toLowerCase()
+		.replace(/\.$/, "");
+
+	return hostname.startsWith("www.") ? hostname.slice(4) : hostname;
+}
+
 function blockedAddress(address: string) {
 	const mapped = address.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i);
 	if (mapped?.[1]) {

@@ -7,7 +7,7 @@
 		"invalidUrl": "Das sieht nicht nach einem Link aus. Die Adresse braucht http oder https.",
 		"notConnected": "Der Import ist noch nicht angeschlossen. Der Link bleibt hier, bis die Anleitung gebaut ist.",
 		"fetch_failed": "Die Seite ließ sich nicht lesen. Prüf den Link und versuch es noch einmal.",
-		"not_a_recipe": "Auf der Seite steht kein Rezept.",
+		"not_a_recipe": "Das sieht nicht nach einem Rezept aus.",
 		"extract_failed": "Die Anleitung konnte nicht erstellt werden. Versuch es gleich noch einmal.",
 		"not_configured": "Die Rezept-Erkennung ist noch nicht eingerichtet.",
 		"theme": "Darstellung wechseln",

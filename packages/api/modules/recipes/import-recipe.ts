@@ -3,14 +3,27 @@ import {
 	dishName,
 	type ExtractedRecipe,
 	extractRecipe,
+	RecipeUrlCheckError,
+	recipeUrlLooksLegitimate,
 } from "@repo/ai";
 import { auth } from "@repo/auth";
-import { db, imports, recipes, recipeTranslations } from "@repo/database";
+import {
+	db,
+	imports,
+	recipes,
+	recipeTranslations,
+	rejectedDomains,
+} from "@repo/database";
 import { enqueueRecipeIcons, processIconJobs } from "@repo/icons";
 import { and, eq } from "drizzle-orm";
 import { after } from "next/server";
 import { z } from "zod";
-import { fetchRecipeSource, ImportError, normalizeRecipeUrl } from "./source";
+import {
+	fetchRecipeSource,
+	ImportError,
+	normalizeRecipeUrl,
+	recipeDomain,
+} from "./source";
 
 export interface StoredRecipe {
 	recipeId: string;
@@ -142,6 +155,37 @@ export async function importRecipeFromUrl(input: {
 			sourceUrl,
 			content: cached.content,
 		};
+	}
+
+	const domain = recipeDomain(url);
+	const blocked = await db.query.rejectedDomains.findFirst({
+		where: eq(rejectedDomains.domain, domain),
+	});
+	if (blocked) {
+		throw new ImportError("not_a_recipe");
+	}
+
+	try {
+		const allowed = await recipeUrlLooksLegitimate(sourceUrl);
+		if (!allowed) {
+			await db
+				.insert(rejectedDomains)
+				.values({ domain })
+				.onConflictDoNothing();
+			throw new ImportError("not_a_recipe");
+		}
+	} catch (error) {
+		if (error instanceof ImportError) {
+			throw error;
+		}
+		if (error instanceof RecipeUrlCheckError) {
+			throw new ImportError(
+				error.reason === "not_configured"
+					? "not_configured"
+					: "extract_failed",
+			);
+		}
+		throw new ImportError("extract_failed");
 	}
 
 	const sourceText = await fetchRecipeSource(url);

@@ -4,7 +4,7 @@ import { api } from "@shared/lib/api";
 import { Button } from "@ui/components/button";
 import { Timer } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
 	findDuration,
 	findEmphasis,
@@ -36,6 +36,13 @@ function secondsLeft(endsAt: number, now: number) {
 	return Math.max(0, Math.ceil((endsAt - now) / 1000));
 }
 
+interface TimerOrigin {
+	left: number;
+	top: number;
+	width: number;
+	height: number;
+}
+
 export function CookingGuide({
 	recipeId,
 	steps,
@@ -53,6 +60,9 @@ export function CookingGuide({
 		stepIndex: number;
 		endsAt: number;
 	} | null>(null);
+	const originRef = useRef<TimerOrigin | null>(null);
+	const floatRef = useRef<HTMLButtonElement>(null);
+	const floatMotionRef = useRef<Animation | null>(null);
 	const [iconsByKey, setIconsByKey] = useState<Record<string, string>>({});
 	const step = steps[index];
 	const isLast = index === steps.length - 1;
@@ -135,6 +145,49 @@ export function CookingGuide({
 		return () => window.clearInterval(timer);
 	}, [running]);
 
+	useLayoutEffect(() => {
+		const origin = originRef.current;
+		const el = floatRef.current;
+		if (!running || !origin || !el) {
+			return;
+		}
+
+		const reduced = window.matchMedia(
+			"(prefers-reduced-motion: reduce)",
+		).matches;
+		el.style.transform = "none";
+		const to = el.getBoundingClientRect();
+		if (reduced || to.height === 0) {
+			originRef.current = null;
+			return;
+		}
+
+		const dx = origin.left + origin.width / 2 - (to.left + to.width / 2);
+		const dy = origin.top + origin.height / 2 - (to.top + to.height / 2);
+		const scale = origin.height / to.height;
+		const from = `translate(${dx}px, ${dy}px) scale(${scale})`;
+		el.style.transform = from;
+		floatMotionRef.current?.cancel();
+		const animation = el.animate(
+			[{ transform: from }, { transform: "none" }],
+			{
+				duration: 480,
+				easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+				fill: "forwards",
+			},
+		);
+		floatMotionRef.current = animation;
+		animation.onfinish = () => {
+			el.style.transform = "none";
+			animation.cancel();
+			originRef.current = null;
+		};
+
+		return () => {
+			animation.cancel();
+		};
+	}, [running]);
+
 	if (!step) {
 		return null;
 	}
@@ -150,24 +203,48 @@ export function CookingGuide({
 		),
 		duration,
 	);
-	const onTimerStep = running?.stepIndex === index;
-	const remaining =
-		running && onTimerStep ? secondsLeft(running.endsAt, now) : null;
-	const timerLabel =
-		remaining == null
-			? null
-			: remaining === 0
-				? t("timerDone")
-				: formatClock(remaining);
-	const floating =
-		running != null && running.stepIndex !== index
-			? secondsLeft(running.endsAt, now)
-			: null;
+	const remaining = running ? secondsLeft(running.endsAt, now) : null;
 
-	function startTimer() {
+	function wiggleFloatingTimer() {
+		const el = floatRef.current;
+		if (!el) {
+			return;
+		}
+		floatMotionRef.current?.cancel();
+		el.style.transform = "none";
+		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+			return;
+		}
+		floatMotionRef.current = el.animate(
+			[
+				{ transform: "translateX(0) rotate(0deg)" },
+				{ transform: "translateX(-6px) rotate(-7deg)", offset: 0.15 },
+				{ transform: "translateX(6px) rotate(7deg)", offset: 0.3 },
+				{ transform: "translateX(-5px) rotate(-5deg)", offset: 0.45 },
+				{ transform: "translateX(5px) rotate(5deg)", offset: 0.6 },
+				{ transform: "translateX(-2px) rotate(-2deg)", offset: 0.75 },
+				{ transform: "translateX(2px) rotate(2deg)", offset: 0.9 },
+				{ transform: "translateX(0) rotate(0deg)" },
+			],
+			{ duration: 1000, easing: "linear" },
+		);
+	}
+
+	function startTimer(event: React.MouseEvent<HTMLButtonElement>) {
 		if (step?.timerSeconds == null) {
 			return;
 		}
+		if (running?.stepIndex === index) {
+			wiggleFloatingTimer();
+			return;
+		}
+		const box = event.currentTarget.getBoundingClientRect();
+		originRef.current = {
+			left: box.left,
+			top: box.top,
+			width: box.width,
+			height: box.height,
+		};
 		const started = Date.now();
 		setNow(started);
 		setRunning({
@@ -194,34 +271,35 @@ export function CookingGuide({
 
 	return (
 		<main className="dark flex min-h-screen flex-col bg-background text-foreground">
-			<header className="sticky top-0 z-20 grid grid-cols-[1fr_auto_1fr] items-center gap-3 bg-background px-5 py-6 sm:px-8">
+			<header className="sticky top-0 z-20 flex items-center justify-between gap-4 bg-background px-5 py-6 sm:px-8">
 				<button
 					type="button"
 					onClick={onExit}
-					className="justify-self-start text-lg text-foreground"
+					className="text-lg text-foreground"
 				>
 					{t("overview")}
 				</button>
-				{floating == null || running == null ? (
-					<span />
-				) : (
-					<button
-						type="button"
-						onClick={() => setIndex(running.stepIndex)}
-						aria-label={t("timerReturn")}
-						className="inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full bg-timer/10 px-4 py-2 font-semibold text-lg text-timer tabular-nums transition-colors hover:bg-timer/20"
-					>
-						<Timer
-							aria-hidden
-							strokeWidth={2.25}
-							className="size-5"
-						/>
-						{floating === 0
-							? t("timerDone")
-							: formatClock(floating)}
-					</button>
-				)}
-				<p className="justify-self-end text-lg tabular-nums">
+				{running && remaining != null ? (
+					<div className="pointer-events-none absolute top-1/2 left-1/2 z-30 -translate-x-1/2 -translate-y-1/2">
+						<button
+							ref={floatRef}
+							type="button"
+							onClick={() => setIndex(running.stepIndex)}
+							aria-label={t("timerReturn")}
+							className="pointer-events-auto inline-flex origin-center cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full bg-timer/10 px-4 py-2 font-semibold text-lg text-timer tabular-nums transition-colors hover:bg-timer/20"
+						>
+							<Timer
+								aria-hidden
+								strokeWidth={2.25}
+								className="size-5"
+							/>
+							{remaining === 0
+								? t("timerDone")
+								: formatClock(remaining)}
+						</button>
+					</div>
+				) : null}
+				<p className="text-lg tabular-nums">
 					{t("progress", { current: index + 1, total: steps.length })}
 				</p>
 			</header>
@@ -241,7 +319,7 @@ export function CookingGuide({
 										strokeWidth={2.25}
 										className="mr-[0.15em] inline size-[0.85em] align-[-0.1em]"
 									/>
-									{timerLabel ?? piece.text}
+									{piece.text}
 								</button>
 							);
 						}
@@ -297,8 +375,7 @@ export function CookingGuide({
 									strokeWidth={2.25}
 									className="mr-[0.15em] inline size-[0.85em] align-[-0.1em]"
 								/>
-								{timerLabel ??
-									fallbackDuration(step.timerSeconds)}
+								{fallbackDuration(step.timerSeconds)}
 							</button>
 						</>
 					) : null}

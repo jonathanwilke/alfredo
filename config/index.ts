@@ -1,7 +1,7 @@
 import type { Config } from "./types";
 
 export const config = {
-	appName: "alfredo",
+	appName: "ulivo",
 	i18n: {
 		locales: {
 			de: { label: "Deutsch" },

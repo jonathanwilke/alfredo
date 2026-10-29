@@ -7,7 +7,7 @@
 		"invalidUrl": "That does not look like a link. The address needs http or https.",
 		"notConnected": "Import is not connected yet. The link stays here until the guide is built.",
 		"fetch_failed": "That page could not be read. Check the link and try again.",
-		"not_a_recipe": "That page does not contain a recipe.",
+		"not_a_recipe": "That does not look like a recipe.",
 		"extract_failed": "The guide could not be created. Try again in a moment.",
 		"not_configured": "Recipe extraction is not set up yet.",
 		"theme": "Switch appearance",

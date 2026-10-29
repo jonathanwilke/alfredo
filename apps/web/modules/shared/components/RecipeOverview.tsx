@@ -17,6 +17,7 @@ import {
 import { LoginButton } from "./LoginButton";
 import { DishImage, useRecipeIcons } from "./RecipeIcons";
 import { SaveRecipeButton } from "./SaveRecipeButton";
+import { Wordmark } from "./Wordmark";
 
 interface RecipeContent {
 	title: string;
@@ -117,11 +118,8 @@ export function RecipeOverview({
 	return (
 		<main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-10 px-5 py-8 sm:px-8">
 			<header className="flex items-center justify-between gap-4">
-				<LocaleLink
-					href="/"
-					className="font-heading text-3xl leading-none text-foreground no-underline"
-				>
-					alfredo
+				<LocaleLink href="/" className="text-foreground no-underline">
+					<Wordmark />
 				</LocaleLink>
 				<div className="flex items-center gap-2">
 					<LoginButton />

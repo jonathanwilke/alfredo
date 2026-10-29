@@ -1,6 +1,8 @@
+import { config } from "@repo/config";
 import { LoginButton } from "@shared/components/LoginButton";
 import { RecipeLinkForm } from "@shared/components/RecipeLinkForm";
 import { ThemeToggle } from "@shared/components/ThemeToggle";
+import { Wordmark } from "@shared/components/Wordmark";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
@@ -13,7 +15,7 @@ export async function generateMetadata({
 	const t = await getTranslations({ locale, namespace: "home" });
 
 	return {
-		title: `alfredo · ${t("title")}`,
+		title: `${config.appName} · ${t("title")}`,
 		description: t("subtitle"),
 	};
 }
@@ -30,7 +32,9 @@ export default async function HomePage({
 	return (
 		<main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-5 py-8 sm:px-8">
 			<header className="flex items-center justify-between gap-4">
-				<p className="font-heading text-3xl leading-none">alfredo</p>
+				<p className="leading-none">
+					<Wordmark />
+				</p>
 				<div className="flex items-center gap-2">
 					<LoginButton />
 					<ThemeToggle />

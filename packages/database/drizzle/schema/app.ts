@@ -107,6 +107,13 @@ export const icons = pgTable(
 	],
 );
 
+export const rejectedDomains = pgTable("rejected_domains", {
+	domain: text("domain").primaryKey(),
+	createdAt: timestamp("created_at", { withTimezone: true })
+		.notNull()
+		.defaultNow(),
+});
+
 export const imports = pgTable(
 	"imports",
 	{

@@ -1,4 +1,5 @@
 import { ensureRecipeDescription, loadRecipe } from "@repo/api";
+import { config } from "@repo/config";
 import { RecipeOverview } from "@shared/components/RecipeOverview";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -15,8 +16,8 @@ export async function generateMetadata({
 
 	return {
 		title: recipe
-			? `alfredo · ${recipe.content.title}`
-			: `alfredo · ${t("title")}`,
+			? `${config.appName} · ${recipe.content.title}`
+			: `${config.appName} · ${t("title")}`,
 	};
 }
 
