@@ -15,6 +15,13 @@
       "when": 1793282098223,
       "tag": "0001_rejected_domains",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793284211206,
+      "tag": "0002_dodo_subscriptions",
+      "breakpoints": true
     }
   ]
 }

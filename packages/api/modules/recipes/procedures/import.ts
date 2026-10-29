@@ -1,8 +1,10 @@
 import { ORPCError } from "@orpc/server";
 import { extractedRecipeSchema } from "@repo/ai";
+import { QuotaExceededError } from "@repo/payments";
 import { z } from "zod";
 import { publicProcedure } from "../../../orpc/procedures";
 import { importRecipeFromUrl } from "../import-recipe";
+import { quotaErrors } from "../quota";
 import { ImportError } from "../source";
 
 const localeSchema = z.enum(["de", "en"]);
@@ -20,7 +22,7 @@ export const importRecipe = publicProcedure
 		tags: ["Recipes"],
 		summary: "Import a recipe URL into the chosen language",
 		description:
-			"Fetches the page, extracts a recipe, and stores the translation. Icon generation is queued after the response and does not count as an import.",
+			"Fetches the page, extracts a recipe, and stores the translation. A new import or translation needs an account. The first one is free; a subscription allows 30 per billing period. Returns QUOTA_EXCEEDED when that limit is used up. A recipe already stored for this language does not count. Icon generation does not count.",
 	})
 	.input(
 		z.object({
@@ -29,7 +31,8 @@ export const importRecipe = publicProcedure
 		}),
 	)
 	.output(storedRecipeSchema)
-	.handler(async ({ input, context }) => {
+	.errors(quotaErrors)
+	.handler(async ({ input, context, errors }) => {
 		try {
 			return await importRecipeFromUrl({
 				url: input.url,
@@ -37,7 +40,19 @@ export const importRecipe = publicProcedure
 				headers: context.headers,
 			});
 		} catch (error) {
+			if (error instanceof QuotaExceededError) {
+				throw errors.QUOTA_EXCEEDED({
+					data: {
+						used: error.used,
+						limit: error.limit,
+						plan: error.plan,
+					},
+				});
+			}
 			if (error instanceof ImportError) {
+				if (error.reason === "account_required") {
+					throw new ORPCError("UNAUTHORIZED");
+				}
 				throw new ORPCError("BAD_REQUEST", { message: error.reason });
 			}
 			throw new ORPCError("INTERNAL_SERVER_ERROR", {

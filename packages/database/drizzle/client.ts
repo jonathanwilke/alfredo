@@ -5,7 +5,7 @@ import * as schema from "./schema";
 
 const connectionString =
 	process.env.DATABASE_URL ??
-	"postgresql://postgres:postgres@127.0.0.1:5432/alfredo";
+	"postgresql://postgres:postgres@127.0.0.1:5432/ulivo";
 
 export const pool = new Pool({
 	connectionString,

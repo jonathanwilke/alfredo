@@ -26,7 +26,8 @@
 		"locale": "Language",
 		"iconPending": "Icon is on its way",
 		"iconFailed": "Icon could not be created",
-		"iconReady": "Recipe icon"
+		"iconReady": "Recipe icon",
+		"accountRequired": "Import needs an account. The first one is free. Log in above."
 	},
 	"recipe": {
 		"servings": "{count, plural, one {# serving} other {# servings}}",
@@ -51,5 +52,42 @@
 		"saveSent": "Check your email for the sign-in link. Then this recipe is saved.",
 		"saveSentDev": "The sign-in link is in the server log. Open it and this recipe is saved.",
 		"saveFailed": "The recipe could not be saved. Try again."
+	},
+	"billing": {
+		"pageTitle": "Subscription",
+		"quotaMonthly": "{used} / {limit} imports this month",
+		"quotaFree": "{used} / {limit} free import",
+		"freeWithAccount": "The first import is free, with an account.",
+		"loading": "Loading your imports.",
+		"loadError": "Your imports could not be loaded.",
+		"retry": "Try again",
+		"upgrade": "Start subscription",
+		"manage": "Manage subscription",
+		"manageHint": "In the portal you can change the payment method or cancel.",
+		"disabled": "The monthly subscription is not set up in this environment.",
+		"periodRenews": "Next billing date is {date}.",
+		"periodCancels": "The subscription ends on {date}.",
+		"inactive": "The subscription is not active.",
+		"paywallFreeTitle": "The free import is used up",
+		"paywallFreeBody": "The subscription includes {limit} imports or translations a month, for {price}.",
+		"paywallMonthlyTitle": "This month's imports are used up",
+		"paywallMonthlyBody": "New imports and translations are available again on {date}.",
+		"paywallMonthlyBodyNoDate": "New imports and translations come back with the next billing period.",
+		"pricingTitle": "{limit} imports a month",
+		"pricingBody": "Imports and translations count together. {price} a month. The first import stays free.",
+		"close": "Close",
+		"checkoutError": "Checkout did not open. Try again.",
+		"checkoutPending": "Continue to checkout",
+		"portalError": "The portal did not open. Try again.",
+		"portalEmpty": "There is no subscription to manage yet.",
+		"returnSuccessTitle": "Payment received",
+		"returnSuccessBody": "Once the confirmation arrives, {limit} imports are available for this period.",
+		"returnReadyBody": "{limit} imports are available for this period.",
+		"returnPendingTitle": "Waiting for confirmation",
+		"returnPendingBody": "The payment is not finished yet. You can leave this page and come back later.",
+		"returnFailedTitle": "The payment did not go through",
+		"returnFailedBody": "Nothing was unlocked. You can try again.",
+		"backHome": "Back to the guide",
+		"tryAgain": "Back to checkout"
 	}
 }

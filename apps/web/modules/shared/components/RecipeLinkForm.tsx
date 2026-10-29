@@ -8,6 +8,13 @@ import { LinkIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useId, useState } from "react";
 
+function errorCode(error: unknown) {
+	if (typeof error === "object" && error !== null && "code" in error) {
+		return String(error.code);
+	}
+	return "";
+}
+
 function importFailure(error: unknown) {
 	const message = error instanceof Error ? error.message : "";
 	if (
@@ -21,7 +28,13 @@ function importFailure(error: unknown) {
 	return "extract_failed" as const;
 }
 
-export function RecipeLinkForm() {
+export function RecipeLinkForm({
+	onQuotaExceeded,
+	resumeError,
+}: {
+	onQuotaExceeded: () => void;
+	resumeError?: string | null;
+}) {
 	const t = useTranslations("home");
 	const locale = useLocale();
 	const router = useLocaleRouter();
@@ -41,7 +54,6 @@ export function RecipeLinkForm() {
 				if (pending) {
 					return;
 				}
-
 				let parsed: URL;
 				try {
 					parsed = new URL(url.trim());
@@ -73,8 +85,22 @@ export function RecipeLinkForm() {
 						router.push(`/recipes/${result.recipeId}`);
 					})
 					.catch((error: unknown) => {
+						const code = errorCode(error);
+						if (code === "QUOTA_EXCEEDED") {
+							onQuotaExceeded();
+							return;
+						}
+						if (code === "UNAUTHORIZED") {
+							const next = `/?import=${encodeURIComponent(parsed.href)}`;
+							router.push(
+								`/login?next=${encodeURIComponent(next)}`,
+							);
+							return;
+						}
 						setInvalid(true);
 						setMessage(t(importFailure(error)));
+					})
+					.finally(() => {
 						setPending(false);
 					});
 			}}
@@ -98,7 +124,9 @@ export function RecipeLinkForm() {
 						disabled={pending}
 						value={url}
 						aria-invalid={invalid}
-						aria-describedby={message ? messageId : undefined}
+						aria-describedby={
+							message || resumeError ? messageId : undefined
+						}
 						placeholder={t("placeholder")}
 						onChange={(event) => {
 							setUrl(event.target.value);
@@ -120,17 +148,17 @@ export function RecipeLinkForm() {
 					{t("submit")}
 				</Button>
 			</div>
-			{message ? (
+			{(message ?? resumeError) ? (
 				<p
 					id={messageId}
-					role={invalid ? "alert" : "status"}
+					role={invalid || resumeError ? "alert" : "status"}
 					className={
-						invalid
+						invalid || resumeError
 							? "text-base text-destructive"
 							: "text-base text-muted-foreground"
 					}
 				>
-					{message}
+					{message ?? resumeError}
 				</p>
 			) : null}
 		</form>

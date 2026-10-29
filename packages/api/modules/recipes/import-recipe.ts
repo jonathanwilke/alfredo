@@ -16,6 +16,7 @@ import {
 	savedRecipes,
 } from "@repo/database";
 import { enqueueRecipeIcons, processIconJobs } from "@repo/icons";
+import { assertImportAllowed } from "@repo/payments";
 import { and, eq } from "drizzle-orm";
 import { after } from "next/server";
 import { z } from "zod";
@@ -185,6 +186,12 @@ export async function importRecipeFromUrl(input: {
 	if (blocked) {
 		throw new ImportError("not_a_recipe");
 	}
+
+	const session = await auth.api.getSession({ headers: input.headers });
+	if (!session) {
+		throw new ImportError("account_required");
+	}
+	await assertImportAllowed(session.user.id);
 
 	try {
 		const allowed = await recipeUrlLooksLegitimate(sourceUrl);

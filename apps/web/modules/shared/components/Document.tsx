@@ -1,34 +1,13 @@
 import { config } from "@repo/config";
 import { cn } from "@ui/lib";
-import { Inter } from "next/font/google";
-import localFont from "next/font/local";
+import { Inter, PT_Serif } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import type { PropsWithChildren } from "react";
 
-const gambarino = localFont({
-	src: [
-		{
-			path: "../fonts/Gambarino-Regular.woff2",
-			weight: "400",
-			style: "normal",
-		},
-		{
-			path: "../fonts/Gambarino-Regular.woff2",
-			weight: "500",
-			style: "normal",
-		},
-		{
-			path: "../fonts/Gambarino-Regular.woff2",
-			weight: "600",
-			style: "normal",
-		},
-		{
-			path: "../fonts/Gambarino-Regular.woff2",
-			weight: "700",
-			style: "normal",
-		},
-	],
-	variable: "--font-gambarino",
+const ptSerif = PT_Serif({
+	subsets: ["latin"],
+	weight: ["400", "700"],
+	variable: "--font-pt-serif",
 	display: "swap",
 });
 
@@ -45,7 +24,7 @@ export function Document({
 	return (
 		<html
 			lang={locale}
-			className={cn(gambarino.variable, inter.variable)}
+			className={cn(ptSerif.variable, inter.variable)}
 			suppressHydrationWarning
 		>
 			<body className="min-h-screen bg-background text-body antialiased">

@@ -1,0 +1,26 @@
+{
+	"name": "@repo/payments",
+	"version": "0.0.0",
+	"private": true,
+	"main": "./index.ts",
+	"types": "./index.ts",
+	"exports": {
+		".": "./index.ts"
+	},
+	"scripts": {
+		"test": "tsx --test quota.test.ts webhooks.test.ts",
+		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@repo/database": "workspace:*",
+		"dodopayments": "^2.59.0",
+		"drizzle-orm": "^0.45.1",
+		"standardwebhooks": "^1.0.0"
+	},
+	"devDependencies": {
+		"@repo/tsconfig": "workspace:*",
+		"@types/node": "24.6.0",
+		"tsx": "^4.20.6",
+		"typescript": "5.9.2"
+	}
+}

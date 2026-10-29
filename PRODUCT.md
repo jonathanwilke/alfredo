@@ -16,7 +16,7 @@ Home cooks. They read the screen from about 1–2 meters away, usually in the ki
 
 ## Product Purpose
 
-alfredo turns a recipe URL into an ad-free, step-by-step cooking guide. Success is a cook who can follow one step at a time without leaving the app for a blog, a video, or an ad.
+ulivo turns a recipe URL into an ad-free, step-by-step cooking guide. Success is a cook who can follow one step at a time without leaving the app for a blog, a video, or an ad.
 
 ## Positioning
 
@@ -34,15 +34,15 @@ Confirmed for the product, not all built in this foundation:
 - Recipe overview with a servings slider and checkable ingredients.
 - Fullscreen cooking mode: one step per screen, per-step ingredients, timer buttons, wake lock.
 - Optional accounts: email magic link and Google.
-- Subscription later via Polar: $2.99/month, 30 imports per month, the first recipe free. Quota events are `import` or `translation`.
+- Subscription via Dodo Payments: $3.99/month, or €3.99 in German, for 30 imports per billing period. The first recipe is free and needs an account. Quota events are `import` or `translation`. Icon generation does not count.
 
-This foundation stores the draft schema and wires auth, the API, and the model call shape. It does not import recipes, charge cards, or send mail. Magic-link delivery is not connected. Polar product ids are undecided.
+Recipe import, cooking mode, and optional accounts are built. Magic-link delivery is not connected. Billing calls Dodo Payments only when its env vars are set. The product id comes from `DODO_PAYMENTS_PRODUCT_ID`.
 
 Locales now: German and English. The locale follows the browser language. German is the fallback.
 
 ## Brand Commitments
 
-The name is alfredo. Binding visual constraints from the brief, recorded here and specified in DESIGN.md: warm cream background, olive and lime palette, Fraunces for headings, the supastarter UI component setup.
+The name is ulivo. Binding visual constraints from the brief, recorded here and specified in DESIGN.md: warm cream background, olive and lime palette, PT Serif for headings, the supastarter UI component setup.
 
 ## Evidence on Hand
 

@@ -1,5 +1,5 @@
 ---
-name: alfredo
+name: ulivo
 description: Warm kitchen UI for turning a recipe link into a step-by-step guide.
 colors:
   cream: "#F3EDE3"
@@ -16,7 +16,7 @@ colors:
   danger: "#8C2F24"
 typography:
   display:
-    fontFamily: "Fraunces, ui-serif, Georgia, serif"
+    fontFamily: "PT Serif, ui-serif, Georgia, serif"
     fontSize: "3.75rem"
     fontWeight: 500
     lineHeight: 1.05
@@ -60,13 +60,13 @@ components:
     rounded: "{rounded.icon}"
 ---
 
-# Design System: alfredo
+# Design System: ulivo
 
 ## Overview
 
 **Creative North Star: "A clay figure on the counter"**
 
-alfredo is read from across a kitchen counter. The page is a warm cream field, type is large, and the one action is a pill-shaped link field. Icons are soft clay toys on the same cream, not photographs and not flat pictograms.
+ulivo is read from across a kitchen counter. The page is a warm cream field, type is large, and the one action is a pill-shaped link field. Icons are soft clay toys on the same cream, not photographs and not flat pictograms.
 
 Components come from the supastarter setup: `tooling/tailwind/theme.css` holds the CSS variables, `@ui/lib` exposes `cn`, and `apps/web/modules/ui` holds Button, Input, and Label. Dark mode is the `dark` class from `next-themes`, and those tokens are the cooking-mode surface.
 
@@ -74,7 +74,7 @@ Components come from the supastarter setup: `tooling/tailwind/theme.css` holds t
 
 - Cream ground, dark olive ink. White is for the link field, not a panel behind the form.
 - Lime is the small accent, not the page background.
-- Fraunces for headings, Source Sans 3 for everything else.
+- PT Serif for headings, Source Sans 3 for everything else.
 - The import field and its button are 2.5rem tall. Cooking-mode controls stay 4rem.
 - One field, one button, sitting on the page.
 
@@ -109,25 +109,25 @@ The palette is warm paper and olive, with lime used in small amounts.
 
 ## Typography
 
-**Display Font:** Fraunces (Georgia fallback), set with `next/font` as `--font-fraunces`.
+**Display Font:** PT Serif (Georgia fallback), set with `next/font` as `--font-pt-serif`.
 
 **Body Font:** Source Sans 3 (system sans fallback), weights 400 and 600, as `--font-source-sans`.
 
-**Character:** Fraunces carries the heading. Source Sans 3 stays plain so a step is easy to read with wet hands.
+**Character:** PT Serif carries the heading. Source Sans 3 stays plain so a step is easy to read with wet hands.
 
 ### Hierarchy
 
 - **Display** (500, 3.75rem–3.75rem scaling to 3.75/4.5rem, line-height 1.05): The page heading, `text-balance`, max about 22ch.
 - **Body** (400, 1.125rem, line-height 1.6): The sentence under the heading. Measure stays under 48ch.
-- **Label** (600, 1rem): Locale links. The wordmark is Fraunces at 1.875rem.
+- **Label** (600, 1rem): Locale links. The wordmark is PT Serif at 1.875rem.
 
 ### Named Rules
 
-**The Two Faces Rule.** Headings use Fraunces. UI text uses Source Sans 3. Do not add a third family.
+**The Two Faces Rule.** Headings use PT Serif. UI text uses Source Sans 3. Do not add a third family.
 
 ## Layout
 
-The home page is one column, `max-w-3xl`, left aligned. It centers vertically when the column fits the screen, and starts under the header when it does not, so a phone can scroll from the top. Page padding is 1.25rem, 2rem from the `sm` breakpoint. The heading is at most about 22 characters of Fraunces. The sentence under it is its own measure, under 48ch. The heading block and the import group are separated by 2rem. The icon and its caption sit together; the field sits 2rem below them, on the cream.
+The home page is one column, `max-w-3xl`, left aligned. It centers vertically when the column fits the screen, and starts under the header when it does not, so a phone can scroll from the top. Page padding is 1.25rem, 2rem from the `sm` breakpoint. The heading is at most about 22 characters of PT Serif. The sentence under it is its own measure, under 48ch. The heading block and the import group are separated by 2rem. The icon and its caption sit together; the field sits 2rem below them, on the cream.
 
 ## Elevation & Depth
 

@@ -26,7 +26,8 @@
 		"locale": "Sprache",
 		"iconPending": "Icon wird erstellt",
 		"iconFailed": "Icon konnte nicht erstellt werden",
-		"iconReady": "Rezept-Icon"
+		"iconReady": "Rezept-Icon",
+		"accountRequired": "Für den Import brauchst du ein Konto. Der erste ist kostenlos. Melde dich oben an."
 	},
 	"recipe": {
 		"servings": "{count, plural, one {# Portion} other {# Portionen}}",
@@ -51,5 +52,42 @@
 		"saveSent": "Schau in dein Postfach nach dem Link. Danach ist das Rezept gespeichert.",
 		"saveSentDev": "Der Link steht im Server-Log. Öffne ihn, dann ist das Rezept gespeichert.",
 		"saveFailed": "Das Rezept konnte nicht gespeichert werden. Versuch es noch einmal."
+	},
+	"billing": {
+		"pageTitle": "Abo",
+		"quotaMonthly": "{used} / {limit} Importe diesen Monat",
+		"quotaFree": "{used} / {limit} kostenloser Import",
+		"freeWithAccount": "Der erste Import ist kostenlos, mit Konto.",
+		"loading": "Importe werden geladen.",
+		"loadError": "Die Importe konnten nicht geladen werden.",
+		"retry": "Nochmal versuchen",
+		"upgrade": "Abo starten",
+		"manage": "Abo verwalten",
+		"manageHint": "Im Portal kannst du die Zahlung ändern oder das Abo kündigen.",
+		"disabled": "Das monatliche Abo ist in dieser Umgebung nicht eingerichtet.",
+		"periodRenews": "Nächste Abrechnung am {date}.",
+		"periodCancels": "Das Abo endet am {date}.",
+		"inactive": "Das Abo ist nicht aktiv.",
+		"paywallFreeTitle": "Der kostenlose Import ist verbraucht",
+		"paywallFreeBody": "Mit dem Abo gibt es {limit} Importe oder Übersetzungen im Monat, für {price}.",
+		"paywallMonthlyTitle": "Die Importe für diesen Monat sind aufgebraucht",
+		"paywallMonthlyBody": "Neue Importe und Übersetzungen gibt es wieder ab {date}.",
+		"paywallMonthlyBodyNoDate": "Neue Importe und Übersetzungen gibt es wieder im nächsten Abrechnungszeitraum.",
+		"pricingTitle": "{limit} Importe im Monat",
+		"pricingBody": "Importe und Übersetzungen zählen zusammen. {price} im Monat. Der erste Import bleibt kostenlos.",
+		"close": "Schließen",
+		"checkoutError": "Die Kasse hat sich nicht geöffnet. Versuch es noch einmal.",
+		"checkoutPending": "Weiter zur Kasse",
+		"portalError": "Das Portal hat sich nicht geöffnet. Versuch es noch einmal.",
+		"portalEmpty": "Es gibt noch kein Abo zum Verwalten.",
+		"returnSuccessTitle": "Zahlung angekommen",
+		"returnSuccessBody": "Sobald die Bestätigung da ist, stehen {limit} Importe für diesen Zeitraum bereit.",
+		"returnReadyBody": "{limit} Importe für diesen Zeitraum sind frei.",
+		"returnPendingTitle": "Wir warten auf die Bestätigung",
+		"returnPendingBody": "Die Zahlung ist noch nicht abgeschlossen. Du kannst die Seite schließen und später wiederkommen.",
+		"returnFailedTitle": "Die Zahlung ist nicht durchgegangen",
+		"returnFailedBody": "Es wurde nichts freigeschaltet. Du kannst es noch einmal versuchen.",
+		"backHome": "Weiter zur Anleitung",
+		"tryAgain": "Erneut zur Kasse"
 	}
 }

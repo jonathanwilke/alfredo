@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
 		"@repo/database",
 		"@repo/i18n",
 		"@repo/icons",
+		"@repo/payments",
 		"@repo/storage",
 	],
 	images: {
