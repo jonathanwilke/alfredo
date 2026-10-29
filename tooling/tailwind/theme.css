@@ -73,7 +73,7 @@
 		--muted-foreground: #6a655a;
 		--accent: #c3d56d;
 		--accent-foreground: #40442a;
-		--popover: #ffffff;
+		--popover: color-mix(in srgb, var(--background) 88%, white);
 		--popover-foreground: #40442a;
 		--card: #ffffff;
 		--card-foreground: #40442a;
@@ -103,7 +103,7 @@
 		--muted-foreground: #c8c2b4;
 		--accent: #c3d56d;
 		--accent-foreground: #1a1d14;
-		--popover: #24281c;
+		--popover: color-mix(in srgb, var(--background) 88%, white);
 		--popover-foreground: #f3ede3;
 		--card: #24281c;
 		--card-foreground: #f3ede3;
@@ -141,6 +141,12 @@
 	input,
 	textarea {
 		caret-color: var(--ring);
+	}
+
+	[role="menu"],
+	[role="listbox"] {
+		background-color: var(--popover);
+		color: var(--popover-foreground);
 	}
 }
 

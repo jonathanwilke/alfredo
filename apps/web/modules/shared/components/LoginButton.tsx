@@ -70,7 +70,7 @@ export function LoginButton() {
 				{open ? (
 					<div
 						role="menu"
-						className="absolute top-full right-0 z-10 mt-2 flex w-56 flex-col rounded-3xl border border-border bg-background p-2"
+						className="absolute top-full right-0 z-10 mt-2 flex w-56 flex-col rounded-3xl border border-border bg-popover p-2"
 					>
 						<LocaleLink
 							href="/saved"
