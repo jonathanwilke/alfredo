@@ -124,6 +124,11 @@
 		@apply bg-background text-body font-sans antialiased;
 	}
 
+	button:not(:disabled),
+	[role="button"]:not([aria-disabled="true"]) {
+		cursor: pointer;
+	}
+
 	h1,
 	h2,
 	h3,
