@@ -30,8 +30,10 @@ function importFailure(error: unknown) {
 
 export function RecipeLinkForm({
 	onQuotaExceeded,
+	resumeError,
 }: {
 	onQuotaExceeded: () => void;
+	resumeError?: string | null;
 }) {
 	const t = useTranslations("home");
 	const locale = useLocale();
@@ -89,8 +91,10 @@ export function RecipeLinkForm({
 							return;
 						}
 						if (code === "UNAUTHORIZED") {
-							setInvalid(true);
-							setMessage(t("accountRequired"));
+							const next = `/?import=${encodeURIComponent(parsed.href)}`;
+							router.push(
+								`/login?next=${encodeURIComponent(next)}`,
+							);
 							return;
 						}
 						setInvalid(true);
@@ -120,7 +124,9 @@ export function RecipeLinkForm({
 						disabled={pending}
 						value={url}
 						aria-invalid={invalid}
-						aria-describedby={message ? messageId : undefined}
+						aria-describedby={
+							message || resumeError ? messageId : undefined
+						}
 						placeholder={t("placeholder")}
 						onChange={(event) => {
 							setUrl(event.target.value);
@@ -142,17 +148,17 @@ export function RecipeLinkForm({
 					{t("submit")}
 				</Button>
 			</div>
-			{message ? (
+			{(message ?? resumeError) ? (
 				<p
 					id={messageId}
-					role={invalid ? "alert" : "status"}
+					role={invalid || resumeError ? "alert" : "status"}
 					className={
-						invalid
+						invalid || resumeError
 							? "text-base text-destructive"
 							: "text-base text-muted-foreground"
 					}
 				>
-					{message}
+					{message ?? resumeError}
 				</p>
 			) : null}
 		</form>
