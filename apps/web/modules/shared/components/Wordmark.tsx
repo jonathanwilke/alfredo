@@ -6,7 +6,7 @@ export function Wordmark({ className }: { className?: string }) {
 			viewBox="0 0 250 56"
 			role="img"
 			aria-label="ulivo"
-			className={cn("h-10 w-auto text-foreground", className)}
+			className={cn("h-9 w-auto text-foreground", className)}
 		>
 			<ellipse
 				cx="16"
@@ -14,7 +14,7 @@ export function Wordmark({ className }: { className?: string }) {
 				rx="9"
 				ry="14"
 				transform="rotate(-22 16 32)"
-				className="fill-[#3d562e] dark:fill-[#9aaa62]"
+				className="fill-[#859438] dark:fill-[#96a84f]"
 			/>
 			<ellipse
 				cx="13"
@@ -30,7 +30,7 @@ export function Wordmark({ className }: { className?: string }) {
 				rx="9"
 				ry="14"
 				transform="rotate(16 36 30)"
-				className="fill-[#93a65c] dark:fill-[#d4e28d]"
+				className="fill-accent"
 			/>
 			<ellipse
 				cx="33"

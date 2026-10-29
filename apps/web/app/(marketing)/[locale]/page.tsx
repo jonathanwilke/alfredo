@@ -49,7 +49,9 @@ export default async function HomePage({
 						{t("subtitle")}
 					</p>
 				</div>
-				<RecipeLinkForm />
+				<div className="flex flex-1 flex-col justify-center sm:flex-none">
+					<RecipeLinkForm />
+				</div>
 			</section>
 		</main>
 	);
