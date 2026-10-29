@@ -30,8 +30,8 @@ export default async function HomePage({
 	const t = await getTranslations("home");
 
 	return (
-		<main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-5 py-8 sm:px-8">
-			<header className="flex items-center justify-between gap-4">
+		<main className="mx-auto flex w-full max-w-3xl flex-col px-5 pt-8 [--home-nav:calc(2rem+2.75rem)] sm:px-8">
+			<header className="flex h-11 shrink-0 items-center justify-between gap-4">
 				<p className="leading-none">
 					<Wordmark />
 				</p>
@@ -40,7 +40,7 @@ export default async function HomePage({
 					<ThemeToggle />
 				</div>
 			</header>
-			<section className="flex flex-1 flex-col justify-center gap-8 py-10 sm:py-16">
+			<section className="flex min-h-[calc(100svh-var(--home-nav))] flex-col justify-center gap-8 py-8">
 				<div className="flex flex-col gap-5">
 					<h1 className="text-balance text-center text-5xl leading-[1.05] font-semibold tracking-tight sm:text-6xl">
 						{t("title")}
