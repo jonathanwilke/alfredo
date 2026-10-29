@@ -8,6 +8,7 @@
 		".": "./index.ts"
 	},
 	"scripts": {
+		"test": "node --experimental-test-module-mocks --import tsx --test render.test.ts",
 		"type-check": "tsc --noEmit"
 	},
 	"dependencies": {

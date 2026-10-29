@@ -1,6 +1,7 @@
 import { generateText } from "ai";
 import sharp from "sharp";
 import {
+	INGREDIENT_IMAGE_CONFIG,
 	iconPrompt,
 	imageModelId,
 	ingredientIconPrompt,
@@ -60,6 +61,15 @@ export async function renderIcon(
 	const result = await generateText({
 		model,
 		prompt,
+		...(frame === "square"
+			? {
+					providerOptions: {
+						google: {
+							imageConfig: INGREDIENT_IMAGE_CONFIG,
+						},
+					},
+				}
+			: {}),
 	});
 	const file = result.files.find((item) =>
 		item.mediaType.startsWith("image/"),
