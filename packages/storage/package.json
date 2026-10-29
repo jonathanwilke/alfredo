@@ -11,11 +11,12 @@
 		"type-check": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.916.0",
+		"@aws-sdk/client-s3": "^3.1160.0",
 		"@repo/config": "workspace:*"
 	},
 	"devDependencies": {
 		"@repo/tsconfig": "workspace:*",
-		"typescript": "5.9.2"
+		"@types/node": "26.6.6",
+		"typescript": "7.0.2"
 	}
 }

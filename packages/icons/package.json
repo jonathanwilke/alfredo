@@ -14,12 +14,13 @@
 	"dependencies": {
 		"@repo/database": "workspace:*",
 		"@repo/storage": "workspace:*",
-		"ai": "^7.0.155",
-		"drizzle-orm": "^0.45.1",
-		"sharp": "^0.34.4"
+		"ai": "^7.0.157",
+		"drizzle-orm": "^0.45.4",
+		"sharp": "^0.35.5"
 	},
 	"devDependencies": {
 		"@repo/tsconfig": "workspace:*",
-		"typescript": "5.9.2"
+		"@types/node": "26.6.6",
+		"typescript": "7.0.2"
 	}
 }

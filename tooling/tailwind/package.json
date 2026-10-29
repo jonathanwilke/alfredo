@@ -4,6 +4,6 @@
 	"private": true,
 	"main": "theme.css",
 	"devDependencies": {
-		"tailwindcss": "^4.1.13"
+		"tailwindcss": "^4.3.3"
 	}
 }

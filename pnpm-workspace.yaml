@@ -3,3 +3,13 @@ packages:
     - apps/*
     - packages/*
     - tooling/*
+
+allowBuilds:
+    "@parcel/watcher": true
+    "@swc/core": true
+    "@tailwindcss/oxide": true
+    esbuild: true
+    sharp: true
+
+# Today's releases are the versions we just pinned. The default one-day wait would reject them.
+minimumReleaseAge: 1

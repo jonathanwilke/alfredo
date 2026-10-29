@@ -17,7 +17,8 @@
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
 		"strict": true,
-		"strictNullChecks": true
+		"strictNullChecks": true,
+		"types": ["node"]
 	},
 	"display": "Default",
 	"exclude": ["node_modules", "dist", ".next", "build"]

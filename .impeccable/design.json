@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 2,
-	"generatedAt": "2026-10-28T15:50:00.000Z",
+	"generatedAt": "2026-10-29T21:10:00.000Z",
 	"title": "Design System: ulivo",
 	"extensions": {
 		"colorMeta": {
@@ -21,35 +21,57 @@
 			},
 			"lime": {
 				"role": "tertiary",
-				"displayName": "Light lime",
-				"canonical": "#D4E28D"
+				"displayName": "Lime",
+				"canonical": "#C3D56D"
 			},
 			"body": {
 				"role": "neutral",
-				"displayName": "Body gray",
-				"canonical": "#5B5B5B"
+				"displayName": "Warm body",
+				"canonical": "#5C584C"
+			},
+			"muted": {
+				"role": "neutral",
+				"displayName": "Warm stone",
+				"canonical": "#6A655A"
+			},
+			"timer": {
+				"role": "tertiary",
+				"displayName": "Timer orange",
+				"canonical": "#DC6416"
 			}
 		},
 		"typographyMeta": {
 			"display": {
 				"displayName": "Display",
-				"purpose": "Page headings in Fraunces."
+				"purpose": "PT Serif headings, semibold, tight tracking."
 			},
 			"body": {
 				"displayName": "Body",
-				"purpose": "Source Sans 3 for reading at counter distance."
+				"purpose": "Inter for reading text and for buttons."
 			}
 		},
 		"shadows": [
 			{
-				"name": "icon",
+				"name": "dish",
 				"value": "0 14px 28px -18px rgba(64, 68, 42, 0.7)",
-				"purpose": "Icon tile on the cream page."
+				"purpose": "The plated recipe photo. Icon tiles and inputs stay flat."
 			}
 		],
-		"motion": [],
+		"motion": [
+			{
+				"name": "timer-flight",
+				"value": "transform 480ms cubic-bezier(0.22, 1, 0.36, 1)",
+				"purpose": "The countdown chip flies from the duration in the step to the header."
+			},
+			{
+				"name": "timer-wiggle",
+				"value": "transform 1000ms linear",
+				"purpose": "A second tap on a running duration wiggles the floating timer."
+			}
+		],
 		"breakpoints": [
-			{ "name": "sm", "value": "640px" }
+			{ "name": "sm", "value": "640px" },
+			{ "name": "lg", "value": "1024px" }
 		]
 	},
 	"components": [
@@ -57,50 +79,58 @@
 			"name": "Primary Button",
 			"kind": "button",
 			"refersTo": "button-primary",
-			"description": "Dark olive pill used for the import action.",
-			"html": "<button class=\"ds-btn-primary\">Make the guide</button>",
-			"css": ".ds-btn-primary { background: #40442A; color: #F6F9E8; height: 2.5rem; padding: 0 1rem; border: 0; border-radius: 9999px; font-family: 'Source Sans 3', sans-serif; font-size: 1rem; font-weight: 600; } .ds-btn-primary:hover { background: rgba(64, 68, 42, 0.9); } .ds-btn-primary:focus-visible { outline: 2px solid #6A7147; outline-offset: 2px; }"
+			"description": "Lime pill for import, start cooking, and login.",
+			"html": "<button class=\"ds-btn-primary\">Let's cook</button>",
+			"css": ".ds-btn-primary { background: #C3D56D; color: #40442A; height: 3rem; padding: 0 1.5rem; border: 0; border-radius: 9999px; font-family: Inter, sans-serif; font-size: 1.125rem; font-weight: 600; box-shadow: none; } .ds-btn-primary:hover { background: rgba(195, 213, 109, 0.9); } .ds-btn-primary:focus-visible { outline: 2px solid #6A7147; outline-offset: 2px; }"
 		},
 		{
 			"name": "Link input",
 			"kind": "input",
 			"refersTo": "input-link",
-			"description": "Pill field for a recipe URL.",
+			"description": "Pill field for a recipe URL. No shadow.",
 			"html": "<input class=\"ds-input\" placeholder=\"Paste a recipe link\" />",
-			"css": ".ds-input { width: 100%; height: 2.5rem; padding: 0 1rem 0 2.5rem; border: 1px solid #D9CDB8; border-radius: 9999px; background: #FFFFFF; color: #40442A; font-family: 'Source Sans 3', sans-serif; font-size: 1rem; } .ds-input::placeholder { color: #5B5B5B; } .ds-input:focus-visible { outline: 1px solid #6A7147; border-color: #6A7147; }"
+			"css": ".ds-input { width: 100%; height: 3rem; padding: 0 1.25rem 0 3rem; border: 1px solid #D9CDB8; border-radius: 9999px; background: #FFFFFF; color: #40442A; box-shadow: none; font-family: Inter, sans-serif; font-size: 1.125rem; } .ds-input::placeholder { color: #6A655A; } .ds-input:focus-visible { outline: 1px solid #6A7147; border-color: #6A7147; }"
 		},
 		{
 			"name": "Icon tile",
 			"kind": "custom",
 			"refersTo": "icon-tile",
-			"description": "Pending clay placeholder until a WebP icon is ready.",
+			"description": "Bordered cream tile. A lime disc stands in until the WebP is ready.",
 			"html": "<div class=\"ds-icon\" role=\"img\" aria-label=\"Icon is on its way\"></div>",
-			"css": ".ds-icon { width: 7rem; height: 7rem; border-radius: 1.75rem; background: #F6F9E8; box-shadow: 0 14px 28px -18px rgba(64, 68, 42, 0.7); display: grid; place-items: center; } .ds-icon::before { content: ''; width: 4rem; height: 4rem; border-radius: 9999px; background: #D4E28D; }"
+			"css": ".ds-icon { width: 4rem; height: 4rem; border-radius: 1.75rem; background: #F6F9E8; border: 1px solid #E4D9C8; box-shadow: none; display: grid; place-items: center; } .ds-icon::before { content: ''; width: 2.25rem; height: 2.25rem; border-radius: 9999px; background: #C3D56D; }"
 		}
 	],
 	"narrative": {
-		"northStar": "A clay figure on the counter",
-		"overview": "Warm cream page, olive ink, lime used in small amounts, Fraunces headings, large pill controls.",
+		"northStar": "A recipe card on the counter",
+		"overview": "Warm cream page, PT Serif headings, Inter body and buttons, lime pills for the main action, bordered ingredient tiles, and one soft shadow on the dish photo.",
 		"keyCharacteristics": [
-			"Cream ground, no panels behind the form",
-			"Fraunces plus Source Sans 3",
-			"2.5rem import controls",
-			"Clay icon tiles"
+			"Cream ground, no cards around the form or a step",
+			"PT Serif headings, Inter everywhere else",
+			"Lime #C3D56D actions, 3rem on import and 4rem while cooking",
+			"Bordered icon tiles, shadowed dish photo"
 		],
 		"rules": [
 			{
-				"name": "The Distance Rule",
-				"body": "Controls and body text stay large enough to read from 1 to 2 meters.",
+				"name": "The Lime Rule",
+				"body": "Lime is the one action. Save is a ghost button. Back in a step is an outline button.",
+				"section": "colors"
+			},
+			{
+				"name": "The Two Faces Rule",
+				"body": "Headings use PT Serif. Body text and buttons use Inter.",
 				"section": "typography"
 			}
 		],
 		"dos": [
-			"Use cream #F3EDE3 as the page background."
+			"Use cream #F3EDE3 as the page and lime #C3D56D for the main action.",
+			"Center the home title, subtitle, and form together.",
+			"Keep Back and Next visible while a long step scrolls."
 		],
 		"donts": [
-			"Do not wrap the import flow in a card.",
-			"Do not set small olive text on cream.",
-			"Do not count icon generation as an import."
+			"Do not wrap the import flow or a cooking step in a card.",
+			"Do not put a shadow on inputs or icon tiles.",
+			"Do not set buttons in PT Serif.",
+			"Do not turn the duration in the step into a running clock."
 		]
 	}
 }
