@@ -97,8 +97,6 @@
 		"tryAgain": "Choose a pack again"
 	},
 	"footer": {
-		"builtBy": "Built by",
-		"broughtBy": "Brought to you by",
 		"language": "Language"
 	}
 }

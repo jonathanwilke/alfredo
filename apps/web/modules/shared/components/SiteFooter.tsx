@@ -14,7 +14,7 @@ export function SiteFooter() {
 	return (
 		<footer className="mt-16 pb-8 text-center">
 			<p className="text-sm text-muted-foreground">
-				{t("builtBy")}{" "}
+				Built by{" "}
 				<a
 					href="https://x.com/jonathan_wilke"
 					target="_blank"
@@ -22,16 +22,6 @@ export function SiteFooter() {
 					className="text-primary transition-colors hover:text-primary/80"
 				>
 					@jonathan_wilke
-				</a>
-				{" · "}
-				{t("broughtBy")}{" "}
-				<a
-					href="https://supastarter.dev"
-					target="_blank"
-					rel="noopener noreferrer"
-					className="text-primary transition-colors hover:text-primary/80"
-				>
-					supastarter.dev
 				</a>
 			</p>
 			<nav
