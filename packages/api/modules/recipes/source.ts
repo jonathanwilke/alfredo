@@ -23,7 +23,8 @@ export class ImportError extends Error {
 			| "fetch_failed"
 			| "not_a_recipe"
 			| "extract_failed"
-			| "not_configured",
+			| "not_configured"
+			| "account_required",
 	) {
 		super(reason);
 	}

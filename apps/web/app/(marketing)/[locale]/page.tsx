@@ -1,6 +1,6 @@
+import { HomeImport } from "@billing/components/HomeImport";
 import { config } from "@repo/config";
 import { LoginButton } from "@shared/components/LoginButton";
-import { RecipeLinkForm } from "@shared/components/RecipeLinkForm";
 import { ThemeToggle } from "@shared/components/ThemeToggle";
 import { Wordmark } from "@shared/components/Wordmark";
 import type { Metadata } from "next";
@@ -49,7 +49,7 @@ export default async function HomePage({
 						{t("subtitle")}
 					</p>
 				</div>
-				<RecipeLinkForm />
+				<HomeImport />
 			</section>
 		</main>
 	);

@@ -8,6 +8,7 @@
 		"lint": "biome check .",
 		"format": "biome check --write .",
 		"type-check": "turbo type-check",
+		"test": "pnpm --filter @repo/payments test",
 		"clean": "turbo clean"
 	},
 	"engines": {

@@ -34,9 +34,9 @@ Confirmed for the product, not all built in this foundation:
 - Recipe overview with a servings slider and checkable ingredients.
 - Fullscreen cooking mode: one step per screen, per-step ingredients, timer buttons, wake lock.
 - Optional accounts: email magic link and Google.
-- Subscription later via Polar: $2.99/month, 30 imports per month, the first recipe free. Quota events are `import` or `translation`.
+- Subscription via Dodo Payments: $2.99/month, 30 imports per billing period. The first recipe is free and needs an account. Quota events are `import` or `translation`. Icon generation does not count.
 
-This foundation stores the draft schema and wires auth, the API, and the model call shape. It does not import recipes, charge cards, or send mail. Magic-link delivery is not connected. Polar product ids are undecided.
+Recipe import, cooking mode, and optional accounts are built. Magic-link delivery is not connected. Billing calls Dodo Payments only when its env vars are set. The product id comes from `DODO_PAYMENTS_PRODUCT_ID`.
 
 Locales now: German and English. The locale follows the browser language. German is the fallback.
 

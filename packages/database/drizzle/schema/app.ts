@@ -1,6 +1,7 @@
 import type { ExtractedRecipe } from "@repo/ai";
 import { relations } from "drizzle-orm";
 import {
+	boolean,
 	index,
 	jsonb,
 	pgEnum,
@@ -157,9 +158,61 @@ export const savedRecipesRelations = relations(savedRecipes, ({ one }) => ({
 	}),
 }));
 
+export const subscriptions = pgTable(
+	"subscriptions",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		userId: text("user_id")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		customerId: text("customer_id").notNull(),
+		subscriptionId: text("subscription_id").notNull(),
+		productId: text("product_id").notNull(),
+		status: text("status").notNull(),
+		currentPeriodStart: timestamp("current_period_start", {
+			withTimezone: true,
+		}),
+		currentPeriodEnd: timestamp("current_period_end", {
+			withTimezone: true,
+		}),
+		cancelAtPeriodEnd: boolean("cancel_at_period_end")
+			.notNull()
+			.default(false),
+		lastEventAt: timestamp("last_event_at", { withTimezone: true }),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+	},
+	(table) => [
+		uniqueIndex("subscriptions_subscription_id_idx").on(
+			table.subscriptionId,
+		),
+		index("subscriptions_user_id_idx").on(table.userId),
+		index("subscriptions_customer_id_idx").on(table.customerId),
+	],
+);
+
+export const billingEvents = pgTable("billing_events", {
+	id: text("id").primaryKey(),
+	type: text("type").notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true })
+		.notNull()
+		.defaultNow(),
+});
+
 export const importsRelations = relations(imports, ({ one }) => ({
 	user: one(user, {
 		fields: [imports.userId],
+		references: [user.id],
+	}),
+}));
+
+export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+	user: one(user, {
+		fields: [subscriptions.userId],
 		references: [user.id],
 	}),
 }));
