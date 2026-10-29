@@ -3,7 +3,7 @@
 import { LocaleLink, useLocalePathname } from "@i18n/routing";
 import { authClient } from "@repo/auth/client";
 import { Button } from "@ui/components/button";
-import { User } from "lucide-react";
+import { Bookmark, LogOut, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
@@ -75,17 +75,19 @@ export function LoginButton() {
 						<LocaleLink
 							href="/saved"
 							role="menuitem"
-							className="rounded-full px-4 py-2.5 text-base text-foreground no-underline hover:bg-muted"
+							className="flex items-center gap-3 rounded-full px-4 py-2.5 text-base text-foreground no-underline hover:bg-muted"
 							onClick={() => setOpen(false)}
 						>
+							<Bookmark aria-hidden className="size-5 shrink-0" />
 							{t("savedRecipes")}
 						</LocaleLink>
 						<button
 							type="button"
 							role="menuitem"
-							className="rounded-full px-4 py-2.5 text-left text-base text-foreground hover:bg-muted"
+							className="flex items-center gap-3 rounded-full px-4 py-2.5 text-left text-base text-foreground hover:bg-muted"
 							onClick={() => void authClient.signOut()}
 						>
+							<LogOut aria-hidden className="size-5 shrink-0" />
 							{t("logout")}
 						</button>
 					</div>
