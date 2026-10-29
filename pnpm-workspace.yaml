@@ -11,9 +11,9 @@ allowBuilds:
     esbuild: true
     sharp: true
 
-# pnpm 12 ignores these in .npmrc. Without them the install falls back to the
-# isolated linker and apps cannot resolve transitive dependencies.
-nodeLinker: hoisted
+# pnpm 12 ignores these keys in .npmrc. shamefullyHoist keeps transitive
+# packages visible. Do not set nodeLinker: hoisted: pnpm 12.16.1 applies it
+# while provisioning the packageManager engine and then deletes that engine.
 shamefullyHoist: true
 strictPeerDependencies: false
 
