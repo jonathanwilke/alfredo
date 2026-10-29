@@ -3,8 +3,9 @@ import { and, count, desc, eq, gte, lt } from "drizzle-orm";
 import {
 	isMonthlyEntitled,
 	MONTHLY_IMPORT_LIMIT,
-	PLAN_CURRENCY,
-	PLAN_PRICE_CENTS,
+	type PlanCurrency,
+	type PlanLocale,
+	planPrice,
 	QuotaExceededError,
 	type QuotaSnapshot,
 	type QuotaSubscription,
@@ -19,19 +20,21 @@ export type BillingStatus = QuotaSnapshot & {
 	hasCustomer: boolean;
 	monthlyLimit: number;
 	priceCents: number;
-	currency: typeof PLAN_CURRENCY;
+	currency: PlanCurrency;
 	interval: "month";
 };
 
 function emptyStatus(
 	billingEnabled: boolean,
 	authenticated: boolean,
+	locale: PlanLocale,
 ): BillingStatus {
 	const quota = resolveQuota({
 		now: new Date(),
 		rows: [],
 		subscription: null,
 	});
+	const price = planPrice(locale);
 	return {
 		...quota,
 		allowed: authenticated ? quota.allowed : false,
@@ -39,8 +42,8 @@ function emptyStatus(
 		authenticated,
 		hasCustomer: false,
 		monthlyLimit: MONTHLY_IMPORT_LIMIT,
-		priceCents: PLAN_PRICE_CENTS,
-		currency: PLAN_CURRENCY,
+		priceCents: price.priceCents,
+		currency: price.currency,
 		interval: "month",
 	};
 }
@@ -89,10 +92,12 @@ export async function getQuotaForUser(userId: string, now = new Date()) {
 export async function getBillingStatus(input: {
 	userId: string | null;
 	billingEnabled: boolean;
+	locale: PlanLocale;
 	now?: Date;
 }): Promise<BillingStatus> {
+	const price = planPrice(input.locale);
 	if (!input.userId) {
-		return emptyStatus(input.billingEnabled, false);
+		return emptyStatus(input.billingEnabled, false, input.locale);
 	}
 
 	const now = input.now ?? new Date();
@@ -110,8 +115,8 @@ export async function getBillingStatus(input: {
 		authenticated: true,
 		hasCustomer: Boolean(customer?.customerId),
 		monthlyLimit: MONTHLY_IMPORT_LIMIT,
-		priceCents: PLAN_PRICE_CENTS,
-		currency: PLAN_CURRENCY,
+		priceCents: price.priceCents,
+		currency: price.currency,
 		interval: "month",
 	};
 }

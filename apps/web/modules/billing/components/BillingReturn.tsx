@@ -31,7 +31,7 @@ export function BillingReturn({
 	useEffect(() => {
 		let cancelled = false;
 		void api.billing
-			.status()
+			.status({ locale: planLocale })
 			.then((next) => {
 				if (!cancelled) {
 					setStatus(next);

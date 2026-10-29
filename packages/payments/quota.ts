@@ -1,7 +1,19 @@
 export const FREE_IMPORT_LIMIT = 1;
 export const MONTHLY_IMPORT_LIMIT = 30;
 export const PLAN_PRICE_CENTS = 399;
-export const PLAN_CURRENCY = "USD" as const;
+export const PLAN_CURRENCIES = ["USD", "EUR"] as const;
+export type PlanCurrency = (typeof PLAN_CURRENCIES)[number];
+export type PlanLocale = "de" | "en";
+
+export function planPrice(locale: PlanLocale): {
+	priceCents: number;
+	currency: PlanCurrency;
+} {
+	if (locale === "de") {
+		return { priceCents: PLAN_PRICE_CENTS, currency: "EUR" };
+	}
+	return { priceCents: PLAN_PRICE_CENTS, currency: "USD" };
+}
 
 export type QuotaPlan = "free" | "monthly";
 

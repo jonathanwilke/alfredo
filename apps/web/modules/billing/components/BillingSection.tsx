@@ -22,7 +22,7 @@ type BillingStatus = {
 	hasCustomer: boolean;
 	monthlyLimit: number;
 	priceCents: number;
-	currency: "USD";
+	currency: "USD" | "EUR";
 };
 
 type DialogMode = "paywall" | "pricing" | null;
@@ -49,25 +49,28 @@ export function BillingSection({
 	const planLocale = locale === "en" ? "en" : "de";
 	const { data: session } = authClient.useSession();
 
-	const load = useCallback(async (silent = false) => {
-		if (!silent) {
-			setLoading(true);
-		}
-		try {
-			const next = await api.billing.status();
-			statusRef.current = next;
-			setStatus(next);
-			setStatusError(false);
-		} catch {
-			if (!statusRef.current) {
-				setStatusError(true);
-			}
-		} finally {
+	const load = useCallback(
+		async (silent = false) => {
 			if (!silent) {
-				setLoading(false);
+				setLoading(true);
 			}
-		}
-	}, []);
+			try {
+				const next = await api.billing.status({ locale: planLocale });
+				statusRef.current = next;
+				setStatus(next);
+				setStatusError(false);
+			} catch {
+				if (!statusRef.current) {
+					setStatusError(true);
+				}
+			} finally {
+				if (!silent) {
+					setLoading(false);
+				}
+			}
+		},
+		[planLocale],
+	);
 
 	useEffect(() => {
 		void load();

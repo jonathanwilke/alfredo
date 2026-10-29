@@ -2,6 +2,7 @@ import { db, subscriptions } from "@repo/database";
 import DodoPayments from "dodopayments";
 import { desc, eq } from "drizzle-orm";
 import { getPaymentsConfig } from "./config";
+import { type PlanLocale, planPrice } from "./quota";
 
 export class BillingDisabledError extends Error {
 	constructor() {
@@ -56,10 +57,12 @@ export async function createCheckoutSession(input: {
 	email: string;
 	name: string;
 	returnUrl: string;
+	locale: PlanLocale;
 }) {
 	const { client, config } = requireClient();
 	const customerId = await latestCustomerId(input.userId);
 	const name = input.name.trim() || input.email;
+	const price = planPrice(input.locale);
 	const session = await client.checkoutSessions.create({
 		product_cart: [{ product_id: config.productId, quantity: 1 }],
 		customer: customerId
@@ -67,6 +70,10 @@ export async function createCheckoutSession(input: {
 			: { email: input.email, name },
 		return_url: input.returnUrl,
 		metadata: { user_id: input.userId },
+		billing_currency: price.currency,
+		...(price.currency === "EUR"
+			? { billing_address: { country: "DE" as const } }
+			: {}),
 	});
 
 	if (!session.checkout_url) {

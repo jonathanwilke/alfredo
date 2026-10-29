@@ -7,8 +7,8 @@ export {
 } from "./checkout";
 export { getPaymentsConfig } from "./config";
 export {
-	PLAN_CURRENCY,
 	PLAN_PRICE_CENTS,
+	planPrice,
 	QuotaExceededError,
 } from "./quota";
 export {

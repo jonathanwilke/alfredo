@@ -33,6 +33,7 @@ export const createCheckout = protectedProcedure
 				email: context.user.email,
 				name: context.user.name,
 				returnUrl: billingReturnUrl(input.locale),
+				locale: input.locale,
 			});
 			return { url };
 		} catch (error) {

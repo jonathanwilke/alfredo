@@ -17,7 +17,7 @@ const statusSchema = z.object({
 	hasCustomer: z.boolean(),
 	monthlyLimit: z.number().int().positive(),
 	priceCents: z.number().int().positive(),
-	currency: z.literal("USD"),
+	currency: z.enum(["USD", "EUR"]),
 	interval: z.literal("month"),
 });
 
@@ -32,14 +32,16 @@ export const status = publicProcedure
 		tags: ["Billing"],
 		summary: "Plan, billing period, and import quota",
 	})
+	.input(z.object({ locale: z.enum(["de", "en"]) }))
 	.output(statusSchema)
-	.handler(async ({ context }) => {
+	.handler(async ({ context, input }) => {
 		const session = await auth.api.getSession({
 			headers: context.headers,
 		});
 		const billing = await getBillingStatus({
 			userId: session?.user.id ?? null,
 			billingEnabled: getPaymentsConfig().enabled,
+			locale: input.locale,
 		});
 		return {
 			...billing,
