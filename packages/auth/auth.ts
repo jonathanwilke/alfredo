@@ -3,6 +3,7 @@ import { config, getBaseUrl } from "@repo/config";
 import { account, db, session, user, verification } from "@repo/database";
 import { betterAuth } from "better-auth";
 import { magicLink } from "better-auth/plugins";
+import { sendMagicLinkEmail } from "./email";
 
 function authSecret() {
 	const secret = process.env.BETTER_AUTH_SECRET;
@@ -63,12 +64,7 @@ export const auth = betterAuth({
 		magicLink({
 			disableSignUp: false,
 			sendMagicLink: async ({ email, url }) => {
-				if (process.env.NODE_ENV !== "production") {
-					console.info(`[auth] magic link for ${email}: ${url}`);
-					return;
-				}
-
-				throw new Error("Magic link email delivery is not configured.");
+				await sendMagicLinkEmail(email, url);
 			},
 		}),
 	],

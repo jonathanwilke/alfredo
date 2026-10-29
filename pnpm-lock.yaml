@@ -208,6 +208,9 @@ importers:
             react:
                 specifier: 19.1.1
                 version: 19.1.1
+            resend:
+                specifier: ^6.35.0
+                version: 6.35.0
         devDependencies:
             "@repo/tsconfig":
                 specifier: workspace:*
@@ -3053,6 +3056,12 @@ packages:
                 integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==,
             }
 
+    postal-mime@2.7.6:
+        resolution:
+            {
+                integrity: sha512-UUlyE2KlxmvwMGq060onF/VWU3zD6dVW31FwokQ5v26jWd35fbs2MoTFzh+jXnPwAyV2MULMKXcBInGOl5TO6Q==,
+            }
+
     postcss@8.4.31:
         resolution:
             {
@@ -3116,6 +3125,18 @@ packages:
                 integrity: sha512-w8nqGImo45dmMIfljjMwOGtbmC/mk4CMYhWIicdSflH91J9TyCyczcPFXJzrZ/ZXcgGRFeP6BU0BEJTw6tZdfQ==,
             }
         engines: { node: ">=0.10.0" }
+
+    resend@6.35.0:
+        resolution:
+            {
+                integrity: sha512-sScNQHunU2Np7oICQ/44GXif8cQ0lp2WPEo9nDtTnM1koPvgJwH/SEee8mJwYRwyIfi+uj7IetKiYspfyYBYaA==,
+            }
+        engines: { node: ">=20" }
+        peerDependencies:
+            "@react-email/render": "*"
+        peerDependenciesMeta:
+            "@react-email/render":
+                optional: true
 
     resolve-pkg-maps@1.0.0:
         resolution:
@@ -4825,6 +4846,8 @@ snapshots:
 
     picocolors@1.1.1: {}
 
+    postal-mime@2.7.6: {}
+
     postcss@8.4.31:
         dependencies:
             nanoid: 3.3.20
@@ -4855,6 +4878,11 @@ snapshots:
             scheduler: 0.26.0
 
     react@19.1.1: {}
+
+    resend@6.35.0:
+        dependencies:
+            postal-mime: 2.7.6
+            standardwebhooks: 1.1.1
 
     resolve-pkg-maps@1.0.0: {}
 
