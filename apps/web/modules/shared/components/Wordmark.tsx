@@ -8,37 +8,17 @@ export function Wordmark({ className }: { className?: string }) {
 			aria-label="ulivo"
 			className={cn("h-9 w-auto text-foreground", className)}
 		>
-			<ellipse
-				cx="16"
-				cy="32"
-				rx="9"
-				ry="14"
-				transform="rotate(-22 16 32)"
+			<path
+				d="M16.5 16.5c-1.4 3.4-1.8 6.2-1.2 9.4C9.4 28.2 6 33.6 6 39.4V42h40v-2.6c0-5.8-3.4-11.2-9.3-13.5.6-3.2.2-6-1.2-9.4-1.4-3.2-4.4-5.2-7.6-5.4-3.4-.2-6.4 1.8-7.4 5.4z"
 				className="fill-[#859438] dark:fill-[#96a84f]"
 			/>
-			<ellipse
-				cx="13"
-				cy="27"
-				rx="2.5"
-				ry="3.5"
-				transform="rotate(-22 13 27)"
-				className="fill-[#e4e6c4] dark:fill-[#1a1d14]"
-			/>
-			<ellipse
-				cx="36"
-				cy="30"
-				rx="9"
-				ry="14"
-				transform="rotate(16 36 30)"
+			<path
+				d="M23.2 18.2c.6 4.4.4 11-.4 17.2h6.6c-.8-6.2-1-12.8-.4-17.2-1.2-2.4-4.6-2.4-5.8 0z"
 				className="fill-accent"
 			/>
-			<ellipse
-				cx="33"
-				cy="25"
-				rx="2.5"
-				ry="3.5"
-				transform="rotate(16 33 25)"
-				className="fill-[#e4e6c4] dark:fill-[#1a1d14]"
+			<path
+				d="M5 39.5h42v5.2c0 2.4-1.9 4.3-4.3 4.3H9.3c-2.4 0-4.3-1.9-4.3-4.3v-5.2z"
+				className="fill-accent"
 			/>
 			<text
 				x="56"
