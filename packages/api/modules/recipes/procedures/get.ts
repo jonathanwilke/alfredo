@@ -24,6 +24,8 @@ export const getRecipe = publicProcedure
 				recipeId: z.string().uuid(),
 				sourceUrl: z.string().url(),
 				content: extractedRecipeSchema,
+				isCurated: z.boolean(),
+				servedLocale: z.string(),
 			})
 			.nullable(),
 	)

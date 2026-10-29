@@ -70,7 +70,7 @@ async function ensureRow(input: {
 
 /**
  * Records icon jobs for a recipe. Does not generate images and does not
- * write an imports row, so it never counts toward the monthly quota.
+ * write an imports row or a credit ledger row, so it never spends a credit.
  */
 export async function enqueueRecipeIcons(input: RecipeIconRequest) {
 	const ingredientKeys = [

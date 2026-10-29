@@ -15,6 +15,7 @@
 		"@better-auth/drizzle-adapter": "^1.7.14",
 		"@repo/config": "workspace:*",
 		"@repo/database": "workspace:*",
+		"@repo/payments": "workspace:*",
 		"better-auth": "^1.7.14",
 		"react": "19.1.1",
 		"resend": "^6.35.0"

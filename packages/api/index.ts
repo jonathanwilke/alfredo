@@ -8,6 +8,7 @@ export {
 	ensureRecipeDescription,
 	loadRecipe,
 } from "./modules/recipes/import-recipe";
+export { listStarterRecipes } from "./modules/recipes/starters";
 export type { ApiRouterClient } from "./orpc/router";
 export { router } from "./orpc/router";
 

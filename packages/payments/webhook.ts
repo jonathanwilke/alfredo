@@ -1,11 +1,8 @@
-import { billingEvents, db, subscriptions, user } from "@repo/database";
-import { eq, isNull, lte, or, sql } from "drizzle-orm";
+import { billingEvents, creditBalances, db, user } from "@repo/database";
+import { eq, sql } from "drizzle-orm";
 import { getPaymentsConfig } from "./config";
-import {
-	processVerifiedWebhook,
-	type SubscriptionPatch,
-	type WebhookStore,
-} from "./events";
+import { processVerifiedWebhook, type WebhookStore } from "./events";
+import { creditStore } from "./service";
 import { verifyWebhook } from "./verify";
 
 export type WebhookResult = {
@@ -21,6 +18,7 @@ function createStore(
 	tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
 ): WebhookStore {
 	return {
+		credits: creditStore(tx),
 		async claim(id, type) {
 			const inserted = await tx
 				.insert(billingEvents)
@@ -40,63 +38,24 @@ function createStore(
 				.limit(1);
 			return row?.id ?? null;
 		},
-		async findUserIdBySubscription(subscriptionId) {
-			const [row] = await tx
-				.select({ userId: subscriptions.userId })
-				.from(subscriptions)
-				.where(eq(subscriptions.subscriptionId, subscriptionId))
-				.limit(1);
-			return row?.userId ?? null;
-		},
 		async findUserIdByCustomer(customerId) {
 			const [row] = await tx
-				.select({ userId: subscriptions.userId })
-				.from(subscriptions)
-				.where(eq(subscriptions.customerId, customerId))
+				.select({ userId: creditBalances.userId })
+				.from(creditBalances)
+				.where(eq(creditBalances.customerId, customerId))
 				.limit(1);
 			return row?.userId ?? null;
 		},
-		async getLastEventAt(subscriptionId) {
-			const [row] = await tx
-				.select({ lastEventAt: subscriptions.lastEventAt })
-				.from(subscriptions)
-				.where(eq(subscriptions.subscriptionId, subscriptionId))
-				.limit(1);
-			return row?.lastEventAt ?? null;
-		},
-		async upsert(patch) {
-			await upsertSubscription(tx, patch);
+		async rememberCustomer(userId, customerId) {
+			await tx
+				.insert(creditBalances)
+				.values({ userId, balance: 0, customerId })
+				.onConflictDoUpdate({
+					target: creditBalances.userId,
+					set: { customerId, updatedAt: new Date() },
+				});
 		},
 	};
-}
-
-async function upsertSubscription(
-	tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-	patch: SubscriptionPatch & { userId: string },
-) {
-	const values = {
-		userId: patch.userId,
-		customerId: patch.customerId,
-		subscriptionId: patch.subscriptionId,
-		productId: patch.productId,
-		status: patch.status,
-		currentPeriodStart: patch.currentPeriodStart,
-		currentPeriodEnd: patch.currentPeriodEnd,
-		cancelAtPeriodEnd: patch.cancelAtPeriodEnd,
-		lastEventAt: patch.eventAt,
-		updatedAt: new Date(),
-	};
-	await tx
-		.insert(subscriptions)
-		.values(values)
-		.onConflictDoUpdate({
-			target: subscriptions.subscriptionId,
-			set: values,
-			setWhere: or(
-				isNull(subscriptions.lastEventAt),
-				lte(subscriptions.lastEventAt, patch.eventAt),
-			),
-		});
 }
 
 export async function handleDodoWebhook(input: {

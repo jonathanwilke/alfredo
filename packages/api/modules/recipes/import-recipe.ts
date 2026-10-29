@@ -9,14 +9,19 @@ import {
 import { auth } from "@repo/auth";
 import {
 	db,
-	imports,
 	recipes,
 	recipeTranslations,
 	rejectedDomains,
 	savedRecipes,
 } from "@repo/database";
 import { enqueueRecipeIcons, processIconJobs } from "@repo/icons";
-import { assertImportAllowed } from "@repo/payments";
+import {
+	assertCreditsAvailable,
+	debitRecipeCredit,
+	estimateGenerationCost,
+	resolveRecipeCharge,
+	userImportedRecipeValues,
+} from "@repo/payments";
 import { and, eq } from "drizzle-orm";
 import { after } from "next/server";
 import { z } from "zod";
@@ -31,21 +36,8 @@ export interface StoredRecipe {
 	recipeId: string;
 	sourceUrl: string;
 	content: ExtractedRecipe;
-}
-
-async function rememberImport(input: {
-	headers: Headers;
-	type: "import" | "translation";
-}) {
-	const session = await auth.api.getSession({ headers: input.headers });
-	if (!session) {
-		return;
-	}
-
-	await db.insert(imports).values({
-		userId: session.user.id,
-		type: input.type,
-	});
+	isCurated: boolean;
+	servedLocale: string;
 }
 
 async function saveForSignedInUser(input: {
@@ -88,28 +80,15 @@ async function queueIcons(recipeId: string, content: ExtractedRecipe) {
 	}
 }
 
-export async function loadRecipe(input: {
-	recipeId: string;
-	locale: string;
-}): Promise<StoredRecipe | null> {
-	if (!z.string().uuid().safeParse(input.recipeId).success) {
-		return null;
-	}
-	const translation = await db.query.recipeTranslations.findFirst({
-		where: and(
-			eq(recipeTranslations.recipeId, input.recipeId),
-			eq(recipeTranslations.locale, input.locale),
-		),
-		with: { recipe: true },
-	});
-
-	if (!translation?.recipe) {
-		return null;
-	}
-
+function storedFrom(
+	recipe: { id: string; sourceUrl: string; isCurated: boolean },
+	translation: { locale: string; content: ExtractedRecipe },
+): StoredRecipe {
 	return {
-		recipeId: translation.recipeId,
-		sourceUrl: translation.recipe.sourceUrl,
+		recipeId: recipe.id,
+		sourceUrl: recipe.sourceUrl,
+		isCurated: recipe.isCurated,
+		servedLocale: translation.locale,
 		content: {
 			...translation.content,
 			title: dishName(translation.content.title),
@@ -117,11 +96,48 @@ export async function loadRecipe(input: {
 	};
 }
 
+export async function loadRecipe(input: {
+	recipeId: string;
+	locale: string;
+}): Promise<StoredRecipe | null> {
+	if (!z.string().uuid().safeParse(input.recipeId).success) {
+		return null;
+	}
+	const recipe = await db.query.recipes.findFirst({
+		where: eq(recipes.id, input.recipeId),
+		with: { translations: true },
+	});
+	if (!recipe) {
+		return null;
+	}
+
+	const decision = resolveRecipeCharge({
+		existing: {
+			isCurated: recipe.isCurated,
+			locales: recipe.translations.map(
+				(translation) => translation.locale,
+			),
+		},
+		requestedLocale: input.locale,
+	});
+	if (decision.action !== "serve") {
+		return null;
+	}
+
+	const translation = recipe.translations.find(
+		(item) => item.locale === decision.locale,
+	);
+	if (!translation) {
+		return null;
+	}
+	return storedFrom(recipe, translation);
+}
+
 export async function ensureRecipeDescription(
 	recipe: StoredRecipe,
 	locale: string,
 ): Promise<StoredRecipe> {
-	if (recipe.content.description?.trim()) {
+	if (recipe.isCurated || recipe.content.description?.trim()) {
 		return recipe;
 	}
 
@@ -166,17 +182,27 @@ export async function importRecipeFromUrl(input: {
 		where: eq(recipes.sourceUrl, sourceUrl),
 		with: { translations: true },
 	});
-	const cached = existing?.translations.find(
-		(translation) => translation.locale === input.locale,
-	);
+	const decision = resolveRecipeCharge({
+		existing: existing
+			? {
+					isCurated: existing.isCurated,
+					locales: existing.translations.map(
+						(translation) => translation.locale,
+					),
+				}
+			: null,
+		requestedLocale: input.locale,
+	});
 
-	if (existing && cached) {
-		await queueIcons(existing.id, cached.content);
-		return {
-			recipeId: existing.id,
-			sourceUrl,
-			content: cached.content,
-		};
+	if (decision.action === "serve") {
+		const translation = existing?.translations.find(
+			(item) => item.locale === decision.locale,
+		);
+		if (!existing || !translation) {
+			throw new ImportError("not_a_recipe");
+		}
+		await queueIcons(existing.id, translation.content);
+		return storedFrom(existing, translation);
 	}
 
 	const domain = recipeDomain(url);
@@ -191,7 +217,7 @@ export async function importRecipeFromUrl(input: {
 	if (!session) {
 		throw new ImportError("account_required");
 	}
-	await assertImportAllowed(session.user.id);
+	await assertCreditsAvailable(session.user.id);
 
 	try {
 		const allowed = await recipeUrlLooksLegitimate(sourceUrl);
@@ -218,6 +244,11 @@ export async function importRecipeFromUrl(input: {
 
 	const sourceText = await fetchRecipeSource(url);
 	let content: ExtractedRecipe;
+	let usage: {
+		model: string;
+		inputTokens: number;
+		outputTokens: number;
+	};
 	try {
 		const extracted = await extractRecipe({
 			sourceText,
@@ -226,7 +257,8 @@ export async function importRecipeFromUrl(input: {
 		if (!extracted) {
 			throw new ImportError("extract_failed");
 		}
-		content = extracted;
+		content = extracted.recipe;
+		usage = extracted.usage;
 	} catch (error) {
 		if (error instanceof ImportError) {
 			throw error;
@@ -245,91 +277,103 @@ export async function importRecipeFromUrl(input: {
 		throw new ImportError("not_a_recipe");
 	}
 
-	const insertedRecipe = await db
-		.insert(recipes)
-		.values({ sourceUrl, rawData: {} })
-		.onConflictDoNothing({ target: recipes.sourceUrl })
-		.returning({ id: recipes.id });
-	const recipeId = insertedRecipe[0]?.id ?? existing?.id;
-	if (!recipeId) {
-		const raced = await db.query.recipes.findFirst({
-			where: eq(recipes.sourceUrl, sourceUrl),
-		});
-		if (!raced) {
+	const userId = session.user.id;
+
+	const stored = await db.transaction(async (tx) => {
+		const insertedRecipe = await tx
+			.insert(recipes)
+			.values(userImportedRecipeValues(sourceUrl))
+			.onConflictDoNothing({ target: recipes.sourceUrl })
+			.returning({ id: recipes.id });
+
+		const recipe =
+			insertedRecipe[0] != null
+				? {
+						id: insertedRecipe[0].id,
+						sourceUrl,
+						isCurated: false,
+					}
+				: await tx.query.recipes.findFirst({
+						where: eq(recipes.sourceUrl, sourceUrl),
+						with: { translations: true },
+					});
+		if (!recipe) {
 			throw new ImportError("extract_failed");
 		}
-		return saveTranslation({
-			recipeId: raced.id,
-			sourceUrl,
+
+		if (recipe.isCurated) {
+			const curated = await tx.query.recipes.findFirst({
+				where: eq(recipes.id, recipe.id),
+				with: { translations: true },
+			});
+			const translation =
+				curated?.translations.find(
+					(item) => item.locale === input.locale,
+				) ?? curated?.translations[0];
+			if (!curated || !translation) {
+				throw new ImportError("not_a_recipe");
+			}
+			return storedFrom(curated, translation);
+		}
+
+		const inserted = await tx
+			.insert(recipeTranslations)
+			.values({
+				recipeId: recipe.id,
+				locale: input.locale,
+				content,
+			})
+			.onConflictDoNothing({
+				target: [
+					recipeTranslations.recipeId,
+					recipeTranslations.locale,
+				],
+			})
+			.returning({ id: recipeTranslations.id });
+
+		if (!inserted[0]) {
+			const cached = await tx.query.recipeTranslations.findFirst({
+				where: and(
+					eq(recipeTranslations.recipeId, recipe.id),
+					eq(recipeTranslations.locale, input.locale),
+				),
+			});
+			if (!cached) {
+				throw new ImportError("extract_failed");
+			}
+			return storedFrom(
+				{ id: recipe.id, sourceUrl, isCurated: false },
+				cached,
+			);
+		}
+
+		await debitRecipeCredit(tx, {
+			userId,
+			recipeId: recipe.id,
 			locale: input.locale,
-			content,
-			event: "translation",
-			headers: input.headers,
+			importType: insertedRecipe[0] ? "import" : "translation",
+			usage: {
+				model: usage.model,
+				inputTokens: usage.inputTokens,
+				outputTokens: usage.outputTokens,
+				estimatedCostMicroUsd:
+					estimateGenerationCost(usage).estimatedCostMicroUsd,
+			},
 		});
-	}
 
-	return saveTranslation({
-		recipeId,
-		sourceUrl,
-		locale: input.locale,
-		content,
-		event: insertedRecipe[0] ? "import" : "translation",
-		headers: input.headers,
+		return storedFrom(
+			{ id: recipe.id, sourceUrl, isCurated: false },
+			{ locale: input.locale, content },
+		);
 	});
-}
 
-async function saveTranslation(input: {
-	recipeId: string;
-	sourceUrl: string;
-	locale: string;
-	content: ExtractedRecipe;
-	event: "import" | "translation";
-	headers: Headers;
-}): Promise<StoredRecipe> {
-	const inserted = await db
-		.insert(recipeTranslations)
-		.values({
-			recipeId: input.recipeId,
-			locale: input.locale,
-			content: input.content,
-		})
-		.onConflictDoNothing({
-			target: [recipeTranslations.recipeId, recipeTranslations.locale],
-		})
-		.returning({ id: recipeTranslations.id });
-
-	if (inserted[0]) {
-		await rememberImport({ headers: input.headers, type: input.event });
-	}
-
-	if (input.event === "import") {
+	if (decision.reason === "import") {
 		await saveForSignedInUser({
 			headers: input.headers,
-			recipeId: input.recipeId,
+			recipeId: stored.recipeId,
 		});
 	}
 
-	const stored =
-		inserted[0] != null
-			? input.content
-			: (
-					await db.query.recipeTranslations.findFirst({
-						where: and(
-							eq(recipeTranslations.recipeId, input.recipeId),
-							eq(recipeTranslations.locale, input.locale),
-						),
-					})
-				)?.content;
-
-	if (!stored) {
-		throw new ImportError("extract_failed");
-	}
-
-	await queueIcons(input.recipeId, stored);
-
-	return {
-		recipeId: input.recipeId,
-		sourceUrl: input.sourceUrl,
-		content: stored,
-	};
+	await queueIcons(stored.recipeId, stored.content);
+	return stored;
 }

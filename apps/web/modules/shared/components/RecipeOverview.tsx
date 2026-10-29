@@ -1,5 +1,6 @@
 "use client";
 
+import { CreditBadge } from "@billing/components/CreditBadge";
 import { LocaleLink } from "@i18n/routing";
 import { ThemeToggle } from "@shared/components/ThemeToggle";
 import { Button } from "@ui/components/button";
@@ -51,9 +52,11 @@ function formatMinutes(seconds: number | null) {
 export function RecipeOverview({
 	recipeId,
 	content,
+	notice,
 }: {
 	recipeId: string;
 	content: RecipeContent;
+	notice?: string | null;
 }) {
 	const t = useTranslations("recipe");
 	const locale = useLocale();
@@ -117,11 +120,12 @@ export function RecipeOverview({
 
 	return (
 		<main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-10 px-5 py-8 sm:px-8">
-			<header className="flex items-center justify-between gap-4">
+			<header className="flex flex-wrap items-center justify-between gap-3">
 				<LocaleLink href="/" className="text-foreground no-underline">
 					<Wordmark />
 				</LocaleLink>
-				<div className="flex items-center gap-2">
+				<div className="flex flex-wrap items-center justify-end gap-2">
+					<CreditBadge />
 					<LoginButton />
 					<ThemeToggle />
 				</div>
@@ -133,6 +137,11 @@ export function RecipeOverview({
 					</h1>
 					{description ? (
 						<p className="text-lg leading-relaxed">{description}</p>
+					) : null}
+					{notice ? (
+						<p className="max-w-[42ch] text-lg leading-relaxed text-muted-foreground">
+							{notice}
+						</p>
 					) : null}
 					{prep || cook ? (
 						<div className="flex flex-wrap gap-x-6 gap-y-2 text-lg text-muted-foreground">
@@ -199,7 +208,9 @@ export function RecipeOverview({
 					/>
 				</div>
 				<section className="flex flex-col gap-4">
-					<h2 className="text-3xl font-semibold tracking-tight">{t("ingredients")}</h2>
+					<h2 className="text-3xl font-semibold tracking-tight">
+						{t("ingredients")}
+					</h2>
 					<ul className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
 						{content.ingredients.map((ingredient) => {
 							const presented = presentIngredient(ingredient);

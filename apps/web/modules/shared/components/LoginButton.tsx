@@ -3,7 +3,7 @@
 import { LocaleLink, useLocalePathname } from "@i18n/routing";
 import { authClient } from "@repo/auth/client";
 import { Button } from "@ui/components/button";
-import { Bookmark, LogOut, User } from "lucide-react";
+import { Bookmark, CookingPot, LogOut, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
@@ -72,6 +72,18 @@ export function LoginButton() {
 						role="menu"
 						className="absolute top-full right-0 z-10 mt-2 flex w-56 flex-col rounded-3xl border border-border bg-popover p-2"
 					>
+						<LocaleLink
+							href="/billing"
+							role="menuitem"
+							className="flex items-center gap-3 rounded-full px-4 py-2.5 text-base text-foreground no-underline hover:bg-muted"
+							onClick={() => setOpen(false)}
+						>
+							<CookingPot
+								aria-hidden
+								className="size-5 shrink-0"
+							/>
+							{t("recipeCredits")}
+						</LocaleLink>
 						<LocaleLink
 							href="/saved"
 							role="menuitem"

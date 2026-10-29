@@ -1,6 +1,7 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { config, getBaseUrl } from "@repo/config";
 import { account, db, session, user, verification } from "@repo/database";
+import { grantWelcomeCreditsForUser } from "@repo/payments";
 import { betterAuth } from "better-auth";
 import { magicLink } from "better-auth/plugins";
 import { sendMagicLinkEmail } from "./email";
@@ -60,6 +61,24 @@ export const auth = betterAuth({
 					},
 				}
 			: undefined,
+	databaseHooks: {
+		session: {
+			create: {
+				after: async (created) => {
+					try {
+						await grantWelcomeCreditsForUser(created.userId);
+					} catch (error) {
+						console.error(
+							"[billing] welcome grant failed",
+							error instanceof Error
+								? error.message
+								: "unknown error",
+						);
+					}
+				},
+			},
+		},
+	},
 	plugins: [
 		magicLink({
 			disableSignUp: false,

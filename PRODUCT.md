@@ -34,9 +34,9 @@ Confirmed for the product, not all built in this foundation:
 - Recipe overview with a servings slider and checkable ingredients.
 - Fullscreen cooking mode: one step per screen, per-step ingredients, timer buttons, wake lock.
 - Optional accounts: email magic link and Google.
-- Subscription via Dodo Payments: $3.99/month, or €3.99 in German, for 30 imports per billing period. The first recipe is free and needs an account. Quota events are `import` or `translation`. Icon generation does not count.
+- Credits via Dodo Payments. No subscription. Packs are 10 recipes for $5.00, 20 for $9.00, and 50 for $20.00. A new verified account gets 3 welcome credits once. Each generated import or translation costs 1 credit. Curated starter recipes are free. Icon generation does not count.
 
-Recipe import, cooking mode, and optional accounts are built. Magic-link delivery is not connected. Billing calls Dodo Payments only when its env vars are set. The product id comes from `DODO_PAYMENTS_PRODUCT_ID`.
+Recipe import, cooking mode, and optional accounts are built. Magic-link delivery is not connected. Billing calls Dodo Payments only when its env vars are set. Pack product ids come from `DODO_PAYMENTS_PRODUCT_ID_PACK_10`, `DODO_PAYMENTS_PRODUCT_ID_PACK_20`, and `DODO_PAYMENTS_PRODUCT_ID_PACK_50`.
 
 Locales now: German and English. The locale follows the browser language. German is the fallback.
 

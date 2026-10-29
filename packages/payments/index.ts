@@ -2,18 +2,35 @@ export {
 	BillingDisabledError,
 	CheckoutUrlMissingError,
 	createCheckoutSession,
-	createPortalSession,
-	NoCustomerError,
+	UnknownPackError,
 } from "./checkout";
-export { getPaymentsConfig } from "./config";
 export {
-	PLAN_PRICE_CENTS,
-	planPrice,
-	QuotaExceededError,
-} from "./quota";
+	CREDIT_PACKS,
+	GENERATION_COST_MARGIN,
+	getPaymentsConfig,
+	listPacks,
+	MODEL_TOKEN_PRICES,
+	PACK_CURRENCY,
+	type PackId,
+	perRecipeCents,
+	RECIPE_CREDIT_COST,
+	savingsCents,
+	WELCOME_CREDITS,
+} from "./config";
+export { estimateGenerationCost } from "./cost";
+export { InsufficientCreditsError } from "./ledger";
 export {
-	assertImportAllowed,
-	type BillingStatus,
-	getBillingStatus,
+	passiveRecipeUse,
+	resolveRecipeCharge,
+	starterCount,
+	userImportedRecipeValues,
+} from "./recipe-access";
+export {
+	assertCreditsAvailable,
+	billingSnapshot,
+	debitRecipeCredit,
+	getCreditBalance,
+	grantWelcomeCreditsForUser,
+	listCreditHistory,
 } from "./service";
 export { handleDodoWebhook, type WebhookResult } from "./webhook";

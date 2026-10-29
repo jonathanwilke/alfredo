@@ -1,55 +1,46 @@
-export type SubscriptionPatch = {
-	userId: string | null;
-	customerEmail: string | null;
-	customerId: string;
-	subscriptionId: string;
+import { packForProductId } from "./config";
+import {
+	applyGrant,
+	applyReversal,
+	type CreditStore,
+	type LedgerType,
+} from "./ledger";
+
+const REVERSAL_EVENTS: Record<string, "refund" | "dispute"> = {
+	"refund.succeeded": "refund",
+	"dispute.lost": "dispute",
+	"dispute.accepted": "dispute",
+	"dispute.expired": "dispute",
+};
+
+export type ProductLine = {
 	productId: string;
-	status: string;
-	currentPeriodStart: Date | null;
-	currentPeriodEnd: Date | null;
-	cancelAtPeriodEnd: boolean;
-	eventAt: Date;
+	quantity: number;
 };
 
 export type WebhookDecision =
-	| { kind: "subscription"; patch: SubscriptionPatch }
-	| { kind: "payment"; eventType: string }
+	| {
+			kind: "grant";
+			paymentId: string;
+			lines: ProductLine[];
+			userId: string | null;
+			email: string | null;
+			customerId: string | null;
+	  }
+	| {
+			kind: "reversal";
+			paymentId: string;
+			reversal: "refund" | "dispute";
+	  }
 	| { kind: "ignore"; eventType: string };
-
-const SUBSCRIPTION_EVENTS = new Set([
-	"subscription.active",
-	"subscription.renewed",
-	"subscription.on_hold",
-	"subscription.cancelled",
-	"subscription.failed",
-	"subscription.expired",
-	"subscription.updated",
-	"subscription.past_due",
-	"subscription.paused",
-	"subscription.unpaused",
-	"subscription.plan_changed",
-]);
-
-const STATUS_FROM_EVENT: Record<string, string> = {
-	"subscription.active": "active",
-	"subscription.renewed": "active",
-	"subscription.on_hold": "on_hold",
-	"subscription.cancelled": "cancelled",
-	"subscription.failed": "failed",
-	"subscription.expired": "expired",
-	"subscription.past_due": "past_due",
-	"subscription.paused": "paused",
-	"subscription.unpaused": "active",
-};
 
 export type WebhookStore = {
 	claim(id: string, type: string): Promise<boolean>;
 	release(id: string): Promise<void>;
 	findUserIdByEmail(email: string): Promise<string | null>;
-	findUserIdBySubscription(subscriptionId: string): Promise<string | null>;
 	findUserIdByCustomer(customerId: string): Promise<string | null>;
-	getLastEventAt(subscriptionId: string): Promise<Date | null>;
-	upsert(patch: SubscriptionPatch & { userId: string }): Promise<void>;
+	rememberCustomer(userId: string, customerId: string): Promise<void>;
+	credits: CreditStore;
 };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -69,87 +60,107 @@ function stringValue(value: unknown) {
 	return null;
 }
 
-function parseDate(value: unknown) {
-	if (typeof value !== "string" && typeof value !== "number") {
-		return null;
+function quantityValue(value: unknown) {
+	if (
+		typeof value === "number" &&
+		Number.isInteger(value) &&
+		value > 0 &&
+		value <= 20
+	) {
+		return value;
 	}
-	const date = new Date(value);
-	return Number.isNaN(date.getTime()) ? null : date;
+	return 1;
 }
 
-function booleanValue(value: unknown) {
-	return value === true;
-}
-
-export function shouldApplySubscriptionUpdate(
-	existingEventAt: Date | null,
-	incoming: Date,
-) {
-	if (!existingEventAt) {
-		return true;
+function productLines(data: Record<string, unknown>) {
+	if (!Array.isArray(data.product_cart)) {
+		return [];
 	}
-	return incoming.getTime() >= existingEventAt.getTime();
+	const lines: ProductLine[] = [];
+	for (const item of data.product_cart) {
+		const row = asRecord(item);
+		const productId = stringValue(row?.product_id);
+		if (!productId) {
+			continue;
+		}
+		lines.push({ productId, quantity: quantityValue(row?.quantity) });
+	}
+	return lines;
 }
 
 export function mapWebhookEvent(event: unknown): WebhookDecision {
 	const body = asRecord(event);
 	const eventType = stringValue(body?.type) ?? "unknown";
-	if (eventType.startsWith("payment.")) {
-		return { kind: "payment", eventType };
-	}
-	if (!SUBSCRIPTION_EVENTS.has(eventType)) {
-		return { kind: "ignore", eventType };
-	}
-
 	const data = asRecord(body?.data);
-	const customer = asRecord(data?.customer);
-	const metadata = asRecord(data?.metadata);
-	const subscriptionId = stringValue(data?.subscription_id);
-	const customerId =
-		stringValue(customer?.customer_id) ?? stringValue(data?.customer_id);
-	if (!data || !subscriptionId || !customerId) {
+	if (!data) {
 		return { kind: "ignore", eventType };
 	}
 
-	const eventAt = parseDate(body?.timestamp) ?? new Date();
+	const reversal = REVERSAL_EVENTS[eventType];
+	if (reversal) {
+		const paymentId = stringValue(data.payment_id);
+		if (!paymentId) {
+			return { kind: "ignore", eventType };
+		}
+		return { kind: "reversal", paymentId, reversal };
+	}
+
+	if (eventType !== "payment.succeeded") {
+		return { kind: "ignore", eventType };
+	}
+
+	const paymentId = stringValue(data.payment_id);
+	const lines = productLines(data);
+	if (!paymentId || lines.length === 0) {
+		return { kind: "ignore", eventType };
+	}
+
+	const customer = asRecord(data.customer);
+	const metadata = asRecord(data.metadata);
 	return {
-		kind: "subscription",
-		patch: {
-			userId:
-				stringValue(metadata?.user_id) ?? stringValue(metadata?.userId),
-			customerEmail: stringValue(customer?.email),
-			customerId,
-			subscriptionId,
-			productId: stringValue(data.product_id) ?? "",
-			status:
-				stringValue(data.status) ??
-				STATUS_FROM_EVENT[eventType] ??
-				"pending",
-			currentPeriodStart: parseDate(data.previous_billing_date),
-			currentPeriodEnd: parseDate(data.next_billing_date),
-			cancelAtPeriodEnd: booleanValue(data.cancel_at_next_billing_date),
-			eventAt,
-		},
+		kind: "grant",
+		paymentId,
+		lines,
+		userId: stringValue(metadata?.user_id) ?? stringValue(metadata?.userId),
+		email: stringValue(customer?.email),
+		customerId:
+			stringValue(customer?.customer_id) ?? stringValue(data.customer_id),
 	};
 }
 
-async function resolveUserId(patch: SubscriptionPatch, store: WebhookStore) {
-	if (patch.userId) {
-		return patch.userId;
+async function resolveUserId(
+	decision: Extract<WebhookDecision, { kind: "grant" }>,
+	store: WebhookStore,
+) {
+	if (decision.userId) {
+		return decision.userId;
 	}
-	if (patch.customerEmail) {
-		const byEmail = await store.findUserIdByEmail(patch.customerEmail);
+	if (decision.email) {
+		const byEmail = await store.findUserIdByEmail(decision.email);
 		if (byEmail) {
 			return byEmail;
 		}
 	}
-	const bySubscription = await store.findUserIdBySubscription(
-		patch.subscriptionId,
-	);
-	if (bySubscription) {
-		return bySubscription;
+	if (decision.customerId) {
+		return store.findUserIdByCustomer(decision.customerId);
 	}
-	return store.findUserIdByCustomer(patch.customerId);
+	return null;
+}
+
+function grantForLines(lines: ProductLine[]) {
+	let credits = 0;
+	let packId: string | null = null;
+	let productId: string | null = null;
+	for (const line of lines) {
+		const pack = packForProductId(line.productId);
+		if (!pack) {
+			continue;
+		}
+		credits += pack.credits * line.quantity;
+		packId = packId ?? pack.id;
+		productId = productId ?? line.productId;
+	}
+	return { credits, packId, productId };
 }
 
 export async function processVerifiedWebhook(
@@ -163,24 +174,43 @@ export async function processVerifiedWebhook(
 		if (!claimed) {
 			return "duplicate";
 		}
+
 		const decision = mapWebhookEvent(input.event);
-		if (decision.kind === "payment") {
-			return "applied";
-		}
 		if (decision.kind === "ignore") {
 			return "ignored";
 		}
-		const userId = await resolveUserId(decision.patch, store);
+
+		if (decision.kind === "reversal") {
+			const outcome = await applyReversal(store.credits, {
+				paymentId: decision.paymentId,
+				type: decision.reversal,
+			});
+			return outcome === "ignored" ? "ignored" : "applied";
+		}
+
+		const userId = await resolveUserId(decision, store);
 		if (!userId) {
+			throw new Error("unresolved-payment-user");
+		}
+
+		const grant = grantForLines(decision.lines);
+		if (grant.credits <= 0 || !grant.productId) {
 			return "ignored";
 		}
-		const existing = await store.getLastEventAt(
-			decision.patch.subscriptionId,
-		);
-		if (!shouldApplySubscriptionUpdate(existing, decision.patch.eventAt)) {
-			return "ignored";
+
+		await applyGrant(store.credits, {
+			userId,
+			amount: grant.credits,
+			type: "purchase" satisfies LedgerType,
+			idempotencyKey: `purchase:${decision.paymentId}`,
+			paymentId: decision.paymentId,
+			packId: grant.packId,
+			productId: grant.productId,
+		});
+
+		if (decision.customerId) {
+			await store.rememberCustomer(userId, decision.customerId);
 		}
-		await store.upsert({ ...decision.patch, userId });
 		return "applied";
 	} catch (error) {
 		if (claimed) {

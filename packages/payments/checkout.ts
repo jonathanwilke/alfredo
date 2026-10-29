@@ -1,8 +1,13 @@
-import { db, subscriptions } from "@repo/database";
+import { creditBalances, db } from "@repo/database";
 import DodoPayments from "dodopayments";
-import { desc, eq } from "drizzle-orm";
-import { getPaymentsConfig } from "./config";
-import { type PlanLocale, planPrice } from "./quota";
+import { eq } from "drizzle-orm";
+import {
+	getPaymentsConfig,
+	isPackId,
+	PACK_CURRENCY,
+	type PackId,
+	packProductId,
+} from "./config";
 
 export class BillingDisabledError extends Error {
 	constructor() {
@@ -11,10 +16,10 @@ export class BillingDisabledError extends Error {
 	}
 }
 
-export class NoCustomerError extends Error {
+export class UnknownPackError extends Error {
 	constructor() {
-		super("No billing customer");
-		this.name = "NoCustomerError";
+		super("Unknown credit pack");
+		this.name = "UnknownPackError";
 	}
 }
 
@@ -42,12 +47,11 @@ function requireClient() {
 	};
 }
 
-async function latestCustomerId(userId: string) {
+async function customerIdFor(userId: string) {
 	const [row] = await db
-		.select({ customerId: subscriptions.customerId })
-		.from(subscriptions)
-		.where(eq(subscriptions.userId, userId))
-		.orderBy(desc(subscriptions.updatedAt))
+		.select({ customerId: creditBalances.customerId })
+		.from(creditBalances)
+		.where(eq(creditBalances.userId, userId))
 		.limit(1);
 	return row?.customerId ?? null;
 }
@@ -57,43 +61,32 @@ export async function createCheckoutSession(input: {
 	email: string;
 	name: string;
 	returnUrl: string;
-	locale: PlanLocale;
+	pack: string;
 }) {
-	const { client, config } = requireClient();
-	const customerId = await latestCustomerId(input.userId);
+	if (!isPackId(input.pack)) {
+		throw new UnknownPackError();
+	}
+	const pack: PackId = input.pack;
+	const { client } = requireClient();
+	const productId = packProductId(pack);
+	if (!productId) {
+		throw new BillingDisabledError();
+	}
+
+	const customerId = await customerIdFor(input.userId);
 	const name = input.name.trim() || input.email;
-	const price = planPrice(input.locale);
 	const session = await client.checkoutSessions.create({
-		product_cart: [{ product_id: config.productId, quantity: 1 }],
+		product_cart: [{ product_id: productId, quantity: 1 }],
 		customer: customerId
 			? { customer_id: customerId }
 			: { email: input.email, name },
 		return_url: input.returnUrl,
-		metadata: { user_id: input.userId },
-		billing_currency: price.currency,
-		...(price.currency === "EUR"
-			? { billing_address: { country: "DE" as const } }
-			: {}),
+		metadata: { user_id: input.userId, pack },
+		billing_currency: PACK_CURRENCY,
 	});
 
 	if (!session.checkout_url) {
 		throw new CheckoutUrlMissingError();
 	}
 	return session.checkout_url;
-}
-
-export async function createPortalSession(input: {
-	userId: string;
-	returnUrl: string;
-}) {
-	const { client } = requireClient();
-	const customerId = await latestCustomerId(input.userId);
-	if (!customerId) {
-		throw new NoCustomerError();
-	}
-	const session = await client.customers.customerPortal.create(customerId, {
-		return_url: input.returnUrl,
-		send_email: false,
-	});
-	return session.link;
 }

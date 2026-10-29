@@ -1,47 +1,61 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { afterEach, describe, it } from "node:test";
 import { Webhook } from "standardwebhooks";
 import {
 	mapWebhookEvent,
 	processVerifiedWebhook,
-	type SubscriptionPatch,
-	shouldApplySubscriptionUpdate,
 	type WebhookStore,
 } from "./events";
+import { createMemoryStore } from "./memory-store";
 import { verifyWebhook } from "./verify";
 
 const secret = `whsec_${Buffer.from("0123456789abcdef0123456789abcdef").toString("base64")}`;
 
-function subscriptionEvent(
-	type: string,
-	overrides: Record<string, unknown> = {},
-) {
+const previousEnv = {
+	pack10: process.env.DODO_PAYMENTS_PRODUCT_ID_PACK_10,
+	pack20: process.env.DODO_PAYMENTS_PRODUCT_ID_PACK_20,
+	pack50: process.env.DODO_PAYMENTS_PRODUCT_ID_PACK_50,
+};
+
+function usePackProducts() {
+	process.env.DODO_PAYMENTS_PRODUCT_ID_PACK_10 = "pdt_10";
+	process.env.DODO_PAYMENTS_PRODUCT_ID_PACK_20 = "pdt_20";
+	process.env.DODO_PAYMENTS_PRODUCT_ID_PACK_50 = "pdt_50";
+}
+
+afterEach(() => {
+	process.env.DODO_PAYMENTS_PRODUCT_ID_PACK_10 = previousEnv.pack10;
+	process.env.DODO_PAYMENTS_PRODUCT_ID_PACK_20 = previousEnv.pack20;
+	process.env.DODO_PAYMENTS_PRODUCT_ID_PACK_50 = previousEnv.pack50;
+});
+
+function paymentEvent(type: string, overrides: Record<string, unknown> = {}) {
 	return {
 		business_id: "bus_123",
 		type,
 		timestamp: "2026-04-15T12:00:00.000Z",
 		data: {
-			subscription_id: "sub_123",
-			product_id: "pdt_123",
-			status: "active",
-			previous_billing_date: "2026-04-01T00:00:00.000Z",
-			next_billing_date: "2026-05-01T00:00:00.000Z",
-			cancel_at_next_billing_date: false,
+			payment_id: "pay_123",
+			product_cart: [{ product_id: "pdt_10", quantity: 1 }],
 			customer: {
 				customer_id: "cus_123",
 				email: "cook@example.com",
+				name: "Cook",
 			},
-			metadata: { user_id: "user_123" },
+			metadata: { user_id: "user_123", pack: "pack_10" },
 			...overrides,
 		},
 	};
 }
 
-function memoryStore() {
+function webhookStore() {
+	const memory = createMemoryStore();
 	const seen = new Set<string>();
-	const upserts: Array<SubscriptionPatch & { userId: string }> = [];
-	let lastEventAt: Date | null = null;
+	const users = new Map<string, string>([
+		["cook@example.com", "user_from_email"],
+	]);
 	const store: WebhookStore = {
+		credits: memory.store,
 		async claim(id) {
 			if (seen.has(id)) {
 				return false;
@@ -53,101 +67,29 @@ function memoryStore() {
 			seen.delete(id);
 		},
 		async findUserIdByEmail(email) {
-			return email === "cook@example.com" ? "user_from_email" : null;
+			return users.get(email.toLowerCase()) ?? null;
 		},
-		async findUserIdBySubscription() {
+		async findUserIdByCustomer(customerId) {
+			for (const [userId, stored] of memory.customers) {
+				if (stored === customerId) {
+					return userId;
+				}
+			}
 			return null;
 		},
-		async findUserIdByCustomer() {
-			return null;
-		},
-		async getLastEventAt() {
-			return lastEventAt;
-		},
-		async upsert(patch) {
-			lastEventAt = patch.eventAt;
-			upserts.push(patch);
+		async rememberCustomer(userId, customerId) {
+			memory.customers.set(userId, customerId);
 		},
 	};
-	return { store, upserts, seen };
+	return { store, memory, seen };
 }
 
-describe("webhook events", () => {
-	it("maps subscription lifecycle events onto the local row", () => {
-		const cases = [
-			["subscription.active", "active"],
-			["subscription.renewed", "active"],
-			["subscription.on_hold", "on_hold"],
-			["subscription.cancelled", "cancelled"],
-			["subscription.failed", "failed"],
-			["subscription.expired", "expired"],
-		] as const;
+describe("payment webhooks", () => {
+	it("grants pack credits once when the same payment is delivered twice", async () => {
+		usePackProducts();
+		const { store, memory } = webhookStore();
+		const event = paymentEvent("payment.succeeded");
 
-		for (const [type, status] of cases) {
-			const decision = mapWebhookEvent(
-				subscriptionEvent(type, {
-					status,
-					cancel_at_next_billing_date: type === "subscription.active",
-				}),
-			);
-			assert.equal(decision.kind, "subscription");
-			if (decision.kind !== "subscription") {
-				continue;
-			}
-			assert.equal(decision.patch.status, status);
-			assert.equal(decision.patch.userId, "user_123");
-			assert.equal(decision.patch.customerId, "cus_123");
-			assert.equal(decision.patch.subscriptionId, "sub_123");
-			assert.equal(decision.patch.productId, "pdt_123");
-			assert.equal(
-				decision.patch.currentPeriodStart?.toISOString(),
-				"2026-04-01T00:00:00.000Z",
-			);
-			assert.equal(
-				decision.patch.currentPeriodEnd?.toISOString(),
-				"2026-05-01T00:00:00.000Z",
-			);
-			assert.equal(
-				decision.patch.cancelAtPeriodEnd,
-				type === "subscription.active",
-			);
-		}
-	});
-
-	it("records payment events without a subscription write", async () => {
-		for (const type of [
-			"payment.succeeded",
-			"payment.failed",
-			"payment.processing",
-			"payment.cancelled",
-		]) {
-			const decision = mapWebhookEvent({
-				business_id: "bus_123",
-				type,
-				timestamp: "2026-04-15T12:00:00.000Z",
-				data: { payment_id: "pay_123", subscription_id: "sub_123" },
-			});
-			assert.deepEqual(decision, { kind: "payment", eventType: type });
-			const { store, upserts } = memoryStore();
-			const outcome = await processVerifiedWebhook(
-				{
-					webhookId: `msg_${type}`,
-					event: {
-						type,
-						timestamp: "2026-04-15T12:00:00.000Z",
-						data: { payment_id: "pay_123" },
-					},
-				},
-				store,
-			);
-			assert.equal(outcome, "applied");
-			assert.equal(upserts.length, 0);
-		}
-	});
-
-	it("skips a duplicate delivery and an older subscription event", async () => {
-		const { store, upserts } = memoryStore();
-		const event = subscriptionEvent("subscription.active");
 		assert.equal(
 			await processVerifiedWebhook({ webhookId: "msg_1", event }, store),
 			"applied",
@@ -156,46 +98,185 @@ describe("webhook events", () => {
 			await processVerifiedWebhook({ webhookId: "msg_1", event }, store),
 			"duplicate",
 		);
-		assert.equal(upserts.length, 1);
-
-		const older = subscriptionEvent("subscription.renewed");
-		older.timestamp = "2026-04-01T00:00:00.000Z";
 		assert.equal(
-			shouldApplySubscriptionUpdate(
-				new Date("2026-04-15T12:00:00.000Z"),
-				new Date(older.timestamp),
-			),
-			false,
+			await processVerifiedWebhook({ webhookId: "msg_2", event }, store),
+			"applied",
 		);
+		assert.equal(memory.balance("user_123"), 10);
+		assert.equal(memory.customers.get("user_123"), "cus_123");
+	});
+
+	it("grants 20 and 50 credit packs from their product ids", async () => {
+		usePackProducts();
+		const { store, memory } = webhookStore();
+		await processVerifiedWebhook(
+			{
+				webhookId: "msg_20",
+				event: paymentEvent("payment.succeeded", {
+					payment_id: "pay_20",
+					product_cart: [{ product_id: "pdt_20", quantity: 1 }],
+					metadata: { user_id: "user_123", pack: "pack_20" },
+				}),
+			},
+			store,
+		);
+		await processVerifiedWebhook(
+			{
+				webhookId: "msg_50",
+				event: paymentEvent("payment.succeeded", {
+					payment_id: "pay_50",
+					product_cart: [{ product_id: "pdt_50", quantity: 1 }],
+				}),
+			},
+			store,
+		);
+		assert.equal(memory.balance("user_123"), 70);
+	});
+
+	it("links a payment by email when metadata has no user id", async () => {
+		usePackProducts();
+		const { store, memory } = webhookStore();
+		await processVerifiedWebhook(
+			{
+				webhookId: "msg_email",
+				event: paymentEvent("payment.succeeded", { metadata: {} }),
+			},
+			store,
+		);
+		assert.equal(memory.balance("user_from_email"), 10);
+	});
+
+	it("ignores failed payments and unknown products", async () => {
+		usePackProducts();
+		const { store, memory } = webhookStore();
+		for (const type of [
+			"payment.failed",
+			"payment.processing",
+			"payment.cancelled",
+			"refund.failed",
+			"dispute.opened",
+			"dispute.won",
+			"subscription.active",
+		]) {
+			assert.equal(mapWebhookEvent(paymentEvent(type)).kind, "ignore");
+			assert.equal(
+				await processVerifiedWebhook(
+					{ webhookId: `msg_${type}`, event: paymentEvent(type) },
+					store,
+				),
+				"ignored",
+			);
+		}
 		assert.equal(
 			await processVerifiedWebhook(
-				{ webhookId: "msg_old", event: older },
+				{
+					webhookId: "msg_unknown",
+					event: paymentEvent("payment.succeeded", {
+						payment_id: "pay_unknown",
+						product_cart: [
+							{ product_id: "pdt_other", quantity: 1 },
+						],
+					}),
+				},
 				store,
 			),
 			"ignored",
 		);
-		assert.equal(upserts.length, 1);
+		assert.equal(memory.balance("user_123"), 0);
 	});
 
-	it("links a subscription by email when metadata has no user id", async () => {
-		const { store, upserts } = memoryStore();
-		const event = subscriptionEvent("subscription.active", {
-			metadata: {},
-		});
+	it("debits the granted pack on refund and does not debit again on a lost dispute", async () => {
+		usePackProducts();
+		const { store, memory } = webhookStore();
+		await processVerifiedWebhook(
+			{
+				webhookId: "msg_pay",
+				event: paymentEvent("payment.succeeded", {
+					payment_id: "pay_50",
+					product_cart: [{ product_id: "pdt_50", quantity: 1 }],
+				}),
+			},
+			store,
+		);
 		assert.equal(
 			await processVerifiedWebhook(
-				{ webhookId: "msg_email", event },
+				{
+					webhookId: "msg_refund",
+					event: {
+						type: "refund.succeeded",
+						timestamp: "2026-04-16T00:00:00.000Z",
+						data: {
+							refund_id: "ref_1",
+							payment_id: "pay_50",
+							status: "succeeded",
+							amount: 2000,
+							is_partial: false,
+						},
+					},
+				},
 				store,
 			),
 			"applied",
 		);
-		assert.equal(upserts[0]?.userId, "user_from_email");
+		assert.equal(memory.balance("user_123"), 0);
+		assert.equal(
+			await processVerifiedWebhook(
+				{
+					webhookId: "msg_dispute",
+					event: {
+						type: "dispute.lost",
+						timestamp: "2026-04-17T00:00:00.000Z",
+						data: {
+							dispute_id: "dis_1",
+							payment_id: "pay_50",
+							amount: "20.00",
+						},
+					},
+				},
+				store,
+			),
+			"applied",
+		);
+		assert.equal(memory.balance("user_123"), 0);
+		const reversal = [...memory.entries.values()].find(
+			(entry) => entry.idempotencyKey === "reversal:pay_50",
+		);
+		assert.equal(reversal?.type, "refund");
+		assert.equal(reversal?.amount, -50);
+	});
+
+	it("debits when a dispute is accepted or expires", async () => {
+		usePackProducts();
+		for (const type of ["dispute.accepted", "dispute.expired"] as const) {
+			const { store, memory } = webhookStore();
+			await processVerifiedWebhook(
+				{
+					webhookId: `pay_${type}`,
+					event: paymentEvent("payment.succeeded", {
+						payment_id: `pay_${type}`,
+					}),
+				},
+				store,
+			);
+			await processVerifiedWebhook(
+				{
+					webhookId: `msg_${type}`,
+					event: {
+						type,
+						data: {
+							dispute_id: `dis_${type}`,
+							payment_id: `pay_${type}`,
+						},
+					},
+				},
+				store,
+			);
+			assert.equal(memory.balance("user_123"), 0);
+		}
 	});
 
 	it("verifies a standard-webhooks signature and rejects a bad one", () => {
-		const payload = JSON.stringify(
-			subscriptionEvent("subscription.active"),
-		);
+		const payload = JSON.stringify(paymentEvent("payment.succeeded"));
 		const webhookId = "msg_signed";
 		const timestamp = new Date();
 		const webhook = new Webhook(secret);
@@ -206,10 +287,7 @@ describe("webhook events", () => {
 			"webhook-signature": signature,
 		};
 		const verified = verifyWebhook(payload, headers, secret);
-		assert.equal(
-			(verified as { type: string }).type,
-			"subscription.active",
-		);
+		assert.equal((verified as { type: string }).type, "payment.succeeded");
 		assert.throws(() =>
 			verifyWebhook(
 				payload,

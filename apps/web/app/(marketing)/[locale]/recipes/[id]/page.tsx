@@ -35,8 +35,17 @@ export default async function RecipePage({
 	}
 
 	const recipe = await ensureRecipeDescription(loaded, locale);
+	const t = await getTranslations("recipe");
+	const notice =
+		recipe.isCurated && recipe.servedLocale !== locale
+			? t(recipe.servedLocale === "de" ? "curatedDe" : "curatedEn")
+			: null;
 
 	return (
-		<RecipeOverview recipeId={recipe.recipeId} content={recipe.content} />
+		<RecipeOverview
+			recipeId={recipe.recipeId}
+			content={recipe.content}
+			notice={notice}
+		/>
 	);
 }
