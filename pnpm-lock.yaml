@@ -28,12 +28,6 @@ importers:
 
     apps/web:
         dependencies:
-            "@hugeicons/core-free-icons":
-                specifier: ^4.4.0
-                version: 4.4.0
-            "@hugeicons/react":
-                specifier: ^1.1.10
-                version: 1.1.10(react@19.1.1)
             "@orpc/client":
                 specifier: ^1.16.1
                 version: 1.16.1
@@ -1443,20 +1437,6 @@ packages:
             {
                 integrity: sha512-af3qATX+m4Rnd9+wHcjJ4w2ijq+rAVP3CCinJQvFv1kgSu1W6jypUmvleJxcewdxmutM8dmIRZFxO/IQBZmP2Q==,
             }
-
-    "@hugeicons/core-free-icons@4.4.0":
-        resolution:
-            {
-                integrity: sha512-7Mz8bmGoY6tZ6l3C2TXwNMLVSr0I8HPwjjFIERAuJFj3rWwLxdF2ZLkDqdrVuEE1dx5b/VXyIsP4WoSU6Q40KQ==,
-            }
-
-    "@hugeicons/react@1.1.10":
-        resolution:
-            {
-                integrity: sha512-9tAsd92yMVVGP+E+d8cM+wc0VnXuYZHNbWQi7TOe8k2neawmhiaFmVFbzyruejhOMa197/LbgvSED32ayUo3ZA==,
-            }
-        peerDependencies:
-            react: ">=16.0.0"
 
     "@img/colour@1.1.0":
         resolution:
@@ -3958,12 +3938,6 @@ snapshots:
     "@formatjs/intl-localematcher@0.5.10":
         dependencies:
             tslib: 2.8.1
-
-    "@hugeicons/core-free-icons@4.4.0": {}
-
-    "@hugeicons/react@1.1.10(react@19.1.1)":
-        dependencies:
-            react: 19.1.1
 
     "@img/colour@1.1.0": {}
 
