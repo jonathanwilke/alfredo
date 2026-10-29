@@ -18,7 +18,13 @@ export function Wordmark({ className }: { className?: string }) {
 				aria-hidden
 				className="shrink-0 text-[#859438] dark:text-[#96a84f]"
 			/>
-			<span className="font-heading text-[1.7rem] leading-none">
+			<span
+				className="font-heading text-[1.7rem] leading-none"
+				style={{
+					WebkitTextStroke: "0.7px currentColor",
+					paintOrder: "stroke fill",
+				}}
+			>
 				ulivo
 			</span>
 		</span>
