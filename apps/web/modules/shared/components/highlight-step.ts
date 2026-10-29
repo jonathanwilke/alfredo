@@ -1,3 +1,5 @@
+import { normalizeIngredientKey } from "@repo/icons/style";
+
 export interface StepIngredient {
 	id: string;
 	name: string;
@@ -152,15 +154,11 @@ function findMatches(text: string, ingredients: StepIngredient[]) {
 }
 
 export function ingredientIconKey(value: string) {
-	const key = value
-		.normalize("NFKD")
-		.replace(/\p{M}/gu, "")
-		.toLowerCase()
-		.trim()
-		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/^-+|-+$/g, "");
-
-	return key || null;
+	try {
+		return normalizeIngredientKey(value);
+	} catch {
+		return null;
+	}
 }
 
 export function highlightStep(text: string, ingredients: StepIngredient[]) {

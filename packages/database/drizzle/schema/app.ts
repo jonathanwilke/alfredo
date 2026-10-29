@@ -3,6 +3,7 @@ import { relations } from "drizzle-orm";
 import {
 	boolean,
 	index,
+	integer,
 	jsonb,
 	pgEnum,
 	pgTable,
@@ -95,6 +96,7 @@ export const icons = pgTable(
 		prompt: text("prompt").notNull(),
 		model: text("model").notNull(),
 		status: iconStatus("status").notNull().default("pending"),
+		version: integer("version").notNull().default(1),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),

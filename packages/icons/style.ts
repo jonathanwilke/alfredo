@@ -25,6 +25,44 @@ export const INGREDIENT_IMAGE_CONFIG = {
 	imageSize: "512",
 } as const;
 
+/**
+ * Visual forms that get their own ingredient icon.
+ * Canonical keys are English kebab-case: `<base>` or `<base>-<form>`.
+ * Add a suffix only when the form changes the picture
+ * (`black-pepper-ground` vs `black-pepper-whole`, `basil-fresh` vs `basil-dried`).
+ * Leave it off when the picture would be the same (`onion`, `egg`, `butter`).
+ * Slicing, chopping, and cooking are preparations, not icon forms.
+ * Keep this list in sync with `CANONICAL_KEY_FORMS` in `@repo/ai`.
+ */
+export const INGREDIENT_FORMS = [
+	"ground",
+	"whole",
+	"fresh",
+	"dried",
+	"flakes",
+	"powder",
+	"smoked",
+] as const;
+
+export type IngredientForm = (typeof INGREDIENT_FORMS)[number];
+
+/**
+ * Obvious synonyms that must share one icon.
+ * Targets are already canonical and are not aliases themselves.
+ */
+export const INGREDIENT_KEY_ALIASES: Readonly<Record<string, string>> = {
+	pepper: "black-pepper-ground",
+	"black-pepper": "black-pepper-ground",
+	"ground-pepper": "black-pepper-ground",
+	"ground-black-pepper": "black-pepper-ground",
+	peppercorn: "black-pepper-whole",
+	peppercorns: "black-pepper-whole",
+	"black-peppercorn": "black-pepper-whole",
+	"black-peppercorns": "black-pepper-whole",
+	"whole-pepper": "black-pepper-whole",
+	"whole-black-pepper": "black-pepper-whole",
+};
+
 export function imageModelId() {
 	return process.env.AI_GATEWAY_IMAGE_MODEL || DEFAULT_IMAGE_MODEL;
 }
@@ -44,6 +82,74 @@ export function iconPrompt(subject: string) {
 
 export function ingredientIconPrompt(subject: string) {
 	return `${ICON_STYLE_PROMPT} ${INGREDIENT_FORM_PROMPT} Subject: raw ${subject}.`;
+}
+
+/** Plain words for the icon prompt: "black pepper, ground" or "olive oil". */
+export function ingredientSubject(key: string) {
+	const canonical = normalizeIngredientKey(key);
+	const form = INGREDIENT_FORMS.find((item) =>
+		canonical.endsWith(`-${item}`),
+	);
+	if (!form) {
+		return canonical.replaceAll("-", " ");
+	}
+
+	const base = canonical.slice(0, -(form.length + 1));
+	return `${base.replaceAll("-", " ")}, ${form}`;
+}
+
+export function buildIngredientPrompt(key: string, promptExtra?: string) {
+	const prompt = ingredientIconPrompt(ingredientSubject(key));
+	const extra = promptExtra?.trim();
+	return extra ? `${prompt} ${extra}` : prompt;
+}
+
+/**
+ * Ingredient objects are one file per canonical key.
+ * Recipe photos stay timestamped so this change does not rewrite them.
+ */
+export function iconObjectKey(
+	kind: "ingredient" | "recipe",
+	key: string,
+	now = Date.now(),
+) {
+	if (kind === "recipe") {
+		return `recipe/${key}-${now}.webp`;
+	}
+
+	return `ingredient/${key}.webp`;
+}
+
+/** First successful write keeps the row version. Later overwrites bump it. */
+export function nextIngredientVersion(row: {
+	storageUrl: string | null;
+	version: number;
+}) {
+	return row.storageUrl ? row.version + 1 : row.version;
+}
+
+/** Cache-bust ingredient URLs. Recipe photo URLs are returned unchanged. */
+export function publicIconUrl(
+	storageUrl: string | null,
+	version: number,
+	kind: "ingredient" | "recipe",
+) {
+	if (!storageUrl || kind !== "ingredient") {
+		return storageUrl;
+	}
+
+	const hashIndex = storageUrl.indexOf("#");
+	const hash = hashIndex === -1 ? "" : storageUrl.slice(hashIndex);
+	const withoutHash =
+		hashIndex === -1 ? storageUrl : storageUrl.slice(0, hashIndex);
+	const queryIndex = withoutHash.indexOf("?");
+	const base =
+		queryIndex === -1 ? withoutHash : withoutHash.slice(0, queryIndex);
+	const params = new URLSearchParams(
+		queryIndex === -1 ? "" : withoutHash.slice(queryIndex + 1),
+	);
+	params.set("v", String(version));
+	return `${base}?${params.toString()}${hash}`;
 }
 
 export function shouldMockIconGeneration() {
@@ -71,5 +177,5 @@ export function normalizeIngredientKey(value: string) {
 		throw new Error("Ingredient icon key is empty.");
 	}
 
-	return key;
+	return INGREDIENT_KEY_ALIASES[key] ?? key;
 }

@@ -199,7 +199,9 @@ export function RecipeOverview({
 					/>
 				</div>
 				<section className="flex flex-col gap-4">
-					<h2 className="text-3xl font-semibold tracking-tight">{t("ingredients")}</h2>
+					<h2 className="text-3xl font-semibold tracking-tight">
+						{t("ingredients")}
+					</h2>
 					<ul className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
 						{content.ingredients.map((ingredient) => {
 							const presented = presentIngredient(ingredient);

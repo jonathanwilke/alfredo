@@ -17,6 +17,7 @@
 		"@repo/auth": "workspace:*",
 		"@repo/config": "workspace:*",
 		"@repo/i18n": "workspace:*",
+		"@repo/icons": "workspace:*",
 		"@repo/payments": "workspace:*",
 		"@repo/storage": "workspace:*",
 		"better-auth": "^1.7.14",

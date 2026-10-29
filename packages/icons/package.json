@@ -5,10 +5,13 @@
 	"main": "./index.ts",
 	"types": "./index.ts",
 	"exports": {
-		".": "./index.ts"
+		".": "./index.ts",
+		"./style": "./style.ts"
 	},
 	"scripts": {
-		"test": "node --experimental-test-module-mocks --import tsx --test render.test.ts",
+		"cleanup": "tsx cleanup.ts",
+		"regenerate": "tsx regenerate.ts",
+		"test": "node --experimental-test-module-mocks --import tsx --test ./*.test.ts",
 		"type-check": "tsc --noEmit"
 	},
 	"dependencies": {
@@ -20,6 +23,8 @@
 	},
 	"devDependencies": {
 		"@repo/tsconfig": "workspace:*",
+		"@types/node": "24.6.0",
+		"tsx": "^4.20.6",
 		"typescript": "5.9.2"
 	}
 }
