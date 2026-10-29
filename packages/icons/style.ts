@@ -15,6 +15,16 @@ const INGREDIENT_FORM_PROMPT = [
 
 export const DEFAULT_IMAGE_MODEL = "google/gemini-3.1-flash-image-preview";
 
+/**
+ * Gemini image config for ingredient icons (frame "square").
+ * `imageSize: "512"` is the 0.5K output (512×512 at 1:1). The API rejects
+ * `"0.5K"` and `"512px"`. Recipe photos do not use this config.
+ */
+export const INGREDIENT_IMAGE_CONFIG = {
+	aspectRatio: "1:1",
+	imageSize: "512",
+} as const;
+
 export function imageModelId() {
 	return process.env.AI_GATEWAY_IMAGE_MODEL || DEFAULT_IMAGE_MODEL;
 }
