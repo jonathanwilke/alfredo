@@ -57,7 +57,7 @@ Open http://localhost:3000. The locale follows the browser. German is the fallba
 | `GET /api/openapi` | OpenAPI document for a future Expo client                        |
 | `/api/auth/*`      | better-auth (magic link and Google)                              |
 
-Magic-link emails are not sent. In development the link is printed in the server log. Google sign-in is registered only when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are both set.
+Magic-link emails go out through Resend when `RESEND_API_KEY` is set. Without that key, development prints the link in the server log and production refuses to send. The sender is `ulivo <noreply@ulivo.app>` unless `EMAIL_FROM` is set. Google sign-in is registered only when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are both set.
 
 `extractRecipe` in `@repo/ai` calls AI Gateway. It uses `AI_GATEWAY_MODEL` when that is set, and `google/gemini-2.5-flash-lite` otherwise. It does not fetch a URL. Each ingredient includes `canonicalKey`, an English singular name used as the icon cache key.
 
@@ -84,6 +84,8 @@ Every variable is listed in `.env.example`. None are required for `pnpm type-che
 | `DATABASE_URL_UNPOOLED`  | Neon direct Postgres URL for Drizzle migrations                        |
 | `GOOGLE_CLIENT_ID`       | Google OAuth client id. Both Google vars must be set together          |
 | `GOOGLE_CLIENT_SECRET`   | Google OAuth client secret                                             |
+| `RESEND_API_KEY`         | Resend key for magic-link email. Empty keeps the dev server log       |
+| `EMAIL_FROM`             | Optional sender. Default `ulivo <noreply@ulivo.app>`                   |
 | `AI_GATEWAY_API_KEY`     | Vercel AI Gateway key for local extraction and live icons              |
 | `AI_GATEWAY_MODEL`       | Optional extraction model. Default `google/gemini-2.5-flash-lite`     |
 | `AI_GATEWAY_IMAGE_MODEL` | Image model for icons. Default `google/gemini-3.1-flash-image-preview` |
