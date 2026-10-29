@@ -1,3 +1,4 @@
+import { BillingProvider } from "@billing/components/BillingProvider";
 import { routing } from "@i18n/routing";
 import { Document } from "@shared/components/Document";
 import { notFound } from "next/navigation";
@@ -26,7 +27,7 @@ export default async function LocaleLayout({
 	return (
 		<Document locale={locale}>
 			<NextIntlClientProvider messages={messages}>
-				{children}
+				<BillingProvider>{children}</BillingProvider>
 			</NextIntlClientProvider>
 		</Document>
 	);

@@ -1,8 +1,13 @@
-import { db, subscriptions } from "@repo/database";
+import { creditBalances, creditCheckouts, db } from "@repo/database";
 import DodoPayments from "dodopayments";
-import { desc, eq } from "drizzle-orm";
-import { getPaymentsConfig } from "./config";
-import { type PlanLocale, planPrice } from "./quota";
+import { eq } from "drizzle-orm";
+import {
+	creditsProductId,
+	getPaymentsConfig,
+	isPackId,
+	PACK_CURRENCY,
+	packById,
+} from "./config";
 
 export class BillingDisabledError extends Error {
 	constructor() {
@@ -11,10 +16,10 @@ export class BillingDisabledError extends Error {
 	}
 }
 
-export class NoCustomerError extends Error {
+export class UnknownPackError extends Error {
 	constructor() {
-		super("No billing customer");
-		this.name = "NoCustomerError";
+		super("Unknown credit pack");
+		this.name = "UnknownPackError";
 	}
 }
 
@@ -42,12 +47,11 @@ function requireClient() {
 	};
 }
 
-async function latestCustomerId(userId: string) {
+async function customerIdFor(userId: string) {
 	const [row] = await db
-		.select({ customerId: subscriptions.customerId })
-		.from(subscriptions)
-		.where(eq(subscriptions.userId, userId))
-		.orderBy(desc(subscriptions.updatedAt))
+		.select({ customerId: creditBalances.customerId })
+		.from(creditBalances)
+		.where(eq(creditBalances.userId, userId))
 		.limit(1);
 	return row?.customerId ?? null;
 }
@@ -57,43 +61,83 @@ export async function createCheckoutSession(input: {
 	email: string;
 	name: string;
 	returnUrl: string;
-	locale: PlanLocale;
+	pack: string;
 }) {
-	const { client, config } = requireClient();
-	const customerId = await latestCustomerId(input.userId);
-	const name = input.name.trim() || input.email;
-	const price = planPrice(input.locale);
-	const session = await client.checkoutSessions.create({
-		product_cart: [{ product_id: config.productId, quantity: 1 }],
-		customer: customerId
-			? { customer_id: customerId }
-			: { email: input.email, name },
-		return_url: input.returnUrl,
-		metadata: { user_id: input.userId },
-		billing_currency: price.currency,
-		...(price.currency === "EUR"
-			? { billing_address: { country: "DE" as const } }
-			: {}),
-	});
+	if (!isPackId(input.pack)) {
+		throw new UnknownPackError();
+	}
+	const pack = packById(input.pack);
+	if (!pack) {
+		throw new UnknownPackError();
+	}
+	const { client } = requireClient();
+	const productId = creditsProductId();
+	if (!productId) {
+		throw new BillingDisabledError();
+	}
 
-	if (!session.checkout_url) {
+	const [checkout] = await db
+		.insert(creditCheckouts)
+		.values({
+			userId: input.userId,
+			packId: pack.id,
+			credits: pack.credits,
+			priceCents: pack.priceCents,
+			currency: PACK_CURRENCY,
+			status: "pending",
+		})
+		.returning({ id: creditCheckouts.id });
+	if (!checkout) {
 		throw new CheckoutUrlMissingError();
 	}
-	return session.checkout_url;
-}
 
-export async function createPortalSession(input: {
-	userId: string;
-	returnUrl: string;
-}) {
-	const { client } = requireClient();
-	const customerId = await latestCustomerId(input.userId);
-	if (!customerId) {
-		throw new NoCustomerError();
+	const customerId = await customerIdFor(input.userId);
+	const name = input.name.trim() || input.email;
+	try {
+		const session = await client.checkoutSessions.create({
+			product_cart: [
+				{ product_id: productId, quantity: 1, amount: pack.priceCents },
+			],
+			customer: customerId
+				? { customer_id: customerId }
+				: { email: input.email, name },
+			return_url: input.returnUrl,
+			metadata: {
+				checkout_id: checkout.id,
+				pack: pack.id,
+				credits: String(pack.credits),
+				user_id: input.userId,
+				price_cents: String(pack.priceCents),
+			},
+			billing_currency: PACK_CURRENCY,
+		});
+
+		await db
+			.update(creditCheckouts)
+			.set({
+				dodoSessionId: session.session_id,
+				updatedAt: new Date(),
+				...(session.checkout_url
+					? {}
+					: { status: "rejected", rejectReason: "missing-url" }),
+			})
+			.where(eq(creditCheckouts.id, checkout.id));
+
+		if (!session.checkout_url) {
+			throw new CheckoutUrlMissingError();
+		}
+		return session.checkout_url;
+	} catch (error) {
+		if (!(error instanceof CheckoutUrlMissingError)) {
+			await db
+				.update(creditCheckouts)
+				.set({
+					status: "rejected",
+					rejectReason: "checkout-failed",
+					updatedAt: new Date(),
+				})
+				.where(eq(creditCheckouts.id, checkout.id));
+		}
+		throw error;
 	}
-	const session = await client.customers.customerPortal.create(customerId, {
-		return_url: input.returnUrl,
-		send_email: false,
-	});
-	return session.link;
 }

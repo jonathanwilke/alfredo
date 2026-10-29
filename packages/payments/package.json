@@ -8,7 +8,7 @@
 		".": "./index.ts"
 	},
 	"scripts": {
-		"test": "tsx --test quota.test.ts webhooks.test.ts",
+		"test": "tsx --test ledger.test.ts welcome.test.ts webhooks.test.ts cost.test.ts recipe-access.test.ts grant.test.ts",
 		"type-check": "tsc --noEmit"
 	},
 	"dependencies": {

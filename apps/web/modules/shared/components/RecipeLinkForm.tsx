@@ -29,10 +29,10 @@ function importFailure(error: unknown) {
 }
 
 export function RecipeLinkForm({
-	onQuotaExceeded,
+	onInsufficientCredits,
 	resumeError,
 }: {
-	onQuotaExceeded: () => void;
+	onInsufficientCredits: () => void;
 	resumeError?: string | null;
 }) {
 	const t = useTranslations("home");
@@ -86,8 +86,8 @@ export function RecipeLinkForm({
 					})
 					.catch((error: unknown) => {
 						const code = errorCode(error);
-						if (code === "QUOTA_EXCEEDED") {
-							onQuotaExceeded();
+						if (code === "INSUFFICIENT_CREDITS") {
+							onInsufficientCredits();
 							return;
 						}
 						if (code === "UNAUTHORIZED") {

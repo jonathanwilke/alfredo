@@ -63,6 +63,12 @@ export type Ingredient = z.infer<typeof ingredientSchema>;
 export type RecipeStep = z.infer<typeof stepSchema>;
 export type ExtractedRecipe = z.infer<typeof extractedRecipeSchema>;
 
+export type TokenUsage = {
+	model: string;
+	inputTokens: number;
+	outputTokens: number;
+};
+
 /** Cheap structured-output model. Override with AI_GATEWAY_MODEL. */
 export const DEFAULT_EXTRACTION_MODEL = "google/gemini-2.5-flash-lite";
 
@@ -79,8 +85,9 @@ export async function extractRecipe(input: {
 	sourceText: string;
 	locale: string;
 }) {
+	const model = extractionModelId();
 	const result = await generateText({
-		model: extractionModelId(),
+		model,
 		output: Output.object({ schema: extractedRecipeSchema }),
 		prompt: [
 			"Extract one cooking recipe from the source text.",
@@ -98,12 +105,19 @@ export async function extractRecipe(input: {
 	});
 
 	if (!result.output) {
-		return result.output;
+		return null;
 	}
 
 	return {
-		...result.output,
-		title: dishName(result.output.title),
+		recipe: {
+			...result.output,
+			title: dishName(result.output.title),
+		},
+		usage: {
+			model,
+			inputTokens: result.usage.inputTokens ?? 0,
+			outputTokens: result.usage.outputTokens ?? 0,
+		} satisfies TokenUsage,
 	};
 }
 

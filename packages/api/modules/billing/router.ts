@@ -1,9 +1,11 @@
+import { balance } from "./procedures/balance";
 import { createCheckout } from "./procedures/create-checkout";
-import { portal } from "./procedures/portal";
-import { status } from "./procedures/status";
+import { history } from "./procedures/history";
+import { packs } from "./procedures/packs";
 
 export const billingRouter = {
+	packs,
 	createCheckout,
-	portal,
-	status,
+	balance,
+	history,
 };

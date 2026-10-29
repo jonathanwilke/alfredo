@@ -1,8 +1,9 @@
 import type { ExtractedRecipe } from "@repo/ai";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
 	boolean,
 	index,
+	integer,
 	jsonb,
 	pgEnum,
 	pgTable,
@@ -26,6 +27,8 @@ export const recipes = pgTable(
 			.$type<Record<string, unknown>>()
 			.notNull()
 			.default({}),
+		isCurated: boolean("is_curated").notNull().default(false),
+		source: text("source").notNull().default("import"),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),
@@ -33,7 +36,10 @@ export const recipes = pgTable(
 			.notNull()
 			.defaultNow(),
 	},
-	(table) => [uniqueIndex("recipes_source_url_idx").on(table.sourceUrl)],
+	(table) => [
+		uniqueIndex("recipes_source_url_idx").on(table.sourceUrl),
+		index("recipes_curated_idx").on(table.isCurated),
+	],
 );
 
 export const recipeTranslations = pgTable(
@@ -123,6 +129,13 @@ export const imports = pgTable(
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
 		type: importType("type").notNull(),
+		recipeId: uuid("recipe_id").references(() => recipes.id, {
+			onDelete: "set null",
+		}),
+		model: text("model"),
+		inputTokens: integer("input_tokens"),
+		outputTokens: integer("output_tokens"),
+		estimatedCostMicroUsd: integer("estimated_cost_micro_usd"),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),
@@ -158,27 +171,57 @@ export const savedRecipesRelations = relations(savedRecipes, ({ one }) => ({
 	}),
 }));
 
-export const subscriptions = pgTable(
-	"subscriptions",
+export const creditLedger = pgTable(
+	"credit_ledger",
 	{
 		id: uuid("id").defaultRandom().primaryKey(),
 		userId: text("user_id")
 			.notNull()
 			.references(() => user.id, { onDelete: "cascade" }),
-		customerId: text("customer_id").notNull(),
-		subscriptionId: text("subscription_id").notNull(),
-		productId: text("product_id").notNull(),
-		status: text("status").notNull(),
-		currentPeriodStart: timestamp("current_period_start", {
-			withTimezone: true,
-		}),
-		currentPeriodEnd: timestamp("current_period_end", {
-			withTimezone: true,
-		}),
-		cancelAtPeriodEnd: boolean("cancel_at_period_end")
+		amount: integer("amount").notNull(),
+		type: text("type").notNull(),
+		idempotencyKey: text("idempotency_key").notNull(),
+		paymentId: text("payment_id"),
+		packId: text("pack_id"),
+		productId: text("product_id"),
+		model: text("model"),
+		inputTokens: integer("input_tokens"),
+		outputTokens: integer("output_tokens"),
+		estimatedCostMicroUsd: integer("estimated_cost_micro_usd"),
+		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
-			.default(false),
-		lastEventAt: timestamp("last_event_at", { withTimezone: true }),
+			.defaultNow(),
+	},
+	(table) => [
+		uniqueIndex("credit_ledger_idempotency_key_idx").on(
+			table.idempotencyKey,
+		),
+		uniqueIndex("credit_ledger_welcome_user_idx")
+			.on(table.userId)
+			.where(sql`${table.type} = 'welcome'`),
+		index("credit_ledger_user_created_idx").on(
+			table.userId,
+			table.createdAt,
+		),
+		index("credit_ledger_payment_id_idx").on(table.paymentId),
+	],
+);
+
+export const creditCheckouts = pgTable(
+	"credit_checkouts",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		userId: text("user_id")
+			.notNull()
+			.references(() => user.id, { onDelete: "cascade" }),
+		packId: text("pack_id").notNull(),
+		credits: integer("credits").notNull(),
+		priceCents: integer("price_cents").notNull(),
+		currency: text("currency").notNull().default("USD"),
+		dodoSessionId: text("dodo_session_id"),
+		paymentId: text("payment_id"),
+		status: text("status").notNull().default("pending"),
+		rejectReason: text("reject_reason"),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),
@@ -187,13 +230,35 @@ export const subscriptions = pgTable(
 			.defaultNow(),
 	},
 	(table) => [
-		uniqueIndex("subscriptions_subscription_id_idx").on(
-			table.subscriptionId,
-		),
-		index("subscriptions_user_id_idx").on(table.userId),
-		index("subscriptions_customer_id_idx").on(table.customerId),
+		uniqueIndex("credit_checkouts_session_idx").on(table.dodoSessionId),
+		index("credit_checkouts_user_idx").on(table.userId),
+		index("credit_checkouts_payment_idx").on(table.paymentId),
 	],
 );
+
+export const creditBalances = pgTable(
+	"credit_balances",
+	{
+		userId: text("user_id")
+			.primaryKey()
+			.references(() => user.id, { onDelete: "cascade" }),
+		balance: integer("balance").notNull().default(0),
+		customerId: text("customer_id"),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+	},
+	(table) => [index("credit_balances_customer_id_idx").on(table.customerId)],
+);
+
+/** Normalized emails that already received welcome credits. No user FK, so the row stays after account deletion. */
+export const welcomeEmails = pgTable("welcome_emails", {
+	normalizedEmail: text("normalized_email").primaryKey(),
+	userId: text("user_id"),
+	createdAt: timestamp("created_at", { withTimezone: true })
+		.notNull()
+		.defaultNow(),
+});
 
 export const billingEvents = pgTable("billing_events", {
 	id: text("id").primaryKey(),
@@ -210,9 +275,26 @@ export const importsRelations = relations(imports, ({ one }) => ({
 	}),
 }));
 
-export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+export const creditLedgerRelations = relations(creditLedger, ({ one }) => ({
 	user: one(user, {
-		fields: [subscriptions.userId],
+		fields: [creditLedger.userId],
+		references: [user.id],
+	}),
+}));
+
+export const creditCheckoutsRelations = relations(
+	creditCheckouts,
+	({ one }) => ({
+		user: one(user, {
+			fields: [creditCheckouts.userId],
+			references: [user.id],
+		}),
+	}),
+);
+
+export const creditBalancesRelations = relations(creditBalances, ({ one }) => ({
+	user: one(user, {
+		fields: [creditBalances.userId],
 		references: [user.id],
 	}),
 }));

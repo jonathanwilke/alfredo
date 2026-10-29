@@ -1,3 +1,4 @@
+import { CreditBadge } from "@billing/components/CreditBadge";
 import { LocaleLink } from "@i18n/routing";
 import { config } from "@repo/config";
 import { LoginButton } from "@shared/components/LoginButton";
@@ -31,11 +32,12 @@ export default async function SavedPage({
 
 	return (
 		<main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-5 py-8 sm:px-8">
-			<header className="flex items-center justify-between gap-4">
+			<header className="flex flex-wrap items-center justify-between gap-3">
 				<LocaleLink href="/" className="text-foreground no-underline">
 					<Wordmark />
 				</LocaleLink>
-				<div className="flex items-center gap-2">
+				<div className="flex flex-wrap items-center justify-end gap-2">
+					<CreditBadge />
 					<LoginButton />
 					<ThemeToggle />
 				</div>

@@ -6,9 +6,11 @@ import {
 	saveRecipe,
 	unsaveRecipe,
 } from "./procedures/save";
+import { starters } from "./procedures/starters";
 
 export const recipesRouter = {
 	get: getRecipe,
+	starters,
 	import: importRecipe,
 	saved: recipeSaved,
 	listSaved: listSavedRecipes,

@@ -6,8 +6,8 @@ import { RecipeLinkForm } from "@shared/components/RecipeLinkForm";
 import { api } from "@shared/lib/api";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Suspense, useCallback, useEffect, useState } from "react";
-import { BillingSection } from "./BillingSection";
+import { Suspense, useEffect, useState } from "react";
+import { useBilling } from "./BillingProvider";
 
 const resumedImports = new Set<string>();
 
@@ -26,11 +26,18 @@ function recipeUrlFromImportParam(value: string | null) {
 	}
 }
 
+function errorCode(error: unknown) {
+	if (typeof error === "object" && error !== null && "code" in error) {
+		return String(error.code);
+	}
+	return "";
+}
+
 function ResumePendingImport({
-	onQuotaExceeded,
+	onInsufficientCredits,
 	onFailed,
 }: {
-	onQuotaExceeded: () => void;
+	onInsufficientCredits: () => void;
 	onFailed: (message: string) => void;
 }) {
 	const t = useTranslations("home");
@@ -63,15 +70,10 @@ function ResumePendingImport({
 				router.replace(`/recipes/${result.recipeId}`);
 			})
 			.catch((error: unknown) => {
-				const code =
-					typeof error === "object" &&
-					error !== null &&
-					"code" in error
-						? String(error.code)
-						: "";
+				const code = errorCode(error);
 				router.replace("/");
-				if (code === "QUOTA_EXCEEDED") {
-					onQuotaExceeded();
+				if (code === "INSUFFICIENT_CREDITS") {
+					onInsufficientCredits();
 					return;
 				}
 				const message = error instanceof Error ? error.message : "";
@@ -90,7 +92,7 @@ function ResumePendingImport({
 		session,
 		locale,
 		router,
-		onQuotaExceeded,
+		onInsufficientCredits,
 		onFailed,
 		t,
 	]);
@@ -99,25 +101,21 @@ function ResumePendingImport({
 }
 
 export function HomeImport() {
-	const [openPaywallToken, setOpenPaywallToken] = useState(0);
+	const { openEmpty } = useBilling();
 	const [resumeError, setResumeError] = useState<string | null>(null);
-	const openPaywall = useCallback(() => {
-		setOpenPaywallToken((value) => value + 1);
-	}, []);
 
 	return (
 		<div className="flex flex-col gap-8">
 			<Suspense fallback={null}>
 				<ResumePendingImport
-					onQuotaExceeded={openPaywall}
+					onInsufficientCredits={openEmpty}
 					onFailed={setResumeError}
 				/>
 			</Suspense>
 			<RecipeLinkForm
-				onQuotaExceeded={openPaywall}
+				onInsufficientCredits={openEmpty}
 				resumeError={resumeError}
 			/>
-			<BillingSection openPaywallToken={openPaywallToken} />
 		</div>
 	);
 }

@@ -9,7 +9,7 @@ ulivo turns a recipe URL into an ad-free, step-by-step cooking guide. Paste a li
 - `packages/database`: Drizzle ORM and Neon Postgres
 - `packages/auth`: better-auth, email magic link and Google
 - `packages/api`: oRPC, a typed client, and an OpenAPI document
-- `packages/payments`: Dodo Payments checkout, customer portal, quota, and webhooks
+- `packages/payments`: Dodo Payments credit packs, ledger, and webhooks
 - `packages/ai`: Vercel AI SDK through AI Gateway, plus the recipe schema
 
 UI follows the supastarter Next.js setup: tokens in `tooling/tailwind/theme.css`, `cn` in `@ui/lib`, components in `apps/web/modules/ui`, and dark mode with `next-themes` (`class` on `html`). The palette is ulivo's: cream background, olive and lime, PT Serif headings, Source Sans 3 for body text.
@@ -35,7 +35,7 @@ cp .env.example .env
 4. Apply the schema.
 
 ```bash
-pnpm --filter @repo/database db:migrate
+pnpm --filter @repo/database migrate
 ```
 
 `db:push` is the alternative when you do not want migration files.
@@ -56,19 +56,23 @@ Open http://localhost:3000. The locale follows the browser. German is the fallba
 | `GET /api/health`             | Health check                                                     |
 | `GET /api/me`                 | Current user, or `null`                                          |
 | `GET /api/openapi`            | OpenAPI document for a future Expo client                        |
-| `GET /api/billing/status`     | Plan, period, imports used, and limit                            |
-| `POST /api/billing/checkout`  | Dodo checkout URL for the signed-in user                         |
-| `POST /api/billing/portal`    | Dodo customer portal URL                                         |
-| `POST /api/recipes/import`    | Import a recipe URL. A new import needs an account and quota     |
+| `GET /api/billing/packs`      | Credit packs: 10 / 20 / 50 recipes and their USD prices          |
+| `GET /api/billing/balance`    | Signed-in balance, or zero when logged out                       |
+| `GET /api/billing/history`    | Purchases, welcome credits, imports, refunds                     |
+| `POST /api/billing/checkout`  | Dodo checkout URL for one pack                                   |
+| `POST /api/recipes/import`    | Import a recipe URL. A new import needs an account and 1 credit  |
+| `GET /api/recipes/starters`   | Free curated starter dishes                                      |
 | `GET /api/recipes/{recipeId}` | Stored recipe for the requested locale                           |
 | `POST /api/webhooks/dodo`     | Dodo Payments webhook                                            |
 | `/api/auth/*`                 | better-auth (magic link and Google)                              |
 
-The same procedures are available through `POST /api/rpc`, including `billing.status`, `billing.createCheckout`, `billing.portal`, and `recipes.import`.
+The same procedures are available through `POST /api/rpc`, including `billing.packs`, `billing.balance`, `billing.history`, `billing.createCheckout`, and `recipes.import`.
 
-The first import is free and requires an account. A subscription is $3.99 per month, or €3.99 in the German app, for 30 imports in the current billing period. Importing the same recipe into another language counts as a translation. A recipe already stored for that language does not count. Icon generation does not write an `imports` row. When the quota is used up, import returns `QUOTA_EXCEEDED` (HTTP 402) and the home page shows the upgrade dialog.
+There is no monthly fee. A verified account receives 3 welcome credits on the first login. Each new import or translation costs 1 credit. A recipe already stored for that language does not cost a credit. Curated starter recipes are free, including when someone pastes their source URL. Icon generation does not write an `imports` row or a ledger debit. When the balance is too low, import returns `INSUFFICIENT_CREDITS` (HTTP 402) and the home page opens the buy-credits dialog.
 
-`@dodopayments/better-auth` and `@dodopayments/nextjs` mount their own checkout, portal, and webhook routes. This app needs the calls in the OpenAPI document and a `subscriptions` table, so billing uses the official `dodopayments` SDK directly. Signature checks use `standardwebhooks`, the same library the SDK uses.
+Pack prices live in `packages/payments/config.ts`: 10 recipes for $5.00 ($0.50 each), 20 for $9.00 ($0.45 each), and 50 for $20.00 ($0.40 each). The same file holds per-model token prices and a margin used only to record what a generation cost. The charge stays 1 credit.
+
+`@dodopayments/better-auth` and `@dodopayments/nextjs` mount their own checkout and webhook routes. This app needs the calls in the OpenAPI document and a credit ledger, so billing uses the official `dodopayments` SDK directly. Signature checks use `standardwebhooks`, the same library the SDK uses.
 
 Magic-link emails go out through Resend when `RESEND_API_KEY` is set. Without that key, development prints the link in the server log and production refuses to send. The sender is `ulivo <noreply@ulivo.app>` unless `EMAIL_FROM` is set. Google sign-in is registered only when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are both set.
 
@@ -88,45 +92,61 @@ Icon files go to Neon Object Storage through a path-style S3 client. Required en
 
 Every variable is listed in `.env.example`. None are required for `pnpm type-check` or `pnpm build`.
 
-| Variable                       | Purpose                                                                |
-| ------------------------------ | ---------------------------------------------------------------------- |
-| `NEXT_PUBLIC_APP_URL`          | Public origin, default `http://localhost:3000`                         |
-| `BETTER_AUTH_SECRET`           | Session secret, at least 32 characters                                 |
-| `BETTER_AUTH_URL`              | Auth base URL, usually the same as the app origin                      |
-| `DATABASE_URL`                 | Neon pooled Postgres URL for the app                                   |
-| `DATABASE_URL_UNPOOLED`        | Neon direct Postgres URL for Drizzle migrations                        |
-| `GOOGLE_CLIENT_ID`             | Google OAuth client id. Both Google vars must be set together          |
-| `GOOGLE_CLIENT_SECRET`         | Google OAuth client secret                                             |
-| `RESEND_API_KEY`               | Resend key for magic-link email. Empty keeps the dev server log        |
-| `EMAIL_FROM`                   | Optional sender. Default `ulivo <noreply@ulivo.app>`                   |
-| `AI_GATEWAY_API_KEY`           | Vercel AI Gateway key for local extraction and live icons              |
-| `AI_GATEWAY_MODEL`             | Optional extraction model. Default `google/gemini-2.5-flash-lite`      |
-| `AI_GATEWAY_IMAGE_MODEL`       | Image model for icons. Default `google/gemini-3.1-flash-image-preview` |
-| `ICON_GENERATION_MODE`         | `mock`, `live`, or empty (mock when no gateway credential is present)  |
-| `VERCEL_OIDC_TOKEN`            | Gateway auth on Vercel. Injected there. Leave empty locally            |
-| `AWS_ENDPOINT_URL_S3`          | Neon Object Storage endpoint for this branch                           |
-| `AWS_ACCESS_KEY_ID`            | Neon storage access key id                                             |
-| `AWS_SECRET_ACCESS_KEY`        | Neon storage secret                                                    |
-| `AWS_REGION`                   | Neon storage region, such as `us-east-2`                               |
-| `S3_BUCKET`                    | `public_read` bucket name for icon WebP files                          |
-| `S3_PUBLIC_URL`                | Optional CDN origin. Empty uses `{endpoint}/{bucket}/{key}`            |
-| `DODO_PAYMENTS_API_KEY`        | Dodo Payments API key. Empty disables checkout and the portal          |
-| `DODO_PAYMENTS_WEBHOOK_SECRET` | Signing secret for `POST /api/webhooks/dodo`                           |
-| `DODO_PAYMENTS_ENVIRONMENT`    | `test_mode` or `live_mode`. Any other value disables billing           |
-| `DODO_PAYMENTS_PRODUCT_ID`     | Monthly $3.99 subscription product id                                  |
+| Variable                           | Purpose                                                                |
+| ---------------------------------- | ---------------------------------------------------------------------- |
+| `NEXT_PUBLIC_APP_URL`              | Public origin, default `http://localhost:3000`                         |
+| `BETTER_AUTH_SECRET`               | Session secret, at least 32 characters                                 |
+| `BETTER_AUTH_URL`                  | Auth base URL, usually the same as the app origin                      |
+| `DATABASE_URL`                     | Neon pooled Postgres URL for the app                                   |
+| `DATABASE_URL_UNPOOLED`            | Neon direct Postgres URL for Drizzle migrations                        |
+| `GOOGLE_CLIENT_ID`                 | Google OAuth client id. Both Google vars must be set together          |
+| `GOOGLE_CLIENT_SECRET`             | Google OAuth client secret                                             |
+| `RESEND_API_KEY`                   | Resend key for magic-link email. Empty keeps the dev server log        |
+| `EMAIL_FROM`                       | Optional sender. Default `ulivo <noreply@ulivo.app>`                   |
+| `AI_GATEWAY_API_KEY`               | Vercel AI Gateway key for local extraction and live icons              |
+| `AI_GATEWAY_MODEL`                 | Optional extraction model. Default `google/gemini-2.5-flash-lite`      |
+| `AI_GATEWAY_IMAGE_MODEL`           | Image model for icons. Default `google/gemini-3.1-flash-image-preview` |
+| `ICON_GENERATION_MODE`             | `mock`, `live`, or empty (mock when no gateway credential is present)  |
+| `VERCEL_OIDC_TOKEN`                | Gateway auth on Vercel. Injected there. Leave empty locally            |
+| `AWS_ENDPOINT_URL_S3`              | Neon Object Storage endpoint for this branch                           |
+| `AWS_ACCESS_KEY_ID`                | Neon storage access key id                                             |
+| `AWS_SECRET_ACCESS_KEY`            | Neon storage secret                                                    |
+| `AWS_REGION`                       | Neon storage region, such as `us-east-2`                               |
+| `S3_BUCKET`                        | `public_read` bucket name for icon WebP files                          |
+| `S3_PUBLIC_URL`                    | Optional CDN origin. Empty uses `{endpoint}/{bucket}/{key}`            |
+| `DODO_PAYMENTS_API_KEY`            | Dodo Payments API key. Empty disables checkout                         |
+| `DODO_PAYMENTS_WEBHOOK_SECRET`     | Signing secret for `POST /api/webhooks/dodo`                           |
+| `DODO_PAYMENTS_ENVIRONMENT`        | `test_mode` or `live_mode`. Any other value disables billing           |
+| `DODO_PAYMENTS_CREDITS_PRODUCT_ID` | Pay What You Want one-time product used for every credit pack          |
 
 ## Billing
 
+Prices are USD, in `packages/payments/config.ts`. Changing a pack price there does not require a new Dodo product. Checkout sends `billing_currency: USD` and sets the Pay What You Want amount in cents on `product_cart`.
+
+Dodo mechanism: one Pay What You Want one-time product. The Checkout Sessions API field `product_cart[].amount` is the price in the smallest currency unit (cents). Session `metadata` is copied onto the payment, so `payment.succeeded` includes `data.metadata`. Refund and dispute events identify `payment_id`; the credit reversal uses the purchase already stored for that payment.
+
+- [Dynamic pricing checkout](https://docs.dodopayments.com/developer-resources/dynamic-pricing-checkout)
+- [Pay What You Want](https://docs.dodopayments.com/features/pay-what-you-want)
+- [Checkout sessions](https://docs.dodopayments.com/developer-resources/checkout-session)
+- [Metadata](https://docs.dodopayments.com/api-reference/metadata)
+- [Payment webhooks](https://docs.dodopayments.com/developer-resources/webhooks/intents/payment)
+
 In the Dodo Payments dashboard:
 
-1. Create a subscription product billed monthly at $3.99 USD. Copy its product id into `DODO_PAYMENTS_PRODUCT_ID`. Add a localized price for Germany of €3.99. The German app sends billing country `DE` and currency `EUR`, so that rule is what the customer pays. Without it, Dodo converts the $3.99 price at the exchange rate.
+1. Create one **one-time** product (not a subscription) and turn on Pay What You Want. Set the minimum price to $0.50, which is at or below every pack in `packages/payments/config.ts`. A higher minimum rejects cheaper packs at checkout. Copy the product id into `DODO_PAYMENTS_CREDITS_PRODUCT_ID`. Leave the price in USD. Do not add a converted EUR price.
 2. Create an API key under Developer → API Keys. Use a test key with `DODO_PAYMENTS_ENVIRONMENT=test_mode`, or a live key with `live_mode`.
 3. Add a webhook endpoint under Developer → Webhooks. The URL is `https://<your-domain>/api/webhooks/dodo`. Copy the signing secret into `DODO_PAYMENTS_WEBHOOK_SECRET`.
-4. Subscribe that endpoint to `subscription.active`, `subscription.renewed`, `subscription.on_hold`, `subscription.cancelled`, `subscription.failed`, `subscription.expired`, `subscription.updated`, `payment.succeeded`, `payment.failed`, `payment.processing`, and `payment.cancelled`.
+4. Subscribe that endpoint to `payment.succeeded`, `payment.failed`, `payment.processing`, `payment.cancelled`, `refund.succeeded`, `refund.failed`, `dispute.opened`, `dispute.expired`, `dispute.accepted`, `dispute.cancelled`, `dispute.challenged`, `dispute.won`, and `dispute.lost`.
 
-`subscription.updated` keeps the period dates and the cancel-at-period-end flag in sync. Payment events are acknowledged and do not change the quota by themselves. The same webhook id is stored, so a retry does not apply twice.
+Before checkout, the server writes a `credit_checkouts` row with the pack, credits, and price from config. `payment.succeeded` grants that row only when the metadata pack and credits match it and the amount paid before tax is at least that price. A mismatch is stored on the row and does not grant credits. The grant is stored once per payment id, and the webhook id is stored, so a retry does not grant twice. `refund.succeeded`, `dispute.lost`, `dispute.accepted`, and `dispute.expired` debit those credits once per payment. The other events are acknowledged and do not change the balance.
 
-Set the four `DODO_PAYMENTS_*` variables in Vercel before charging cards. With any of the key, product id, or environment missing, checkout and the portal return `BILLING_DISABLED` and the app still builds.
+Welcome credits are a ledger row of type `welcome`. The normalized email is stored in `welcome_emails`, which has no foreign key, so deleting the account does not free the email for another grant. Gmail addresses lose dots and `+tags`. Known disposable domains do not receive the grant.
+
+Set the API key, webhook secret, environment, and `DODO_PAYMENTS_CREDITS_PRODUCT_ID` in Vercel before charging cards. If any of those is missing, checkout returns `BILLING_DISABLED` and the app still builds. Welcome credits still work.
+
+## Curated recipes
+
+`pnpm seed:curated` upserts the fixtures in `packages/database/seed/recipes.ts`. Each row is `is_curated = true` and `source = 'curated'`. The homepage shows 4 to 6 of them at random when that many exist. Viewing, cooking, saving, or opening one by its source URL does not debit a credit and does not record token usage. A user import cannot set those flags. Add real dishes to the fixture list and run the script again. Generation for those dishes stays in the operator script, not on the user's account.
 
 ## Scripts
 
@@ -137,5 +157,6 @@ pnpm lint
 pnpm test
 pnpm type-check
 pnpm --filter @repo/database db:generate
-pnpm --filter @repo/database db:migrate
+pnpm --filter @repo/database migrate
+pnpm seed:curated
 ```

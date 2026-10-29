@@ -22,6 +22,27 @@
       "when": 1793284211206,
       "tag": "0002_dodo_subscriptions",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793301708149,
+      "tag": "0003_light_roxanne_simpson",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793301716277,
+      "tag": "0004_fat_jetstream",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793305060222,
+      "tag": "0005_chubby_dazzler",
+      "breakpoints": true
     }
   ]
 }

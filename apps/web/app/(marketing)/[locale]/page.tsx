@@ -1,10 +1,15 @@
+import { CreditBadge } from "@billing/components/CreditBadge";
 import { HomeImport } from "@billing/components/HomeImport";
+import { StarterRecipes } from "@billing/components/StarterRecipes";
+import { listStarterRecipes } from "@repo/api";
 import { config } from "@repo/config";
 import { LoginButton } from "@shared/components/LoginButton";
 import { ThemeToggle } from "@shared/components/ThemeToggle";
 import { Wordmark } from "@shared/components/Wordmark";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
 	params,
@@ -28,14 +33,16 @@ export default async function HomePage({
 	const { locale } = await params;
 	setRequestLocale(locale);
 	const t = await getTranslations("home");
+	const starters = await listStarterRecipes(locale).catch(() => []);
 
 	return (
 		<main className="mx-auto flex w-full max-w-3xl flex-col px-5 pt-8 [--home-nav:calc(2rem+2.75rem)] sm:px-8">
-			<header className="flex h-11 shrink-0 items-center justify-between gap-4">
+			<header className="flex min-h-11 shrink-0 flex-wrap items-center justify-between gap-3">
 				<p className="leading-none">
 					<Wordmark />
 				</p>
-				<div className="flex items-center gap-2">
+				<div className="flex flex-wrap items-center justify-end gap-2">
+					<CreditBadge />
 					<LoginButton />
 					<ThemeToggle />
 				</div>
@@ -50,6 +57,7 @@ export default async function HomePage({
 					</p>
 				</div>
 				<HomeImport />
+				<StarterRecipes recipes={starters} />
 			</section>
 		</main>
 	);

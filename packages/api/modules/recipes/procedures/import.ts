@@ -1,10 +1,10 @@
 import { ORPCError } from "@orpc/server";
 import { extractedRecipeSchema } from "@repo/ai";
-import { QuotaExceededError } from "@repo/payments";
+import { InsufficientCreditsError } from "@repo/payments";
 import { z } from "zod";
 import { publicProcedure } from "../../../orpc/procedures";
+import { creditErrors } from "../credits";
 import { importRecipeFromUrl } from "../import-recipe";
-import { quotaErrors } from "../quota";
 import { ImportError } from "../source";
 
 const localeSchema = z.enum(["de", "en"]);
@@ -13,6 +13,8 @@ const storedRecipeSchema = z.object({
 	recipeId: z.string().uuid(),
 	sourceUrl: z.string().url(),
 	content: extractedRecipeSchema,
+	isCurated: z.boolean(),
+	servedLocale: z.string(),
 });
 
 export const importRecipe = publicProcedure
@@ -22,7 +24,7 @@ export const importRecipe = publicProcedure
 		tags: ["Recipes"],
 		summary: "Import a recipe URL into the chosen language",
 		description:
-			"Fetches the page, extracts a recipe, and stores the translation. A new import or translation needs an account. The first one is free; a subscription allows 30 per billing period. Returns QUOTA_EXCEEDED when that limit is used up. A recipe already stored for this language does not count. Icon generation does not count.",
+			"Fetches the page, extracts a recipe, and stores the translation. A new import or translation needs an account and one credit. New accounts start with 3 welcome credits. Returns INSUFFICIENT_CREDITS when the balance is too low. A recipe already stored for this language does not cost a credit. Curated recipes are free, including a pasted source URL. Icon generation does not cost a credit.",
 	})
 	.input(
 		z.object({
@@ -31,7 +33,7 @@ export const importRecipe = publicProcedure
 		}),
 	)
 	.output(storedRecipeSchema)
-	.errors(quotaErrors)
+	.errors(creditErrors)
 	.handler(async ({ input, context, errors }) => {
 		try {
 			return await importRecipeFromUrl({
@@ -40,13 +42,9 @@ export const importRecipe = publicProcedure
 				headers: context.headers,
 			});
 		} catch (error) {
-			if (error instanceof QuotaExceededError) {
-				throw errors.QUOTA_EXCEEDED({
-					data: {
-						used: error.used,
-						limit: error.limit,
-						plan: error.plan,
-					},
+			if (error instanceof InsufficientCreditsError) {
+				throw errors.INSUFFICIENT_CREDITS({
+					data: { balance: error.balance },
 				});
 			}
 			if (error instanceof ImportError) {

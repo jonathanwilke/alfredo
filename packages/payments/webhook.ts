@@ -1,11 +1,15 @@
-import { billingEvents, db, subscriptions, user } from "@repo/database";
-import { eq, isNull, lte, or, sql } from "drizzle-orm";
-import { getPaymentsConfig } from "./config";
 import {
-	processVerifiedWebhook,
-	type SubscriptionPatch,
-	type WebhookStore,
-} from "./events";
+	billingEvents,
+	creditBalances,
+	creditCheckouts,
+	db,
+	user,
+} from "@repo/database";
+import { eq, sql } from "drizzle-orm";
+import { getPaymentsConfig } from "./config";
+import { processVerifiedWebhook, type WebhookStore } from "./events";
+import type { CheckoutRecord } from "./grant";
+import { creditStore } from "./service";
 import { verifyWebhook } from "./verify";
 
 export type WebhookResult = {
@@ -21,6 +25,7 @@ function createStore(
 	tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
 ): WebhookStore {
 	return {
+		credits: creditStore(tx),
 		async claim(id, type) {
 			const inserted = await tx
 				.insert(billingEvents)
@@ -40,63 +45,72 @@ function createStore(
 				.limit(1);
 			return row?.id ?? null;
 		},
-		async findUserIdBySubscription(subscriptionId) {
-			const [row] = await tx
-				.select({ userId: subscriptions.userId })
-				.from(subscriptions)
-				.where(eq(subscriptions.subscriptionId, subscriptionId))
-				.limit(1);
-			return row?.userId ?? null;
-		},
 		async findUserIdByCustomer(customerId) {
 			const [row] = await tx
-				.select({ userId: subscriptions.userId })
-				.from(subscriptions)
-				.where(eq(subscriptions.customerId, customerId))
+				.select({ userId: creditBalances.userId })
+				.from(creditBalances)
+				.where(eq(creditBalances.customerId, customerId))
 				.limit(1);
 			return row?.userId ?? null;
 		},
-		async getLastEventAt(subscriptionId) {
-			const [row] = await tx
-				.select({ lastEventAt: subscriptions.lastEventAt })
-				.from(subscriptions)
-				.where(eq(subscriptions.subscriptionId, subscriptionId))
-				.limit(1);
-			return row?.lastEventAt ?? null;
+		async rememberCustomer(userId, customerId) {
+			await tx
+				.insert(creditBalances)
+				.values({ userId, balance: 0, customerId })
+				.onConflictDoUpdate({
+					target: creditBalances.userId,
+					set: { customerId, updatedAt: new Date() },
+				});
 		},
-		async upsert(patch) {
-			await upsertSubscription(tx, patch);
+		async findCheckoutById(id) {
+			const [row] = await tx
+				.select()
+				.from(creditCheckouts)
+				.where(eq(creditCheckouts.id, id))
+				.limit(1);
+			return row ? toCheckout(row) : null;
+		},
+		async findCheckoutBySession(sessionId) {
+			const [row] = await tx
+				.select()
+				.from(creditCheckouts)
+				.where(eq(creditCheckouts.dodoSessionId, sessionId))
+				.limit(1);
+			return row ? toCheckout(row) : null;
+		},
+		async flagCheckout(id, input) {
+			await tx
+				.update(creditCheckouts)
+				.set({
+					status: input.status,
+					paymentId: input.paymentId,
+					rejectReason: input.reason,
+					updatedAt: new Date(),
+				})
+				.where(eq(creditCheckouts.id, id));
 		},
 	};
 }
 
-async function upsertSubscription(
-	tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-	patch: SubscriptionPatch & { userId: string },
-) {
-	const values = {
-		userId: patch.userId,
-		customerId: patch.customerId,
-		subscriptionId: patch.subscriptionId,
-		productId: patch.productId,
-		status: patch.status,
-		currentPeriodStart: patch.currentPeriodStart,
-		currentPeriodEnd: patch.currentPeriodEnd,
-		cancelAtPeriodEnd: patch.cancelAtPeriodEnd,
-		lastEventAt: patch.eventAt,
-		updatedAt: new Date(),
+function toCheckout(
+	row: typeof creditCheckouts.$inferSelect,
+): CheckoutRecord | null {
+	if (
+		row.status !== "pending" &&
+		row.status !== "granted" &&
+		row.status !== "rejected"
+	) {
+		return null;
+	}
+	return {
+		id: row.id,
+		userId: row.userId,
+		packId: row.packId,
+		credits: row.credits,
+		priceCents: row.priceCents,
+		status: row.status,
+		paymentId: row.paymentId,
 	};
-	await tx
-		.insert(subscriptions)
-		.values(values)
-		.onConflictDoUpdate({
-			target: subscriptions.subscriptionId,
-			set: values,
-			setWhere: or(
-				isNull(subscriptions.lastEventAt),
-				lte(subscriptions.lastEventAt, patch.eventAt),
-			),
-		});
 }
 
 export async function handleDodoWebhook(input: {

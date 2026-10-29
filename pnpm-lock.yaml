@@ -202,6 +202,9 @@ importers:
             "@repo/database":
                 specifier: workspace:*
                 version: link:../database
+            "@repo/payments":
+                specifier: workspace:*
+                version: link:../payments
             better-auth:
                 specifier: ^1.7.14
                 version: 1.7.14(drizzle-kit@0.31.11)(drizzle-orm@0.45.4(@types/pg@8.23.1)(kysely@0.29.7)(pg@8.23.1))(next@15.5.13(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(pg@8.23.1)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -249,6 +252,9 @@ importers:
             drizzle-kit:
                 specifier: ^0.31.5
                 version: 0.31.11
+            tsx:
+                specifier: ^4.20.6
+                version: 4.23.15
             typescript:
                 specifier: 5.9.2
                 version: 5.9.2
