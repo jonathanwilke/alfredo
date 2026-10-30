@@ -43,6 +43,13 @@
       "when": 1793305060222,
       "tag": "0005_chubby_dazzler",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793380379086,
+      "tag": "0006_last_chamber",
+      "breakpoints": true
     }
   ]
 }

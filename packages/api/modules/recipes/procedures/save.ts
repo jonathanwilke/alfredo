@@ -1,23 +1,28 @@
 import { ORPCError } from "@orpc/server";
 import { dishName } from "@repo/ai";
 import { auth } from "@repo/auth";
-import { db, recipes, savedRecipes } from "@repo/database";
-import { and, eq } from "drizzle-orm";
+import { db, icons, imports, recipes, savedRecipes } from "@repo/database";
+import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { protectedProcedure, publicProcedure } from "../../../orpc/procedures";
+import {
+	findOwnedCopy,
+	insertRecipeCopy,
+	planRecipeSave,
+} from "../copy-recipe";
 
 const recipeIdSchema = z.object({
 	recipeId: z.string().uuid(),
 });
 
-async function requireRecipe(recipeId: string) {
-	const recipe = await db.query.recipes.findFirst({
-		where: eq(recipes.id, recipeId),
+async function bookmark(userId: string, recipeId: string) {
+	const row = await db.query.savedRecipes.findFirst({
+		where: and(
+			eq(savedRecipes.userId, userId),
+			eq(savedRecipes.recipeId, recipeId),
+		),
 	});
-
-	if (!recipe) {
-		throw new ORPCError("NOT_FOUND");
-	}
+	return Boolean(row);
 }
 
 export const recipeSaved = publicProcedure
@@ -38,14 +43,17 @@ export const recipeSaved = publicProcedure
 			return { saved: false };
 		}
 
-		const row = await db.query.savedRecipes.findFirst({
-			where: and(
-				eq(savedRecipes.userId, session.user.id),
-				eq(savedRecipes.recipeId, input.recipeId),
-			),
-		});
+		const userId = session.user.id;
+		if (await bookmark(userId, input.recipeId)) {
+			return { saved: true };
+		}
 
-		return { saved: Boolean(row) };
+		const copy = await findOwnedCopy(userId, input.recipeId);
+		if (copy && (await bookmark(userId, copy.id))) {
+			return { saved: true };
+		}
+
+		return { saved: false };
 	});
 
 export const saveRecipe = protectedProcedure
@@ -54,22 +62,71 @@ export const saveRecipe = protectedProcedure
 		path: "/recipes/{recipeId}/save",
 		tags: ["Recipes"],
 		summary: "Save a recipe for the signed-in user",
+		description:
+			"Saving a recipe the user does not own copies it onto their account, including translations and the existing dish photo. The copy is free. Saving the same recipe again returns that copy.",
 	})
 	.input(recipeIdSchema)
-	.output(z.object({ saved: z.literal(true) }))
+	.output(z.object({ saved: z.literal(true), recipeId: z.string().uuid() }))
 	.handler(async ({ input, context }) => {
-		await requireRecipe(input.recipeId);
+		const source = await db.query.recipes.findFirst({
+			where: eq(recipes.id, input.recipeId),
+			with: { translations: true },
+		});
+		if (!source) {
+			throw new ORPCError("NOT_FOUND");
+		}
+
+		const imported = await db.query.imports.findFirst({
+			where: and(
+				eq(imports.userId, context.user.id),
+				eq(imports.recipeId, source.id),
+			),
+		});
+		const existingCopy = await findOwnedCopy(context.user.id, source.id);
+		const plan = planRecipeSave({
+			viewerUserId: context.user.id,
+			recipeUserId: source.userId,
+			hasImport: Boolean(imported),
+			existingCopyId: existingCopy?.id ?? null,
+			sourceRecipeId: source.id,
+		});
+		let recipeId: string;
+		if (plan.action === "bookmark") {
+			recipeId = plan.recipeId;
+		} else {
+			const hero = await db.query.icons.findFirst({
+				where: and(eq(icons.kind, "recipe"), eq(icons.key, source.id)),
+			});
+			recipeId = await insertRecipeCopy({
+				userId: context.user.id,
+				sourceRecipeId: source.id,
+				rawData: source.rawData,
+				translations: source.translations.map((translation) => ({
+					locale: translation.locale,
+					content: translation.content,
+				})),
+				hero: hero
+					? {
+							storageUrl: hero.storageUrl,
+							prompt: hero.prompt,
+							model: hero.model,
+							status: hero.status,
+						}
+					: null,
+			});
+		}
+
 		await db
 			.insert(savedRecipes)
 			.values({
 				userId: context.user.id,
-				recipeId: input.recipeId,
+				recipeId,
 			})
 			.onConflictDoNothing({
 				target: [savedRecipes.userId, savedRecipes.recipeId],
 			});
 
-		return { saved: true as const };
+		return { saved: true as const, recipeId };
 	});
 
 const localeSchema = z.enum(["de", "en"]);
@@ -128,12 +185,14 @@ export const unsaveRecipe = protectedProcedure
 	.input(recipeIdSchema)
 	.output(z.object({ saved: z.literal(false) }))
 	.handler(async ({ input, context }) => {
+		const copy = await findOwnedCopy(context.user.id, input.recipeId);
+		const recipeIds = copy ? [input.recipeId, copy.id] : [input.recipeId];
 		await db
 			.delete(savedRecipes)
 			.where(
 				and(
 					eq(savedRecipes.userId, context.user.id),
-					eq(savedRecipes.recipeId, input.recipeId),
+					inArray(savedRecipes.recipeId, recipeIds),
 				),
 			);
 

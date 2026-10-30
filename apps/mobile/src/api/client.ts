@@ -144,10 +144,17 @@ export const api = {
 		return parse(z.object({ saved: z.boolean() }), json).saved;
 	},
 	async saveRecipe(recipeId: string) {
-		await request(`/recipes/${encodeURIComponent(recipeId)}/save`, {
-			method: "POST",
-			body: JSON.stringify({ recipeId }),
-		});
+		const json = await request(
+			`/recipes/${encodeURIComponent(recipeId)}/save`,
+			{
+				method: "POST",
+				body: JSON.stringify({ recipeId }),
+			},
+		);
+		return parse(
+			z.object({ saved: z.literal(true), recipeId: z.string().uuid() }),
+			json,
+		);
 	},
 	async unsaveRecipe(recipeId: string) {
 		await request(`/recipes/${encodeURIComponent(recipeId)}/save`, {

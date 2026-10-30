@@ -1,6 +1,7 @@
 import type { ExtractedRecipe } from "@repo/ai";
 import { relations, sql } from "drizzle-orm";
 import {
+	type AnyPgColumn,
 	boolean,
 	index,
 	integer,
@@ -29,6 +30,13 @@ export const recipes = pgTable(
 			.default({}),
 		isCurated: boolean("is_curated").notNull().default(false),
 		source: text("source").notNull().default("import"),
+		userId: text("user_id").references(() => user.id, {
+			onDelete: "set null",
+		}),
+		sourceRecipeId: uuid("source_recipe_id").references(
+			(): AnyPgColumn => recipes.id,
+			{ onDelete: "set null" },
+		),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),
@@ -39,6 +47,10 @@ export const recipes = pgTable(
 	(table) => [
 		uniqueIndex("recipes_source_url_idx").on(table.sourceUrl),
 		index("recipes_curated_idx").on(table.isCurated),
+		index("recipes_user_id_idx").on(table.userId),
+		uniqueIndex("recipes_user_source_idx")
+			.on(table.userId, table.sourceRecipeId)
+			.where(sql`${table.sourceRecipeId} is not null`),
 	],
 );
 

@@ -9,7 +9,8 @@
 		"./client": "./client.ts"
 	},
 	"scripts": {
-		"type-check": "tsc --noEmit"
+		"type-check": "tsc --noEmit",
+		"test": "node --import tsx --test modules/recipes/copy-recipe.test.ts"
 	},
 	"dependencies": {
 		"@orpc/client": "^1.16.1",

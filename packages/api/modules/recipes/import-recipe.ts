@@ -282,7 +282,7 @@ export async function importRecipeFromUrl(input: {
 	const stored = await db.transaction(async (tx) => {
 		const insertedRecipe = await tx
 			.insert(recipes)
-			.values(userImportedRecipeValues(sourceUrl))
+			.values(userImportedRecipeValues(sourceUrl, userId))
 			.onConflictDoNothing({ target: recipes.sourceUrl })
 			.returning({ id: recipes.id });
 

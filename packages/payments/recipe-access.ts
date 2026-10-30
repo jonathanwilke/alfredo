@@ -72,12 +72,13 @@ export function passiveRecipeUse() {
 	};
 }
 
-export function userImportedRecipeValues(sourceUrl: string) {
+export function userImportedRecipeValues(sourceUrl: string, userId?: string) {
 	return {
 		sourceUrl,
 		rawData: {} as Record<string, unknown>,
 		isCurated: false as const,
 		source: "import" as const,
+		userId: userId ?? null,
 	};
 }
 
