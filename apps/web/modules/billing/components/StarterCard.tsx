@@ -26,10 +26,6 @@ export type StarterTile = {
 	meta: string | null;
 };
 
-export function tileImageUrl(image: string | null, heroIconUrl: string | null) {
-	return heroIconUrl ?? image;
-}
-
 export function StarterCarousel({ tiles }: { tiles: StarterTile[] }) {
 	const t = useTranslations("home");
 	const scroller = useRef<HTMLDivElement>(null);
