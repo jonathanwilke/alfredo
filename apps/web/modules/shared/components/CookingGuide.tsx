@@ -371,7 +371,6 @@ export function CookingGuide({
 										<StepCopy
 											step={item}
 											locale={locale}
-											iconsByKey={iconsByKey}
 											alertBody={t("timerDone")}
 											stepIndex={stepIndex}
 										/>
@@ -389,13 +388,11 @@ export function CookingGuide({
 function StepCopy({
 	step,
 	locale,
-	iconsByKey,
 	alertBody,
 	stepIndex,
 }: {
 	step: CookingStep;
 	locale: string;
-	iconsByKey: Record<string, string>;
 	alertBody: string;
 	stepIndex: number;
 }) {
@@ -408,7 +405,6 @@ function StepCopy({
 					piece={piece}
 					stepId={step.id}
 					stepIndex={stepIndex}
-					iconsByKey={iconsByKey}
 					alertBody={alertBody}
 				/>
 			))}
@@ -420,13 +416,11 @@ function StepFragment({
 	piece,
 	stepId,
 	stepIndex,
-	iconsByKey,
 	alertBody,
 }: {
 	piece: StepPiece;
 	stepId: string;
 	stepIndex: number;
-	iconsByKey: Record<string, string>;
 	alertBody: string;
 }) {
 	const { timers } = useTimerClock();
@@ -448,34 +442,17 @@ function StepFragment({
 						alertBody: `${alertBody} · ${piece.text}`,
 					});
 				}}
-				className={`mx-[0.12em] inline-flex cursor-pointer items-center gap-[0.2em] rounded-full border-0 px-[0.35em] py-[0.02em] align-baseline font-semibold text-[0.72em] text-timer ${running ? "bg-timer/25" : "bg-timer/10"}`}
+				className={`mx-[0.12em] inline cursor-pointer rounded-full border-0 px-[0.35em] py-[0.02em] align-baseline font-semibold text-[0.72em] text-timer ${running ? "bg-timer/25" : "bg-timer/10"}`}
 			>
-				<Timer
-					aria-hidden
-					strokeWidth={2.25}
-					className="size-[0.9em]"
-				/>
 				{piece.text}
 			</button>
 		);
 	}
 
-	const iconKey = piece.ingredient?.canonicalKey
-		? ingredientIconKey(piece.ingredient.canonicalKey)
-		: null;
-	const iconUrl = iconKey ? iconsByKey[iconKey] : null;
 	const emphasized = Boolean(piece.ingredient || piece.emphasis);
 
 	return (
 		<span className={emphasized ? "font-semibold" : undefined}>
-			{iconUrl ? (
-				// biome-ignore lint/performance/noImgElement: icon URLs are stored objects, not next/image assets
-				<img
-					src={iconUrl}
-					alt=""
-					className="mr-[0.15em] inline-block size-[1.05em] rounded-[0.25em] object-cover align-[-0.15em]"
-				/>
-			) : null}
 			{piece.text}
 		</span>
 	);

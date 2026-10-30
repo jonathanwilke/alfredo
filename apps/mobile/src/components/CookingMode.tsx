@@ -334,7 +334,6 @@ export function CookingMode({
 								locale={locale}
 								label={copy.recipe.stepLabel(stepIndex + 1)}
 								alertBody={copy.recipe.timerDone}
-								iconsByKey={iconsByKey}
 								onFocus={focusStep}
 								onLayout={(layout) => {
 									layouts.current[stepIndex] = layout;
@@ -358,7 +357,6 @@ function StepBlock({
 	locale,
 	label,
 	alertBody,
-	iconsByKey,
 	onFocus,
 	onLayout,
 }: {
@@ -370,7 +368,6 @@ function StepBlock({
 	locale: string;
 	label: string;
 	alertBody: string;
-	iconsByKey: Record<string, string>;
 	onFocus: (index: number) => void;
 	onLayout: (layout: StepLayout) => void;
 }) {
@@ -411,7 +408,6 @@ function StepBlock({
 				stepId={step.id}
 				stepIndex={index}
 				alertBody={alertBody}
-				iconsByKey={iconsByKey}
 				onFocus={() => onFocus(index)}
 			/>
 		</Animated.View>
@@ -425,7 +421,6 @@ function StepCopy({
 	stepId,
 	stepIndex,
 	alertBody,
-	iconsByKey,
 	onFocus,
 }: {
 	pieces: StepPiece[];
@@ -434,7 +429,6 @@ function StepCopy({
 	stepId: string;
 	stepIndex: number;
 	alertBody: string;
-	iconsByKey: Record<string, string>;
 	onFocus: () => void;
 }) {
 	return (
@@ -453,10 +447,6 @@ function StepCopy({
 						/>
 					);
 				}
-				const iconKey = piece.ingredient?.canonicalKey
-					? ingredientIconKey(piece.ingredient.canonicalKey)
-					: null;
-				const iconUrl = iconKey ? iconsByKey[iconKey] : null;
 				const tokens = piece.text.match(/\s+|\S+/g) ?? [];
 				return tokens.map((token, tokenIndex) => (
 					<Text
@@ -473,12 +463,6 @@ function StepCopy({
 							color: colors.foreground,
 						}}
 					>
-						{iconUrl && tokenIndex === 0 ? (
-							<Image
-								source={{ uri: iconUrl }}
-								style={styles.inlineIcon}
-							/>
-						) : null}
 						{token}
 					</Text>
 				));
@@ -528,11 +512,6 @@ function TimerChip({
 				},
 			]}
 		>
-			<Timer
-				color={colors.timer}
-				size={Math.round(fontSize * 0.62)}
-				strokeWidth={2.25}
-			/>
 			<Text
 				style={{
 					fontFamily: fonts.label,
@@ -827,11 +806,6 @@ const styles = StyleSheet.create({
 		paddingVertical: 4,
 		marginHorizontal: 3,
 		marginVertical: 2,
-	},
-	inlineIcon: {
-		width: 28,
-		height: 28,
-		borderRadius: 6,
 	},
 	sideScroll: {
 		width: 320,
