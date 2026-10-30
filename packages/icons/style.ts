@@ -41,14 +41,14 @@ export interface DishPromptSource {
 }
 
 const DISH_ONLY_THESE = [
-	"Show only these ingredients; do not add any other ingredients, garnishes, herbs, vegetables, sauces or side dishes that are not listed.",
+	"Light decorative garnish that suits the dish is allowed even when it is not listed, such as a few berries, a mint leaf, a dollop of whipped cream, a dusting of powdered sugar on pancakes or crêpes, or fresh herbs sprinkled on top.",
+	"Do not add extra main ingredients, vegetables, sauces, or toppings inside the dish that are not listed and that would change what the dish is, such as lettuce or tomato on a burger.",
+	"Do not add side dishes, such as fries, unless they are listed.",
 	"Salt, pepper and oil may be invisible.",
 ].join(" ");
 
-const DISH_PROPS = [
-	"Plates, cutlery, glasses of water, and napkins are allowed.",
-	"Do not add extra food side dishes, such as fries, unless they are listed.",
-].join(" ");
+const DISH_PROPS =
+	"Plates, cutlery, glasses of water, and napkins are allowed.";
 
 export function dishIngredientLabel(ingredient: DishPromptIngredient) {
 	const name = ingredient.canonicalKey.replaceAll("-", " ").trim();

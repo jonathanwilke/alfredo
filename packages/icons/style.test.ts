@@ -16,7 +16,7 @@ const smashBurger = [
 ];
 
 describe("iconPrompt", () => {
-	it("names every stored ingredient and forbids anything else", () => {
+	it("names every stored ingredient and allows only a light garnish", () => {
 		const source = dishPromptInput(
 			[
 				{
@@ -58,20 +58,29 @@ describe("iconPrompt", () => {
 			assert.equal(prompt.includes(label), true, label);
 		}
 
+		const ingredientsLine = prompt.slice(
+			prompt.indexOf("Ingredients:"),
+			prompt.indexOf("Light decorative garnish"),
+		);
+		assert.equal(ingredientsLine.includes("lettuce"), false);
+		assert.equal(ingredientsLine.includes("tomato"), false);
 		assert.match(
 			prompt,
-			/Show only these ingredients; do not add any other ingredients, garnishes, herbs, vegetables, sauces or side dishes that are not listed\. Salt, pepper and oil may be invisible\./,
+			/Light decorative garnish that suits the dish is allowed even when it is not listed, such as a few berries, a mint leaf, a dollop of whipped cream, a dusting of powdered sugar on pancakes or crêpes, or fresh herbs sprinkled on top\./,
 		);
+		assert.match(
+			prompt,
+			/Do not add extra main ingredients, vegetables, sauces, or toppings inside the dish that are not listed and that would change what the dish is, such as lettuce or tomato on a burger\./,
+		);
+		assert.match(
+			prompt,
+			/Do not add side dishes, such as fries, unless they are listed\./,
+		);
+		assert.match(prompt, /Salt, pepper and oil may be invisible\./);
 		assert.match(
 			prompt,
 			/Plates, cutlery, glasses of water, and napkins are allowed\./,
 		);
-		assert.match(
-			prompt,
-			/Do not add extra food side dishes, such as fries, unless they are listed\./,
-		);
-		assert.equal(prompt.includes("lettuce"), false);
-		assert.equal(prompt.includes("tomato"), false);
 		assert.equal(prompt.includes("Client title"), false);
 	});
 });
