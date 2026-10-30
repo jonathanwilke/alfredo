@@ -28,11 +28,8 @@ const nextConfig: NextConfig = {
 			},
 			{
 				protocol: "https",
-				hostname: "**",
-			},
-			{
-				protocol: "http",
-				hostname: "**",
+				hostname: "**.aws.neon.tech",
+				pathname: "/icons/**",
 			},
 		],
 	},
