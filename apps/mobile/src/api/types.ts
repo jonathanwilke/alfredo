@@ -42,6 +42,10 @@ export const starterSchema = z.object({
 	recipeId: z.string(),
 	title: z.string(),
 	servedLocale: z.string(),
+	image: z.string().nullable().optional(),
+	heroIconUrl: z.string().nullable().optional(),
+	servings: z.number().positive().optional(),
+	totalTimeSeconds: z.number().int().nonnegative().nullable().optional(),
 });
 
 export const iconSchema = z.object({
