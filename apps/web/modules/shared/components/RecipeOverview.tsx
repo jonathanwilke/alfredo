@@ -80,7 +80,6 @@ export function RecipeOverview({
 	if (cooking) {
 		return (
 			<CookingGuide
-				recipeId={recipeId}
 				onExit={() => setCooking(false)}
 				steps={content.steps.map((step) => ({
 					id: step.id,

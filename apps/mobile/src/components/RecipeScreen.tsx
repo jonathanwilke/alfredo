@@ -152,12 +152,6 @@ function RecipeBody({
 	const iconsByKey = new Map(
 		icons.ingredients.map((icon) => [icon.key, icon]),
 	);
-	const iconUrls: Record<string, string> = {};
-	for (const icon of icons.ingredients) {
-		if (icon.status === "ready" && icon.url) {
-			iconUrls[icon.key] = icon.url;
-		}
-	}
 
 	useEffect(() => {
 		let cancelled = false;
@@ -279,11 +273,7 @@ function RecipeBody({
 		return (
 			<>
 				<StatusBar style="light" />
-				<CookingMode
-					steps={steps}
-					iconsByKey={iconUrls}
-					onExit={() => setCooking(false)}
-				/>
+				<CookingMode steps={steps} onExit={() => setCooking(false)} />
 			</>
 		);
 	}

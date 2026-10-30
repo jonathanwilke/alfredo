@@ -1,6 +1,5 @@
 "use client";
 
-import { api } from "@shared/lib/api";
 import {
 	addCookMinute,
 	cancelCookTimer,
@@ -16,7 +15,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import {
 	decorateStep,
-	ingredientIconKey,
 	type StepIngredient,
 	type StepPiece,
 } from "./highlight-step";
@@ -73,11 +71,9 @@ function piecesFor(step: CookingStep, locale: string) {
 }
 
 export function CookingGuide({
-	recipeId,
 	steps,
 	onExit,
 }: {
-	recipeId: string;
 	steps: CookingStep[];
 	onExit: () => void;
 }) {
@@ -87,41 +83,10 @@ export function CookingGuide({
 	const alert = useTimerAlert();
 	const [index, setIndex] = useState(0);
 	const [banner, setBanner] = useState<string | null>(null);
-	const [iconsByKey, setIconsByKey] = useState<Record<string, string>>({});
 	const scrollerRef = useRef<HTMLDivElement>(null);
 	const stepRefs = useRef<(HTMLElement | null)[]>([]);
 	const focusing = useRef(false);
 	const step = steps[index];
-
-	useEffect(() => {
-		let stopped = false;
-		let timer = 0;
-
-		async function load() {
-			const result = await api.icons.list({ recipeId });
-			if (stopped) {
-				return;
-			}
-			const ready: Record<string, string> = {};
-			for (const icon of result.ingredients) {
-				if (icon.status === "ready" && icon.url) {
-					ready[icon.key] = icon.url;
-				}
-			}
-			setIconsByKey(ready);
-			if (result.ingredients.some((icon) => icon.status === "pending")) {
-				timer = window.setTimeout(() => {
-					void load();
-				}, 2000);
-			}
-		}
-
-		void load();
-		return () => {
-			stopped = true;
-			window.clearTimeout(timer);
-		};
-	}, [recipeId]);
 
 	useEffect(() => {
 		let lock: WakeLockSentinel | null = null;
@@ -279,105 +244,45 @@ export function CookingGuide({
 			) : null}
 			<div className="relative flex min-h-0 flex-1">
 				<TimerTray timers={timers} now={now} />
-				<div className="flex min-h-0 flex-1">
-					<aside className="hidden w-80 shrink-0 overflow-y-auto border-r border-border px-6 py-8 lg:block">
-						<h2 className="font-heading text-3xl">
-							{t("stepIngredients")}
-						</h2>
-						{step.ingredients.length === 0 ? (
-							<p className="mt-4 text-lg text-muted-foreground">
-								—
-							</p>
-						) : (
-							<ul className="mt-5 flex flex-col gap-4">
-								{step.ingredients.map((ingredient) => {
-									const key = ingredient.canonicalKey
-										? ingredientIconKey(
-												ingredient.canonicalKey,
-											)
-										: null;
-									const iconUrl = key
-										? iconsByKey[key]
-										: null;
-									const amount = [
-										ingredient.scaledQuantity,
-										ingredient.scaledUnit ??
-											ingredient.unit,
-									]
-										.filter(Boolean)
-										.join(" ");
-									return (
-										<li
-											key={ingredient.id}
-											className="flex items-center gap-3"
-										>
-											{iconUrl ? (
-												// biome-ignore lint/performance/noImgElement: icon URLs are stored objects, not next/image assets
-												<img
-													src={iconUrl}
-													alt=""
-													className="size-12 rounded-2xl object-cover"
-												/>
-											) : (
-												<span className="size-12 rounded-2xl bg-accent" />
-											)}
-											<span className="min-w-0">
-												<span className="block text-lg">
-													{ingredient.name}
-												</span>
-												{amount ? (
-													<span className="block text-base text-muted-foreground">
-														{amount}
-													</span>
-												) : null}
-											</span>
-										</li>
-									);
-								})}
-							</ul>
-						)}
-					</aside>
-					<div
-						ref={scrollerRef}
-						onScroll={updateActive}
-						className="min-h-0 flex-1 overflow-y-auto px-5 sm:px-8"
-					>
-						<div className="mx-auto w-full max-w-3xl pt-[12vh] pb-[62vh]">
-							{steps.map((item, stepIndex) => {
-								const distance = Math.abs(index - stepIndex);
-								return (
-									// biome-ignore lint/a11y/useKeyWithClickEvents: arrow keys and the step label handle the keyboard
-									<article
-										key={item.id}
-										ref={(element) => {
-											stepRefs.current[stepIndex] =
-												element;
-										}}
+				<div
+					ref={scrollerRef}
+					onScroll={updateActive}
+					className="min-h-0 flex-1 overflow-y-auto px-5 sm:px-8"
+				>
+					<div className="mx-auto w-full max-w-3xl pt-[12vh] pb-[62vh]">
+						{steps.map((item, stepIndex) => {
+							const distance = Math.abs(index - stepIndex);
+							return (
+								// biome-ignore lint/a11y/useKeyWithClickEvents: arrow keys and the step label handle the keyboard
+								<article
+									key={item.id}
+									ref={(element) => {
+										stepRefs.current[stepIndex] = element;
+									}}
+									onClick={() => focusStep(stepIndex)}
+									className="scroll-mt-[18vh] cursor-pointer py-8 transition-opacity duration-300 motion-reduce:transition-none"
+									style={{
+										opacity: distance === 0 ? 1 : 0.32,
+									}}
+								>
+									<button
+										type="button"
 										onClick={() => focusStep(stepIndex)}
-										className="scroll-mt-[18vh] cursor-pointer py-8 transition-opacity duration-300 motion-reduce:transition-none"
-										style={{
-											opacity: distance === 0 ? 1 : 0.32,
-										}}
+										className="mb-3 font-sans text-[13px] font-semibold tracking-[0.14em] uppercase"
 									>
-										<button
-											type="button"
-											onClick={() => focusStep(stepIndex)}
-											className="mb-3 font-sans text-[13px] font-semibold tracking-[0.14em] uppercase"
-										>
-											{t("stepLabel", {
-												step: stepIndex + 1,
-											})}
-										</button>
-										<StepCopy
-											step={item}
-											locale={locale}
-											alertBody={t("timerDone")}
-											stepIndex={stepIndex}
-										/>
-									</article>
-								);
-							})}
-						</div>
+										{t("stepLabel", {
+											step: stepIndex + 1,
+										})}
+									</button>
+									<StepCopy
+										step={item}
+										locale={locale}
+										alertBody={t("timerDone")}
+										stepIndex={stepIndex}
+									/>
+								</article>
+							);
+						})}
 					</div>
 				</div>
 			</div>

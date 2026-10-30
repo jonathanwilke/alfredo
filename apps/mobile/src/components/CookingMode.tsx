@@ -3,7 +3,6 @@ import { ChevronDown, ChevronUp, Timer, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
 	AccessibilityInfo,
-	Image,
 	Pressable,
 	ScrollView,
 	type ScrollViewInstance,
@@ -22,7 +21,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useI18n } from "@/i18n";
 import {
 	decorateStep,
-	ingredientIconKey,
 	type StepIngredient,
 	type StepPiece,
 } from "@/lib/highlight-step";
@@ -124,15 +122,13 @@ function closestStep(
 
 export function CookingMode({
 	steps,
-	iconsByKey,
 	onExit,
 }: {
 	steps: CookingStep[];
-	iconsByKey: Record<string, string>;
 	onExit: () => void;
 }) {
 	const { copy, locale } = useI18n();
-	const { split, pagePadding, isTablet } = useLayout();
+	const { pagePadding, isTablet } = useLayout();
 	const insets = useSafeAreaInsets();
 	const { timers, now } = useTimerClock();
 	const alert = useTimerAlert();
@@ -289,14 +285,7 @@ export function CookingMode({
 				</View>
 			) : null}
 			<View style={styles.stage}>
-				<View style={[styles.body, split ? styles.bodySplit : null]}>
-					{split ? (
-						<IngredientColumn
-							ingredients={step.ingredients}
-							iconsByKey={iconsByKey}
-							title={copy.recipe.stepIngredients}
-						/>
-					) : null}
+				<View style={styles.body}>
 					<ScrollView
 						ref={scrollRef}
 						style={styles.stepScroll}
@@ -526,93 +515,6 @@ function TimerChip({
 	);
 }
 
-function IngredientColumn({
-	ingredients,
-	iconsByKey,
-	title,
-}: {
-	ingredients: StepIngredient[];
-	iconsByKey: Record<string, string>;
-	title: string;
-}) {
-	return (
-		<ScrollView
-			style={styles.sideScroll}
-			contentContainerStyle={[
-				styles.side,
-				{
-					borderColor: colors.border,
-					backgroundColor: colors.card,
-				},
-			]}
-		>
-			<Text style={[styles.sideTitle, { color: colors.foreground }]}>
-				{title}
-			</Text>
-			{ingredients.length === 0 ? (
-				<Text
-					style={[
-						styles.sideEmpty,
-						{ color: colors.mutedForeground },
-					]}
-				>
-					—
-				</Text>
-			) : (
-				ingredients.map((ingredient) => {
-					const key = ingredient.canonicalKey
-						? ingredientIconKey(ingredient.canonicalKey)
-						: null;
-					const iconUrl = key ? iconsByKey[key] : null;
-					const amount = [
-						ingredient.scaledQuantity,
-						ingredient.scaledUnit ?? ingredient.unit,
-					]
-						.filter(Boolean)
-						.join(" ");
-					return (
-						<View key={ingredient.id} style={styles.sideRow}>
-							{iconUrl ? (
-								<Image
-									source={{ uri: iconUrl }}
-									style={styles.sideIcon}
-								/>
-							) : (
-								<View
-									style={[
-										styles.sideIcon,
-										{ backgroundColor: colors.accent },
-									]}
-								/>
-							)}
-							<View style={styles.sideCopy}>
-								<Text
-									style={[
-										styles.sideName,
-										{ color: colors.foreground },
-									]}
-								>
-									{ingredient.name}
-								</Text>
-								{amount ? (
-									<Text
-										style={[
-											styles.sideAmount,
-											{ color: colors.mutedForeground },
-										]}
-									>
-										{amount}
-									</Text>
-								) : null}
-							</View>
-						</View>
-					);
-				})
-			)}
-		</ScrollView>
-	);
-}
-
 function TimerTray({
 	timers,
 	now,
@@ -775,10 +677,6 @@ const styles = StyleSheet.create({
 	body: {
 		flex: 1,
 	},
-	bodySplit: {
-		flexDirection: "row",
-		alignItems: "stretch",
-	},
 	stepScroll: {
 		flex: 1,
 	},
@@ -806,47 +704,6 @@ const styles = StyleSheet.create({
 		paddingVertical: 4,
 		marginHorizontal: 3,
 		marginVertical: 2,
-	},
-	sideScroll: {
-		width: 320,
-		marginLeft: 24,
-		marginBottom: 12,
-	},
-	side: {
-		borderRadius: 28,
-		borderWidth: 1,
-		padding: 20,
-		gap: 16,
-	},
-	sideTitle: {
-		fontFamily: fonts.display,
-		fontSize: 28,
-	},
-	sideEmpty: {
-		fontFamily: fonts.body,
-		fontSize: 18,
-	},
-	sideRow: {
-		flexDirection: "row",
-		alignItems: "center",
-		gap: 12,
-	},
-	sideIcon: {
-		width: 48,
-		height: 48,
-		borderRadius: 16,
-	},
-	sideCopy: {
-		flex: 1,
-		gap: 2,
-	},
-	sideName: {
-		fontFamily: fonts.body,
-		fontSize: 18,
-	},
-	sideAmount: {
-		fontFamily: fonts.body,
-		fontSize: 16,
 	},
 	floatWrap: {
 		position: "absolute",
