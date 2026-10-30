@@ -10,7 +10,7 @@ export const scheduleIcons = publicProcedure
 		tags: ["Icons"],
 		summary: "Queue icon generation after a recipe import",
 		description:
-			"Inserts pending icon rows and returns immediately. Image generation runs after the response and does not count as an import.",
+			"Inserts pending icon rows and returns immediately. Image generation runs after the response and does not count as an import. Dish photos are prompted from the recipe stored for recipeId. ingredientKeys only queue ingredient icons.",
 	})
 	.input(
 		z.object({

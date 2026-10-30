@@ -29,7 +29,95 @@ export function imageModelId() {
 	return process.env.AI_GATEWAY_IMAGE_MODEL || DEFAULT_IMAGE_MODEL;
 }
 
-export function iconPrompt(subject: string) {
+export interface DishPromptIngredient {
+	canonicalKey: string;
+	form?: string | null;
+}
+
+export interface DishPromptSource {
+	locale: string;
+	title: string;
+	ingredients: DishPromptIngredient[];
+}
+
+const DISH_ONLY_THESE = [
+	"Show only these ingredients; do not add any other ingredients, garnishes, herbs, vegetables, sauces or side dishes that are not listed.",
+	"Salt, pepper and oil may be invisible.",
+].join(" ");
+
+const DISH_PROPS = [
+	"Plates, cutlery, glasses of water, and napkins are allowed.",
+	"Do not add extra food side dishes, such as fries, unless they are listed.",
+].join(" ");
+
+export function dishIngredientLabel(ingredient: DishPromptIngredient) {
+	const name = ingredient.canonicalKey.replaceAll("-", " ").trim();
+	const form = ingredient.form?.trim() ?? "";
+	if (!name) {
+		return "";
+	}
+	if (!form) {
+		return name;
+	}
+	return `${name} (${form})`;
+}
+
+/**
+ * English translation when one is stored; otherwise the fullest list.
+ * canonicalKey is the English ingredient name. Form comes from that same translation.
+ */
+export function dishPromptInput(
+	translations: DishPromptSource[],
+	fallbackTitle = "",
+) {
+	if (translations.length === 0) {
+		const title = fallbackTitle.trim();
+		if (!title) {
+			return null;
+		}
+		return { title, ingredients: [] as DishPromptIngredient[] };
+	}
+
+	const english = translations.find((item) => item.locale === "en");
+	const source =
+		english ??
+		translations.reduce((fullest, item) =>
+			item.ingredients.length > fullest.ingredients.length
+				? item
+				: fullest,
+		);
+	const title = source.title.trim() || fallbackTitle.trim();
+	const ingredients: DishPromptIngredient[] = [];
+	const seen = new Set<string>();
+
+	for (const ingredient of source.ingredients) {
+		const canonicalKey = ingredient.canonicalKey.trim();
+		const key = canonicalKey.toLowerCase();
+		if (!key || seen.has(key)) {
+			continue;
+		}
+		seen.add(key);
+		ingredients.push({
+			canonicalKey,
+			form: ingredient.form?.trim() || null,
+		});
+	}
+
+	return { title, ingredients };
+}
+
+export function iconPrompt(input: {
+	title: string;
+	ingredients: DishPromptIngredient[];
+}) {
+	const listed = input.ingredients
+		.map(dishIngredientLabel)
+		.filter((label) => label.length > 0);
+	const ingredients =
+		listed.length > 0
+			? `Ingredients: ${listed.join("; ")}.`
+			: "Ingredients: none listed.";
+
 	return [
 		"A photorealistic cookbook photograph, wide 16:9 frame.",
 		"The finished dish is served and ready to eat, centered, filling most of the frame.",
@@ -38,7 +126,10 @@ export function iconPrompt(subject: string) {
 		"Overhead or a slight three-quarter view. Editorial food photography, appetizing and real.",
 		"No text, no logo, no watermark, no people, no hands.",
 		"Not an illustration, not clay, not a toy, not a 3D icon.",
-		`Subject: the finished dish, ${subject}.`,
+		`Subject: the finished dish, ${input.title}.`,
+		ingredients,
+		DISH_ONLY_THESE,
+		DISH_PROPS,
 	].join(" ");
 }
 

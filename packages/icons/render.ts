@@ -1,6 +1,7 @@
 import { generateText } from "ai";
 import sharp from "sharp";
 import {
+	type DishPromptIngredient,
 	INGREDIENT_IMAGE_CONFIG,
 	iconPrompt,
 	imageModelId,
@@ -91,10 +92,11 @@ export async function renderIcon(
 export function subjectPrompt(
 	subject: string,
 	kind: "ingredient" | "recipe" = "recipe",
+	ingredients: DishPromptIngredient[] = [],
 ) {
 	if (kind === "ingredient") {
 		return ingredientIconPrompt(subject);
 	}
 
-	return iconPrompt(subject);
+	return iconPrompt({ title: subject, ingredients });
 }
