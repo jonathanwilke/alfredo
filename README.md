@@ -6,6 +6,7 @@ ulivo turns a recipe URL into an ad-free, step-by-step cooking guide. Paste a li
 
 - Turborepo and pnpm
 - `apps/web`: Next.js App Router, Tailwind CSS, shadcn-style components in `modules/ui`, next-intl (`de`, `en`)
+- `apps/mobile`: Expo SDK 58 and Expo Router. It calls the OpenAPI routes under `/api` (not the oRPC client).
 - `packages/database`: Drizzle ORM and Neon Postgres
 - `packages/auth`: better-auth, email magic link and Google
 - `packages/api`: oRPC, a typed client, and an OpenAPI document
@@ -48,6 +49,18 @@ pnpm dev
 
 Open http://localhost:3000. The locale follows the browser. German is the fallback, at `/`. English is at `/en`.
 
+## Mobile
+
+```bash
+pnpm --filter @repo/mobile dev
+```
+
+`EXPO_PUBLIC_API_URL` in `apps/mobile/.env` is the site origin. It defaults to `https://ulivo.app`. Copy `apps/mobile/.env.example` when you want a local API.
+
+Sign-in uses the `ulivo://` scheme. A development build (`npx expo run:ios` or `npx expo run:android` from `apps/mobile`) can return from the magic link and from Google. Expo Go uses `exp://`, which the auth server trusts only while `NODE_ENV` is `development`.
+
+The app shows the credit balance and history. It does not sell credits and does not link to a checkout page.
+
 ## API
 
 | Path                          | What it is                                                       |
@@ -55,7 +68,7 @@ Open http://localhost:3000. The locale follows the browser. German is the fallba
 | `POST /api/rpc`               | Typed oRPC endpoint used by `apps/web/modules/shared/lib/api.ts` |
 | `GET /api/health`             | Health check                                                     |
 | `GET /api/me`                 | Current user, or `null`                                          |
-| `GET /api/openapi`            | OpenAPI document for a future Expo client                        |
+| `GET /api/openapi`            | OpenAPI document. `apps/mobile` calls these routes directly      |
 | `GET /api/billing/packs`      | Credit packs: 10 / 20 / 50 recipes and their USD prices          |
 | `GET /api/billing/balance`    | Signed-in balance, or zero when logged out                       |
 | `GET /api/billing/history`    | Purchases, welcome credits, imports, refunds                     |

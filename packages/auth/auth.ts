@@ -1,4 +1,5 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
+import { expo } from "@better-auth/expo";
 import { config, getBaseUrl } from "@repo/config";
 import { account, db, session, user, verification } from "@repo/database";
 import { grantWelcomeCreditsForUser } from "@repo/payments";
@@ -31,7 +32,7 @@ export const auth = betterAuth({
 	appName: config.appName,
 	baseURL,
 	secret: authSecret(),
-	trustedOrigins: [baseURL],
+	trustedOrigins: [baseURL, "ulivo://", "ulivo://*"],
 	database: drizzleAdapter(db, {
 		provider: "pg",
 		schema: {
@@ -80,6 +81,7 @@ export const auth = betterAuth({
 		},
 	},
 	plugins: [
+		expo(),
 		magicLink({
 			disableSignUp: false,
 			sendMagicLink: async ({ email, url }) => {

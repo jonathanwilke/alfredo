@@ -1,0 +1,20 @@
+{
+	"name": "@repo/cooking",
+	"version": "0.0.0",
+	"private": true,
+	"main": "./index.ts",
+	"types": "./index.ts",
+	"exports": {
+		".": "./index.ts"
+	},
+	"scripts": {
+		"test": "tsx --test durations.test.ts",
+		"type-check": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@repo/tsconfig": "workspace:*",
+		"@types/node": "26.6.6",
+		"tsx": "^4.23.15",
+		"typescript": "7.0.2"
+	}
+}
