@@ -26,6 +26,9 @@ yarn-error.log*
 # turbo
 .turbo
 
+# expo
+.expo/
+
 # build
 dist/
 *.tsbuildinfo
