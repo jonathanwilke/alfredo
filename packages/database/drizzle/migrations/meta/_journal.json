@@ -50,6 +50,13 @@
       "when": 1793380379086,
       "tag": "0006_last_chamber",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793381062492,
+      "tag": "0007_old_namorita",
+      "breakpoints": true
     }
   ]
 }

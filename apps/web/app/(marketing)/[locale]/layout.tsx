@@ -1,11 +1,17 @@
 import { BillingProvider } from "@billing/components/BillingProvider";
 import { routing } from "@i18n/routing";
+import { getBaseUrl } from "@repo/config";
 import { Document } from "@shared/components/Document";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import type { PropsWithChildren } from "react";
 import "../../globals.css";
+
+export const metadata: Metadata = {
+	metadataBase: new URL(getBaseUrl()),
+};
 
 export function generateStaticParams() {
 	return routing.locales.map((locale) => ({ locale }));

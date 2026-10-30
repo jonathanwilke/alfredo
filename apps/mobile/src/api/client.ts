@@ -168,6 +168,27 @@ export const api = {
 			json,
 		);
 	},
+	async enableShare(recipeId: string, locale: Locale) {
+		const json = await request(
+			`/recipes/${encodeURIComponent(recipeId)}/share`,
+			{
+				method: "POST",
+				body: JSON.stringify({ recipeId, locale }),
+			},
+		);
+		return parse(
+			z.object({
+				shared: z.boolean(),
+				path: z.string().nullable(),
+			}),
+			json,
+		);
+	},
+	async disableShare(recipeId: string) {
+		await request(`/recipes/${encodeURIComponent(recipeId)}/share`, {
+			method: "DELETE",
+		});
+	},
 	async icons(recipeId: string): Promise<{
 		recipe: RecipeIcon | null;
 		ingredients: RecipeIcon[];

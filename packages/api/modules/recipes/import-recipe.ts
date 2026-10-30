@@ -9,6 +9,7 @@ import {
 import { auth } from "@repo/auth";
 import {
 	db,
+	imports,
 	recipes,
 	recipeTranslations,
 	rejectedDomains,
@@ -38,6 +39,8 @@ export interface StoredRecipe {
 	content: ExtractedRecipe;
 	isCurated: boolean;
 	servedLocale: string;
+	isOwner?: boolean;
+	shared?: boolean;
 }
 
 async function saveForSignedInUser(input: {
@@ -96,9 +99,48 @@ function storedFrom(
 	};
 }
 
+export async function viewerOwnsRecipe(
+	userId: string,
+	recipe: { id: string; userId: string | null },
+) {
+	if (recipe.userId === userId) {
+		return true;
+	}
+	const imported = await db.query.imports.findFirst({
+		where: and(eq(imports.userId, userId), eq(imports.recipeId, recipe.id)),
+	});
+	return Boolean(imported);
+}
+
+function servedTranslation(
+	recipe: {
+		isCurated: boolean;
+		translations: { locale: string; content: ExtractedRecipe }[];
+	},
+	locale: string,
+) {
+	const decision = resolveRecipeCharge({
+		existing: {
+			isCurated: recipe.isCurated,
+			locales: recipe.translations.map(
+				(translation) => translation.locale,
+			),
+		},
+		requestedLocale: locale,
+	});
+	if (decision.action !== "serve") {
+		return null;
+	}
+	return (
+		recipe.translations.find((item) => item.locale === decision.locale) ??
+		null
+	);
+}
+
 export async function loadRecipe(input: {
 	recipeId: string;
 	locale: string;
+	viewerUserId?: string | null;
 }): Promise<StoredRecipe | null> {
 	if (!z.string().uuid().safeParse(input.recipeId).success) {
 		return null;
@@ -111,26 +153,45 @@ export async function loadRecipe(input: {
 		return null;
 	}
 
-	const decision = resolveRecipeCharge({
-		existing: {
-			isCurated: recipe.isCurated,
-			locales: recipe.translations.map(
-				(translation) => translation.locale,
-			),
-		},
-		requestedLocale: input.locale,
-	});
-	if (decision.action !== "serve") {
+	const viewer = input.viewerUserId ?? null;
+	const owns = viewer ? await viewerOwnsRecipe(viewer, recipe) : false;
+	if (!recipe.isCurated && !owns) {
 		return null;
 	}
-
-	const translation = recipe.translations.find(
-		(item) => item.locale === decision.locale,
-	);
+	const translation = servedTranslation(recipe, input.locale);
 	if (!translation) {
 		return null;
 	}
-	return storedFrom(recipe, translation);
+	return {
+		...storedFrom(recipe, translation),
+		isOwner: owns,
+		shared: owns && Boolean(recipe.shareToken),
+	};
+}
+
+export async function loadSharedRecipe(input: {
+	token: string;
+	locale: string;
+}): Promise<StoredRecipe | null> {
+	if (!/^[A-Za-z0-9_-]{24}$/.test(input.token)) {
+		return null;
+	}
+	const recipe = await db.query.recipes.findFirst({
+		where: eq(recipes.shareToken, input.token),
+		with: { translations: true },
+	});
+	if (!recipe?.shareToken) {
+		return null;
+	}
+	const translation = servedTranslation(recipe, input.locale);
+	if (!translation) {
+		return null;
+	}
+	return {
+		...storedFrom(recipe, translation),
+		isOwner: false,
+		shared: false,
+	};
 }
 
 export async function ensureRecipeDescription(

@@ -17,6 +17,7 @@ import {
 import { LoginButton } from "./LoginButton";
 import { DishImage, useRecipeIcons } from "./RecipeIcons";
 import { SaveRecipeButton } from "./SaveRecipeButton";
+import { ShareRecipeButton } from "./ShareRecipeButton";
 import { SiteFooter } from "./SiteFooter";
 import { Wordmark } from "./Wordmark";
 
@@ -53,10 +54,16 @@ export function RecipeOverview({
 	recipeId,
 	content,
 	notice,
+	share,
 }: {
 	recipeId: string;
 	content: RecipeContent;
 	notice?: string | null;
+	share?: {
+		mode: "public" | "owner";
+		shared: boolean;
+		path?: string;
+	};
 }) {
 	const t = useTranslations("recipe");
 	const locale = useLocale();
@@ -188,6 +195,23 @@ export function RecipeOverview({
 							<ChefHat aria-hidden className="size-5" />
 							{t("start")}
 						</Button>
+					) : null}
+					{share ? (
+						<ShareRecipeButton
+							recipeId={recipeId}
+							title={content.title}
+							text={description ?? content.title}
+							locale={locale === "en" ? "en" : "de"}
+							mode={share.mode}
+							path={share.path}
+							shared={share.shared}
+							labels={{
+								share: t("share"),
+								stopSharing: t("stopSharing"),
+								linkCopied: t("linkCopied"),
+								shareFailed: t("shareFailed"),
+							}}
+						/>
 					) : null}
 				</SaveRecipeButton>
 				<div className="flex max-w-sm flex-col gap-3">

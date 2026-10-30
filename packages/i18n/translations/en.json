@@ -67,6 +67,10 @@
 		"saveSent": "Check your email for the sign-in link. Then this recipe is saved.",
 		"saveSentDev": "The sign-in link is in the server log. Open it and this recipe is saved.",
 		"saveFailed": "The recipe could not be saved. Try again.",
+		"share": "Share",
+		"stopSharing": "Stop sharing",
+		"linkCopied": "Link copied",
+		"shareFailed": "The recipe could not be shared. Try again.",
 		"curatedDe": "This dish is shown in German.",
 		"curatedEn": "This dish is shown in English."
 	},

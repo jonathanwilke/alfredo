@@ -67,6 +67,10 @@
 		"saveSent": "Schau in dein Postfach nach dem Link. Danach ist das Rezept gespeichert.",
 		"saveSentDev": "Der Link steht im Server-Log. Öffne ihn, dann ist das Rezept gespeichert.",
 		"saveFailed": "Das Rezept konnte nicht gespeichert werden. Versuch es noch einmal.",
+		"share": "Teilen",
+		"stopSharing": "Nicht mehr teilen",
+		"linkCopied": "Link kopiert",
+		"shareFailed": "Das Rezept konnte nicht geteilt werden. Versuch es noch einmal.",
 		"curatedDe": "Dieses Gericht wird auf Deutsch gezeigt.",
 		"curatedEn": "Dieses Gericht wird auf Englisch gezeigt."
 	},

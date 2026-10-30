@@ -6,6 +6,11 @@ import {
 	saveRecipe,
 	unsaveRecipe,
 } from "./procedures/save";
+import {
+	disableShare,
+	enableShare,
+	readSharedRecipe,
+} from "./procedures/share";
 import { starters } from "./procedures/starters";
 
 export const recipesRouter = {
@@ -16,4 +21,7 @@ export const recipesRouter = {
 	listSaved: listSavedRecipes,
 	save: saveRecipe,
 	unsave: unsaveRecipe,
+	share: enableShare,
+	unshare: disableShare,
+	shared: readSharedRecipe,
 };

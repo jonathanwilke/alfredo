@@ -36,6 +36,8 @@ export const storedRecipeSchema = z.object({
 	content: recipeContentSchema,
 	isCurated: z.boolean(),
 	servedLocale: z.string(),
+	isOwner: z.boolean().optional(),
+	shared: z.boolean().optional(),
 });
 
 export const starterSchema = z.object({

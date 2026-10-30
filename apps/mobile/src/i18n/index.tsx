@@ -131,6 +131,12 @@ function createCopy(locale: Locale) {
 			saveFailed: de
 				? "Das Rezept konnte nicht gespeichert werden. Versuch es noch einmal."
 				: "The recipe could not be saved. Try again.",
+			share: de ? "Teilen" : "Share",
+			stopSharing: de ? "Nicht mehr teilen" : "Stop sharing",
+			linkCopied: de ? "Link kopiert" : "Link copied",
+			shareFailed: de
+				? "Das Rezept konnte nicht geteilt werden. Versuch es noch einmal."
+				: "The recipe could not be shared. Try again.",
 			missing: de
 				? "Dieses Rezept ist nicht da."
 				: "That recipe is not here.",

@@ -1,7 +1,7 @@
 import { HomeImport } from "@billing/components/HomeImport";
 import { StarterRecipes } from "@billing/components/StarterRecipes";
 import { listStarterRecipes } from "@repo/api";
-import { config } from "@repo/config";
+import { config, getBaseUrl } from "@repo/config";
 import { LoginButton } from "@shared/components/LoginButton";
 import { SiteFooter } from "@shared/components/SiteFooter";
 import { ThemeToggle } from "@shared/components/ThemeToggle";
@@ -20,8 +20,20 @@ export async function generateMetadata({
 	const t = await getTranslations({ locale, namespace: "home" });
 
 	return {
+		metadataBase: new URL(getBaseUrl()),
 		title: `${config.appName} · ${t("title")}`,
 		description: t("subtitle"),
+		openGraph: {
+			title: `${config.appName} · ${t("title")}`,
+			description: t("subtitle"),
+			locale: locale === "de" ? "de_DE" : "en_US",
+			type: "website",
+		},
+		twitter: {
+			card: "summary_large_image",
+			title: `${config.appName} · ${t("title")}`,
+			description: t("subtitle"),
+		},
 	};
 }
 

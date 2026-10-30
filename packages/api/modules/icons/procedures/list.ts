@@ -1,6 +1,10 @@
+import { auth } from "@repo/auth";
+import { db, imports, recipes } from "@repo/database";
 import { listRecipeIcons } from "@repo/icons";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { publicProcedure } from "../../../orpc/procedures";
+import { canReadRecipeIcons } from "../../recipes/access";
 
 export const iconSchema = z.object({
 	id: z.string(),
@@ -24,7 +28,37 @@ export const listIcons = publicProcedure
 			ingredients: z.array(iconSchema),
 		}),
 	)
-	.handler(async ({ input }) => {
+	.handler(async ({ input, context }) => {
+		const recipe = await db.query.recipes.findFirst({
+			where: eq(recipes.id, input.recipeId),
+		});
+		const session = await auth.api.getSession({
+			headers: context.headers,
+		});
+		const viewerUserId = session?.user.id ?? null;
+		const hasImport = viewerUserId
+			? Boolean(
+					await db.query.imports.findFirst({
+						where: and(
+							eq(imports.userId, viewerUserId),
+							eq(imports.recipeId, input.recipeId),
+						),
+					}),
+				)
+			: false;
+		const allowed =
+			recipe != null &&
+			canReadRecipeIcons({
+				isCurated: recipe.isCurated,
+				shareToken: recipe.shareToken,
+				ownerUserId: recipe.userId,
+				viewerUserId,
+				hasImport,
+			});
+		if (!allowed) {
+			return { recipe: null, ingredients: [] };
+		}
+
 		const { recipeIcon, ingredientIcons } = await listRecipeIcons(
 			input.recipeId,
 		);

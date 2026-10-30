@@ -11,14 +11,17 @@ import {
 import { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
+	Platform,
 	Pressable,
 	ScrollView,
+	Share,
 	Text,
 	View,
 } from "react-native";
 import { ApiError, api, apiCode } from "@/api/client";
 import type { StoredRecipe } from "@/api/types";
 import { authClient } from "@/auth/client";
+import { siteOrigin } from "@/auth/origin";
 import { useRecipeIcons } from "@/hooks/useRecipeIcons";
 import { useI18n } from "@/i18n";
 import { ingredientIconKey, type StepIngredient } from "@/lib/highlight-step";
@@ -129,6 +132,7 @@ function RecipeBody({
 	const [servings, setServings] = useState(content.servings);
 	const [cooking, setCooking] = useState(false);
 	const [saved, setSaved] = useState(false);
+	const [shared, setShared] = useState(recipe.shared ?? false);
 	const [pending, setPending] = useState(false);
 	const [needsSignIn, setNeedsSignIn] = useState(false);
 	const [email, setEmail] = useState("");
@@ -278,6 +282,56 @@ function RecipeBody({
 		);
 	}
 
+	async function shareRecipe() {
+		setPending(true);
+		setNotice(null);
+		try {
+			const owner = recipe.isOwner ?? !recipe.isCurated;
+			const path = recipe.isCurated
+				? locale === "de"
+					? `/recipes/${recipe.recipeId}`
+					: `/${locale}/recipes/${recipe.recipeId}`
+				: owner
+					? (await api.enableShare(recipe.recipeId, locale)).path
+					: null;
+			if (!path) {
+				throw new Error("share");
+			}
+			const url = `${siteOrigin}${path}`;
+			if (owner && !recipe.isCurated) {
+				setShared(true);
+			}
+			await Share.share({
+				title: content.title,
+				message:
+					Platform.OS === "android"
+						? `${content.title}\n${url}`
+						: content.title,
+				url,
+			});
+		} catch (error) {
+			const message = error instanceof Error ? error.message : "";
+			if (/cancel|dismiss|did not share/i.test(message)) {
+				return;
+			}
+			setNotice(copy.recipe.shareFailed);
+		} finally {
+			setPending(false);
+		}
+	}
+
+	async function stopSharing() {
+		setPending(true);
+		try {
+			await api.disableShare(recipe.recipeId);
+			setShared(false);
+		} catch {
+			setNotice(copy.recipe.shareFailed);
+		} finally {
+			setPending(false);
+		}
+	}
+
 	const recipeIcon = icons.recipe;
 	const dishPhoto =
 		recipeIcon?.status === "ready" && recipeIcon.url ? (
@@ -347,6 +401,20 @@ function RecipeBody({
 								/>
 							}
 							onPress={() => setCooking(true)}
+						/>
+					) : null}
+					<Button
+						label={copy.recipe.share}
+						variant="ghost"
+						loading={pending}
+						onPress={() => void shareRecipe()}
+					/>
+					{shared && !recipe.isCurated ? (
+						<Button
+							label={copy.recipe.stopSharing}
+							variant="ghost"
+							loading={pending}
+							onPress={() => void stopSharing()}
 						/>
 					) : null}
 					<Button

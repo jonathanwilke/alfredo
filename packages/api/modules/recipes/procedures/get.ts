@@ -1,4 +1,5 @@
 import { extractedRecipeSchema } from "@repo/ai";
+import { auth } from "@repo/auth";
 import { z } from "zod";
 import { publicProcedure } from "../../../orpc/procedures";
 import { loadRecipe } from "../import-recipe";
@@ -22,13 +23,29 @@ export const getRecipe = publicProcedure
 		z
 			.object({
 				recipeId: z.string().uuid(),
-				sourceUrl: z.string().url(),
+				sourceUrl: z.string().min(1),
 				content: extractedRecipeSchema,
 				isCurated: z.boolean(),
 				servedLocale: z.string(),
+				isOwner: z.boolean(),
+				shared: z.boolean(),
 			})
 			.nullable(),
 	)
-	.handler(async ({ input }) => {
-		return await loadRecipe(input);
+	.handler(async ({ input, context }) => {
+		const session = await auth.api.getSession({
+			headers: context.headers,
+		});
+		const recipe = await loadRecipe({
+			...input,
+			viewerUserId: session?.user.id ?? null,
+		});
+		if (!recipe) {
+			return null;
+		}
+		return {
+			...recipe,
+			isOwner: recipe.isOwner ?? false,
+			shared: recipe.shared ?? false,
+		};
 	});

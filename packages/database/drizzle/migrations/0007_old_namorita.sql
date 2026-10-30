@@ -1,0 +1,2 @@
+ALTER TABLE "recipes" ADD COLUMN "share_token" text;--> statement-breakpoint
+CREATE UNIQUE INDEX "recipes_share_token_idx" ON "recipes" USING btree ("share_token") WHERE "recipes"."share_token" is not null;

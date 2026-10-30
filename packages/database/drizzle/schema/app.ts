@@ -37,6 +37,7 @@ export const recipes = pgTable(
 			(): AnyPgColumn => recipes.id,
 			{ onDelete: "set null" },
 		),
+		shareToken: text("share_token"),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),
@@ -51,6 +52,9 @@ export const recipes = pgTable(
 		uniqueIndex("recipes_user_source_idx")
 			.on(table.userId, table.sourceRecipeId)
 			.where(sql`${table.sourceRecipeId} is not null`),
+		uniqueIndex("recipes_share_token_idx")
+			.on(table.shareToken)
+			.where(sql`${table.shareToken} is not null`),
 	],
 );
 

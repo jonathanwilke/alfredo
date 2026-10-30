@@ -7,6 +7,7 @@ export type { StoredRecipe } from "./modules/recipes/import-recipe";
 export {
 	ensureRecipeDescription,
 	loadRecipe,
+	loadSharedRecipe,
 } from "./modules/recipes/import-recipe";
 export { listStarterRecipes } from "./modules/recipes/starters";
 export type { ApiRouterClient } from "./orpc/router";
