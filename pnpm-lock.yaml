@@ -199,6 +199,9 @@ importers:
       '@react-native-community/slider':
         specifier: 5.2.1
         version: 5.2.1
+      '@repo/cooking':
+        specifier: workspace:*
+        version: link:../../packages/cooking
       better-auth:
         specifier: ^1.7.14
         version: 1.7.14(drizzle-kit@0.31.11)(drizzle-orm@0.45.4(@types/pg@8.23.1)(kysely@0.29.7)(pg@8.23.1))(next@16.4.3(@babel/core@7.29.7(supports-color@8.1.1))(@types/node@26.6.6)(babel-plugin-react-compiler@1.0.0)(react-dom@19.3.1(react@19.3.0))(react@19.3.0))(pg@8.23.1)(react-dom@19.3.1(react@19.3.0))(react@19.3.0)
@@ -314,6 +317,9 @@ importers:
       '@repo/config':
         specifier: workspace:*
         version: link:../../config
+      '@repo/cooking':
+        specifier: workspace:*
+        version: link:../../packages/cooking
       '@repo/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
@@ -501,6 +507,21 @@ importers:
       '@types/react':
         specifier: 19.3.0
         version: 19.3.0
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+
+  packages/cooking:
+    devDependencies:
+      '@repo/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
+      '@types/node':
+        specifier: 26.6.6
+        version: 26.6.6
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
       typescript:
         specifier: 7.0.2
         version: 7.0.2

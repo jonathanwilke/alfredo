@@ -1,18 +1,24 @@
 "use client";
 
 import { api } from "@shared/lib/api";
-import { Button } from "@ui/components/button";
-import { Timer } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
-	findDuration,
-	findEmphasis,
-	highlightStep,
+	addCookMinute,
+	cancelCookTimer,
+	pauseCookTimer,
+	remainingSeconds,
+	resumeCookTimer,
+	startCookTimer,
+	useTimerAlert,
+	useTimerClock,
+} from "@shared/lib/cook-timers";
+import { ChevronDown, ChevronUp, Timer, X } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useRef, useState } from "react";
+import {
+	decorateStep,
 	ingredientIconKey,
-	placeDuration,
-	placeEmphasis,
 	type StepIngredient,
+	type StepPiece,
 } from "./highlight-step";
 
 interface CookingStep {
@@ -32,15 +38,38 @@ function formatClock(totalSeconds: number) {
 	return `${minutes}:${seconds}`;
 }
 
-function secondsLeft(endsAt: number, now: number) {
-	return Math.max(0, Math.ceil((endsAt - now) / 1000));
+function fallbackDuration(seconds: number, locale: string) {
+	const unit =
+		seconds < 60 ? "second" : seconds % 3600 === 0 ? "hour" : "minute";
+	const value =
+		unit === "second"
+			? seconds
+			: unit === "hour"
+				? Math.max(1, Math.round(seconds / 3600))
+				: Math.max(1, Math.round(seconds / 60));
+	return new Intl.NumberFormat(locale, {
+		style: "unit",
+		unit,
+		unitDisplay: "long",
+	}).format(value);
 }
 
-interface TimerOrigin {
-	left: number;
-	top: number;
-	width: number;
-	height: number;
+function piecesFor(step: CookingStep, locale: string) {
+	const pieces = decorateStep(step.text, step.ingredients);
+	if (pieces.some((piece) => piece.timer) || step.timerSeconds == null) {
+		return pieces;
+	}
+	return [
+		...pieces,
+		{
+			text: fallbackDuration(step.timerSeconds, locale),
+			ingredient: null,
+			timer: true,
+			timerSeconds: step.timerSeconds,
+			sourceStart: step.text.length,
+			sourceEnd: step.text.length,
+		} satisfies StepPiece,
+	];
 }
 
 export function CookingGuide({
@@ -54,18 +83,15 @@ export function CookingGuide({
 }) {
 	const t = useTranslations("recipe");
 	const locale = useLocale();
+	const { timers, now } = useTimerClock();
+	const alert = useTimerAlert();
 	const [index, setIndex] = useState(0);
-	const [now, setNow] = useState(() => Date.now());
-	const [running, setRunning] = useState<{
-		stepIndex: number;
-		endsAt: number;
-	} | null>(null);
-	const originRef = useRef<TimerOrigin | null>(null);
-	const floatRef = useRef<HTMLButtonElement>(null);
-	const floatMotionRef = useRef<Animation | null>(null);
+	const [banner, setBanner] = useState<string | null>(null);
 	const [iconsByKey, setIconsByKey] = useState<Record<string, string>>({});
+	const scrollerRef = useRef<HTMLDivElement>(null);
+	const stepRefs = useRef<(HTMLElement | null)[]>([]);
+	const focusing = useRef(false);
 	const step = steps[index];
-	const isLast = index === steps.length - 1;
 
 	useEffect(() => {
 		let stopped = false;
@@ -76,7 +102,6 @@ export function CookingGuide({
 			if (stopped) {
 				return;
 			}
-
 			const ready: Record<string, string> = {};
 			for (const icon of result.ingredients) {
 				if (icon.status === "ready" && icon.url) {
@@ -84,7 +109,6 @@ export function CookingGuide({
 				}
 			}
 			setIconsByKey(ready);
-
 			if (result.ingredients.some((icon) => icon.status === "pending")) {
 				timer = window.setTimeout(() => {
 					void load();
@@ -93,7 +117,6 @@ export function CookingGuide({
 		}
 
 		void load();
-
 		return () => {
 			stopped = true;
 			window.clearTimeout(timer);
@@ -122,7 +145,6 @@ export function CookingGuide({
 
 		void acquire();
 		document.addEventListener("visibilitychange", onVisible);
-
 		return () => {
 			document.removeEventListener("visibilitychange", onVisible);
 			void lock?.release();
@@ -130,283 +152,397 @@ export function CookingGuide({
 	}, []);
 
 	useEffect(() => {
-		if (!running || running.endsAt <= Date.now()) {
+		if (!alert) {
 			return;
 		}
+		setBanner(alert.label);
+		const timeout = window.setTimeout(() => {
+			setBanner((current) => (current === alert.label ? null : current));
+		}, 4000);
+		return () => window.clearTimeout(timeout);
+	}, [alert]);
 
-		const timer = window.setInterval(() => {
-			const next = Date.now();
-			setNow(next);
-			if (next >= running.endsAt) {
-				window.clearInterval(timer);
+	useEffect(() => {
+		function onKey(event: KeyboardEvent) {
+			const target = event.target;
+			if (
+				target instanceof HTMLInputElement ||
+				target instanceof HTMLTextAreaElement
+			) {
+				return;
 			}
-		}, 1000);
+			if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+				event.preventDefault();
+				focusStep(Math.min(steps.length - 1, index + 1));
+			}
+			if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+				event.preventDefault();
+				focusStep(Math.max(0, index - 1));
+			}
+		}
+		window.addEventListener("keydown", onKey);
+		return () => window.removeEventListener("keydown", onKey);
+	}, [index, steps.length]);
 
-		return () => window.clearInterval(timer);
-	}, [running]);
-
-	useLayoutEffect(() => {
-		const origin = originRef.current;
-		const el = floatRef.current;
-		if (!running || !origin || !el) {
+	function updateActive() {
+		const scroller = scrollerRef.current;
+		if (!scroller || focusing.current) {
 			return;
 		}
+		const root = scroller.getBoundingClientRect();
+		const focus = root.top + root.height * 0.32;
+		let best = 0;
+		let bestDistance = Number.POSITIVE_INFINITY;
+		stepRefs.current.forEach((element, stepIndex) => {
+			if (!element) {
+				return;
+			}
+			const box = element.getBoundingClientRect();
+			const distance = Math.abs(box.top + box.height / 2 - focus);
+			if (distance < bestDistance) {
+				best = stepIndex;
+				bestDistance = distance;
+			}
+		});
+		setIndex((current) => (current === best ? current : best));
+	}
 
-		const reduced = window.matchMedia(
+	function focusStep(next: number) {
+		const element = stepRefs.current[next];
+		if (!element) {
+			setIndex(next);
+			return;
+		}
+		focusing.current = true;
+		setIndex(next);
+		const reduce = window.matchMedia(
 			"(prefers-reduced-motion: reduce)",
 		).matches;
-		el.style.transform = "none";
-		const to = el.getBoundingClientRect();
-		if (reduced || to.height === 0) {
-			originRef.current = null;
-			return;
-		}
-
-		const dx = origin.left + origin.width / 2 - (to.left + to.width / 2);
-		const dy = origin.top + origin.height / 2 - (to.top + to.height / 2);
-		const scale = origin.height / to.height;
-		const from = `translate(${dx}px, ${dy}px) scale(${scale})`;
-		el.style.transform = from;
-		floatMotionRef.current?.cancel();
-		const animation = el.animate(
-			[{ transform: from }, { transform: "none" }],
-			{
-				duration: 480,
-				easing: "cubic-bezier(0.22, 1, 0.36, 1)",
-				fill: "forwards",
+		element.scrollIntoView({
+			behavior: reduce ? "auto" : "smooth",
+			block: "start",
+		});
+		window.setTimeout(
+			() => {
+				focusing.current = false;
 			},
+			reduce ? 0 : 450,
 		);
-		floatMotionRef.current = animation;
-		animation.onfinish = () => {
-			el.style.transform = "none";
-			animation.cancel();
-			originRef.current = null;
-		};
-
-		return () => {
-			animation.cancel();
-		};
-	}, [running]);
+	}
 
 	if (!step) {
 		return null;
 	}
 
-	const duration =
-		step.timerSeconds == null
-			? null
-			: findDuration(step.text, step.timerSeconds);
-	const pieces = placeDuration(
-		placeEmphasis(
-			highlightStep(step.text, step.ingredients),
-			findEmphasis(step.text),
-		),
-		duration,
+	return (
+		<main className="dark flex h-dvh flex-col overflow-hidden bg-background text-foreground">
+			<header className="flex shrink-0 items-center justify-between gap-4 px-5 py-5 sm:px-8">
+				<button type="button" onClick={onExit} className="text-lg">
+					{t("overview")}
+				</button>
+				<div className="flex items-center gap-2">
+					<button
+						type="button"
+						aria-label={t("previous")}
+						disabled={index === 0}
+						onClick={() => focusStep(Math.max(0, index - 1))}
+						className="disabled:opacity-50"
+					>
+						<ChevronUp aria-hidden className="size-7" />
+					</button>
+					<p className="text-lg tabular-nums">
+						{t("progress", {
+							current: index + 1,
+							total: steps.length,
+						})}
+					</p>
+					<button
+						type="button"
+						aria-label={t("next")}
+						disabled={index === steps.length - 1}
+						onClick={() =>
+							focusStep(Math.min(steps.length - 1, index + 1))
+						}
+						className="disabled:opacity-50"
+					>
+						<ChevronDown aria-hidden className="size-7" />
+					</button>
+				</div>
+			</header>
+			{banner ? (
+				<p
+					role="alert"
+					className="mx-5 mb-2 rounded-full bg-timer px-4 py-2 text-center font-semibold text-background sm:mx-8"
+				>
+					{t("timerDone")}
+				</p>
+			) : null}
+			<div className="flex min-h-0 flex-1">
+				<aside className="hidden w-80 shrink-0 overflow-y-auto border-r border-border px-6 py-8 lg:block">
+					<h2 className="font-heading text-3xl">
+						{t("stepIngredients")}
+					</h2>
+					{step.ingredients.length === 0 ? (
+						<p className="mt-4 text-lg text-muted-foreground">—</p>
+					) : (
+						<ul className="mt-5 flex flex-col gap-4">
+							{step.ingredients.map((ingredient) => {
+								const key = ingredient.canonicalKey
+									? ingredientIconKey(ingredient.canonicalKey)
+									: null;
+								const iconUrl = key ? iconsByKey[key] : null;
+								const amount = [
+									ingredient.scaledQuantity,
+									ingredient.scaledUnit ?? ingredient.unit,
+								]
+									.filter(Boolean)
+									.join(" ");
+								return (
+									<li
+										key={ingredient.id}
+										className="flex items-center gap-3"
+									>
+										{iconUrl ? (
+											// biome-ignore lint/performance/noImgElement: icon URLs are stored objects, not next/image assets
+											<img
+												src={iconUrl}
+												alt=""
+												className="size-12 rounded-2xl object-cover"
+											/>
+										) : (
+											<span className="size-12 rounded-2xl bg-accent" />
+										)}
+										<span className="min-w-0">
+											<span className="block text-lg">
+												{ingredient.name}
+											</span>
+											{amount ? (
+												<span className="block text-base text-muted-foreground">
+													{amount}
+												</span>
+											) : null}
+										</span>
+									</li>
+								);
+							})}
+						</ul>
+					)}
+				</aside>
+				<div
+					ref={scrollerRef}
+					onScroll={updateActive}
+					className="min-h-0 flex-1 overflow-y-auto px-5 sm:px-8"
+				>
+					<div className="mx-auto w-full max-w-3xl pt-[12vh] pb-[62vh]">
+						{steps.map((item, stepIndex) => {
+							const distance = Math.abs(index - stepIndex);
+							return (
+								// biome-ignore lint/a11y/useKeyWithClickEvents: arrow keys and the step label handle the keyboard
+								<article
+									key={item.id}
+									ref={(element) => {
+										stepRefs.current[stepIndex] = element;
+									}}
+									onClick={() => focusStep(stepIndex)}
+									className="scroll-mt-[18vh] cursor-pointer py-8 transition-opacity duration-300 motion-reduce:transition-none"
+									style={{
+										opacity: distance === 0 ? 1 : 0.32,
+									}}
+								>
+									<button
+										type="button"
+										onClick={() => focusStep(stepIndex)}
+										className="mb-3 font-sans text-[13px] font-semibold tracking-[0.14em] uppercase"
+									>
+										{t("stepLabel", {
+											step: stepIndex + 1,
+										})}
+									</button>
+									<StepCopy
+										step={item}
+										locale={locale}
+										iconsByKey={iconsByKey}
+										alertBody={t("timerDone")}
+										stepIndex={stepIndex}
+									/>
+								</article>
+							);
+						})}
+					</div>
+				</div>
+			</div>
+			<TimerTray timers={timers} now={now} />
+		</main>
 	);
-	const remaining = running ? secondsLeft(running.endsAt, now) : null;
+}
 
-	function wiggleFloatingTimer() {
-		const el = floatRef.current;
-		if (!el) {
-			return;
-		}
-		floatMotionRef.current?.cancel();
-		el.style.transform = "none";
-		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-			return;
-		}
-		floatMotionRef.current = el.animate(
-			[
-				{ transform: "translateX(0) rotate(0deg)" },
-				{ transform: "translateX(-6px) rotate(-7deg)", offset: 0.15 },
-				{ transform: "translateX(6px) rotate(7deg)", offset: 0.3 },
-				{ transform: "translateX(-5px) rotate(-5deg)", offset: 0.45 },
-				{ transform: "translateX(5px) rotate(5deg)", offset: 0.6 },
-				{ transform: "translateX(-2px) rotate(-2deg)", offset: 0.75 },
-				{ transform: "translateX(2px) rotate(2deg)", offset: 0.9 },
-				{ transform: "translateX(0) rotate(0deg)" },
-			],
-			{ duration: 1000, easing: "linear" },
+function StepCopy({
+	step,
+	locale,
+	iconsByKey,
+	alertBody,
+	stepIndex,
+}: {
+	step: CookingStep;
+	locale: string;
+	iconsByKey: Record<string, string>;
+	alertBody: string;
+	stepIndex: number;
+}) {
+	const pieces = piecesFor(step, locale);
+	return (
+		<p className="font-sans text-[30px] leading-[1.35] lg:text-[40px] lg:leading-[1.3]">
+			{pieces.map((piece, pieceIndex) => (
+				<StepFragment
+					key={`${piece.sourceStart}-${pieceIndex}`}
+					piece={piece}
+					stepId={step.id}
+					stepIndex={stepIndex}
+					iconsByKey={iconsByKey}
+					alertBody={alertBody}
+				/>
+			))}
+		</p>
+	);
+}
+
+function StepFragment({
+	piece,
+	stepId,
+	stepIndex,
+	iconsByKey,
+	alertBody,
+}: {
+	piece: StepPiece;
+	stepId: string;
+	stepIndex: number;
+	iconsByKey: Record<string, string>;
+	alertBody: string;
+}) {
+	const { timers } = useTimerClock();
+	if (piece.timer && piece.timerSeconds) {
+		const id = `${stepId}:${piece.sourceStart}`;
+		const running = timers.some(
+			(timer) => timer.id === id && timer.status !== "done",
+		);
+		return (
+			<button
+				type="button"
+				onClick={(event) => {
+					event.stopPropagation();
+					startCookTimer({
+						id,
+						label: piece.text,
+						stepIndex,
+						seconds: piece.timerSeconds ?? 0,
+						alertBody: `${alertBody} · ${piece.text}`,
+					});
+				}}
+				className={`mx-[0.12em] inline-flex cursor-pointer items-center gap-[0.2em] rounded-full border-0 px-[0.35em] py-[0.02em] align-baseline font-semibold text-[0.72em] text-timer ${running ? "bg-timer/25" : "bg-timer/10"}`}
+			>
+				<Timer
+					aria-hidden
+					strokeWidth={2.25}
+					className="size-[0.9em]"
+				/>
+				{piece.text}
+			</button>
 		);
 	}
 
-	function startTimer(event: React.MouseEvent<HTMLButtonElement>) {
-		if (step?.timerSeconds == null) {
-			return;
-		}
-		if (running?.stepIndex === index) {
-			wiggleFloatingTimer();
-			return;
-		}
-		const box = event.currentTarget.getBoundingClientRect();
-		originRef.current = {
-			left: box.left,
-			top: box.top,
-			width: box.width,
-			height: box.height,
-		};
-		const started = Date.now();
-		setNow(started);
-		setRunning({
-			stepIndex: index,
-			endsAt: started + step.timerSeconds * 1000,
-		});
-	}
-
-	function fallbackDuration(seconds: number) {
-		const unit =
-			seconds < 60 ? "second" : seconds % 3600 === 0 ? "hour" : "minute";
-		const value =
-			unit === "second"
-				? seconds
-				: unit === "hour"
-					? Math.max(1, Math.round(seconds / 3600))
-					: Math.max(1, Math.round(seconds / 60));
-		return new Intl.NumberFormat(locale, {
-			style: "unit",
-			unit,
-			unitDisplay: "long",
-		}).format(value);
-	}
+	const iconKey = piece.ingredient?.canonicalKey
+		? ingredientIconKey(piece.ingredient.canonicalKey)
+		: null;
+	const iconUrl = iconKey ? iconsByKey[iconKey] : null;
+	const emphasized = Boolean(piece.ingredient || piece.emphasis);
 
 	return (
-		<main className="dark flex h-dvh flex-col overflow-hidden bg-background text-foreground">
-			<header className="relative z-20 flex shrink-0 items-center justify-between gap-4 bg-background px-5 py-6 sm:px-8">
-				<button
-					type="button"
-					onClick={onExit}
-					className="text-lg text-foreground"
-				>
-					{t("overview")}
-				</button>
-				{running && remaining != null ? (
-					<div className="pointer-events-none absolute top-1/2 left-1/2 z-30 -translate-x-1/2 -translate-y-1/2">
-						<button
-							ref={floatRef}
-							type="button"
-							onClick={() => setIndex(running.stepIndex)}
-							aria-label={t("timerReturn")}
-							className="pointer-events-auto inline-flex origin-center cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full bg-timer/10 px-4 py-2 font-semibold text-lg text-timer tabular-nums transition-colors hover:bg-timer/20"
-						>
-							<Timer
-								aria-hidden
-								strokeWidth={2.25}
-								className="size-5"
-							/>
-							{remaining === 0
-								? t("timerDone")
-								: formatClock(remaining)}
-						</button>
-					</div>
-				) : null}
-				<p className="text-lg tabular-nums">
-					{t("progress", { current: index + 1, total: steps.length })}
-				</p>
-			</header>
-			<div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col justify-center gap-8 overflow-y-auto px-5 py-8 sm:px-8">
-				<p className="text-3xl leading-snug sm:text-4xl">
-					{pieces.map((piece, pieceIndex) => {
-						if (piece.timer) {
-							return (
+		<span className={emphasized ? "font-semibold" : undefined}>
+			{iconUrl ? (
+				// biome-ignore lint/performance/noImgElement: icon URLs are stored objects, not next/image assets
+				<img
+					src={iconUrl}
+					alt=""
+					className="mr-[0.15em] inline-block size-[1.05em] rounded-[0.25em] object-cover align-[-0.15em]"
+				/>
+			) : null}
+			{piece.text}
+		</span>
+	);
+}
+
+function TimerTray({
+	timers,
+	now,
+}: {
+	timers: ReturnType<typeof useTimerClock>["timers"];
+	now: number;
+}) {
+	const t = useTranslations("recipe");
+	if (timers.length === 0) {
+		return null;
+	}
+	return (
+		<div className="max-h-52 shrink-0 overflow-y-auto border-t border-border bg-card px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+			<ul className="mx-auto flex w-full max-w-3xl flex-col gap-2">
+				{timers.map((timer) => {
+					const remaining = remainingSeconds(timer, now);
+					const clock =
+						timer.status === "done"
+							? t("timerDone")
+							: formatClock(remaining);
+					const toggle =
+						timer.status === "paused"
+							? t("timerResume")
+							: t("timerPause");
+					return (
+						<li key={timer.id} className="flex items-center gap-2">
+							<div className="min-w-0 flex-1">
+								<p
+									className={`font-semibold text-lg tabular-nums ${timer.status === "done" ? "text-timer" : "text-foreground"}`}
+								>
+									{clock}
+								</p>
+								<p className="truncate text-sm text-muted-foreground">
+									{timer.label}
+								</p>
+							</div>
+							{timer.status === "done" ? null : (
 								<button
-									key={`timer-${pieceIndex}`}
 									type="button"
-									onClick={startTimer}
-									className="inline cursor-pointer rounded-[0.3em] border-0 bg-timer/10 px-[0.28em] py-[0.02em] font-semibold text-timer transition-colors hover:bg-timer/20"
+									onClick={() => {
+										if (timer.status === "paused") {
+											resumeCookTimer(timer.id);
+											return;
+										}
+										pauseCookTimer(timer.id);
+									}}
+									className="rounded-full border border-border px-3 py-1.5 font-semibold text-sm"
 								>
-									<Timer
-										aria-hidden
-										strokeWidth={2.25}
-										className="mr-[0.15em] inline size-[0.85em] align-[-0.1em]"
-									/>
-									{piece.text}
+									{toggle}
 								</button>
-							);
-						}
-
-						if (piece.emphasis) {
-							return (
-								<strong
-									key={`emphasis-${pieceIndex}`}
-									className="font-semibold"
-								>
-									{piece.text}
-								</strong>
-							);
-						}
-
-						if (!piece.ingredient) {
-							return piece.text;
-						}
-
-						const iconKey = piece.ingredient.canonicalKey
-							? ingredientIconKey(piece.ingredient.canonicalKey)
-							: null;
-						const iconUrl = iconKey ? iconsByKey[iconKey] : null;
-
-						return (
-							<strong
-								key={`${piece.ingredient.id}-${pieceIndex}`}
-								className="font-semibold"
-							>
-								{iconUrl ? (
-									// biome-ignore lint/performance/noImgElement: icon URLs are stored objects, not next/image assets
-									<img
-										src={iconUrl}
-										alt=""
-										className="mr-[0.15em] inline-block size-[1.1em] rounded-[0.25em] object-cover align-[-0.15em]"
-									/>
-								) : null}
-								{piece.text}
-							</strong>
-						);
-					})}
-					{step.timerSeconds != null &&
-					!pieces.some((piece) => piece.timer) ? (
-						<>
-							{" "}
+							)}
 							<button
 								type="button"
-								onClick={startTimer}
-								className="inline cursor-pointer rounded-[0.3em] border-0 bg-timer/10 px-[0.28em] py-[0.02em] font-semibold text-timer transition-colors hover:bg-timer/20"
+								onClick={() => addCookMinute(timer.id)}
+								className="rounded-full border border-border px-3 py-1.5 font-semibold text-sm"
 							>
-								<Timer
-									aria-hidden
-									strokeWidth={2.25}
-									className="mr-[0.15em] inline size-[0.85em] align-[-0.1em]"
-								/>
-								{fallbackDuration(step.timerSeconds)}
+								{t("timerAdd")}
 							</button>
-						</>
-					) : null}
-				</p>
-			</div>
-			<div className="mx-auto flex w-full max-w-5xl shrink-0 gap-3 bg-background px-5 pt-2 pb-8 sm:px-8">
-				{index > 0 ? (
-					<Button
-						type="button"
-						variant="outline"
-						onClick={() => setIndex((current) => current - 1)}
-						className="h-16 rounded-full px-6 text-lg"
-					>
-						{t("previous")}
-					</Button>
-				) : null}
-				<Button
-					type="button"
-					variant="primary"
-					onClick={() => {
-						if (isLast) {
-							onExit();
-							return;
-						}
-						setIndex((current) => current + 1);
-					}}
-					className="h-16 flex-1 rounded-full text-lg"
-				>
-					{isLast ? t("done") : t("next")}
-				</Button>
-			</div>
-		</main>
+							<button
+								type="button"
+								aria-label={t("timerCancel")}
+								onClick={() => cancelCookTimer(timer.id)}
+							>
+								<X
+									aria-hidden
+									className="size-5 text-muted-foreground"
+								/>
+							</button>
+						</li>
+					);
+				})}
+			</ul>
+		</div>
 	);
 }

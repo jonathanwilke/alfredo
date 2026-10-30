@@ -15,6 +15,7 @@
 		"@radix-ui/react-label": "^2.1.17",
 		"@radix-ui/react-slot": "^1.5.0",
 		"@repo/api": "workspace:*",
+		"@repo/cooking": "workspace:*",
 		"@repo/auth": "workspace:*",
 		"@repo/config": "workspace:*",
 		"@repo/i18n": "workspace:*",
