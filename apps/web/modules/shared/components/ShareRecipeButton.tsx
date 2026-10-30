@@ -1,6 +1,7 @@
 "use client";
 
 import { Share01Icon } from "@hugeicons/core-free-icons";
+import { track } from "@shared/lib/analytics";
 import { api } from "@shared/lib/api";
 import { Button } from "@ui/components/button";
 import { useState } from "react";
@@ -68,17 +69,20 @@ export function ShareRecipeButton({
 			if (typeof navigator.share === "function") {
 				try {
 					await navigator.share({ title, text, url });
+					track("RecipeShared", { mode, method: "native" });
 					return;
 				} catch (error) {
 					if (
 						error instanceof DOMException &&
 						error.name === "AbortError"
 					) {
+						track("RecipeShared", { mode, method: "dismissed" });
 						return;
 					}
 				}
 			}
 			await navigator.clipboard.writeText(url);
+			track("RecipeShared", { mode, method: "clipboard" });
 			showToast(labels.linkCopied);
 		} catch {
 			showToast(labels.shareFailed);
@@ -92,6 +96,7 @@ export function ShareRecipeButton({
 		try {
 			await api.recipes.unshare({ recipeId });
 			setShared(false);
+			track("RecipeUnshared");
 		} catch {
 			showToast(labels.shareFailed);
 		} finally {

@@ -2,6 +2,7 @@
 
 import { ChefHatIcon, Pot01Icon, SpoonIcon } from "@hugeicons/core-free-icons";
 import { LocaleLink } from "@i18n/routing";
+import { track } from "@shared/lib/analytics";
 import { Button } from "@ui/components/button";
 import { useLocale, useTranslations } from "next-intl";
 import { parseAsInteger, parseAsStringLiteral, useQueryStates } from "nuqs";
@@ -256,6 +257,7 @@ function RecipeOverviewContent({
 							type="button"
 							variant="primary"
 							onClick={() => {
+								track("CookingStarted", { source: "recipe" });
 								void setCookingQuery({ cook: "1", step: null });
 							}}
 							className="order-first h-12 rounded-full bg-accent px-8 text-lg text-accent-foreground shadow-none hover:bg-accent/90 [&>svg]:opacity-100"

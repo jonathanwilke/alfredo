@@ -1,6 +1,7 @@
 "use client";
 
 import { LocaleLink } from "@i18n/routing";
+import { track } from "@shared/lib/analytics";
 import { api } from "@shared/lib/api";
 import { Button } from "@ui/components/button";
 import { useLocale, useTranslations } from "next-intl";
@@ -76,6 +77,7 @@ export function BuyCreditsDialog({
 				locale: planLocale,
 				pack: pack.id,
 			});
+			track("CheckoutStarted", { pack: pack.id });
 			window.location.assign(url);
 		} catch (error) {
 			setPendingPack(null);

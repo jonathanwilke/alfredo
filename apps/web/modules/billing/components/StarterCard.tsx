@@ -7,6 +7,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { LocaleLink } from "@i18n/routing";
 import { Icon } from "@shared/components/Icon";
+import { track } from "@shared/lib/analytics";
 import { optimizableImage } from "@shared/lib/optimizable-image";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
@@ -206,7 +207,10 @@ export function StarterCard({
 			<LocaleLink
 				href={`${tile.href}?cook=1`}
 				aria-label={t("start")}
-				onClick={(event) => event.stopPropagation()}
+				onClick={(event) => {
+					event.stopPropagation();
+					track("CookingStarted", { source: "starter" });
+				}}
 				className="absolute right-3 bottom-3 z-10 grid size-10 place-items-center rounded-full bg-accent text-accent-foreground no-underline shadow-[0_8px_16px_-8px_rgba(26,29,20,0.8)] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
 			>
 				<Icon icon={SpoonIcon} aria-hidden />

@@ -347,6 +347,9 @@ importers:
       '@repo/storage':
         specifier: workspace:*
         version: link:../../packages/storage
+      '@vemetric/web':
+        specifier: ^0.7.0
+        version: 0.7.0
       better-auth:
         specifier: ^1.7.14
         version: 1.7.14(drizzle-kit@0.31.11)(drizzle-orm@0.45.4(@types/pg@8.23.1)(kysely@0.29.7)(pg@8.23.1))(next@16.4.3(@babel/core@7.29.7(supports-color@8.1.1))(@types/node@26.6.6)(babel-plugin-react-compiler@1.0.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(pg@8.23.1)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -3184,6 +3187,9 @@ packages:
 
   '@ungap/structured-clone@1.4.0':
     resolution: {integrity: sha512-1mEZtMKPM09vDmQt5y7YvmN2+DFTP7Tg0EWXdic8/C6VRnpb33e4ghisCIE3WZjsE2N8mf+QV1Zqh7ZFYLWInQ==}
+
+  '@vemetric/web@0.7.0':
+    resolution: {integrity: sha512-2xSaQzcuT2tfH2wy9Sue5iQzqqMh7DIOPG0zsADED00YYAtRWSSCb0UgncqJ+gaE6nOTBAbfv46rxH5LozVUpg==}
 
   '@vercel/cli-config@0.3.5':
     resolution: {integrity: sha512-O7y3EFzHENSLtE/3fjM3vIRqDpFFhZor2dMcZaND4G1d88gQk9u8yBcZhRR9CKnBowgzXdl0qcXkuINI05I72w==}
@@ -8297,6 +8303,8 @@ snapshots:
     optional: true
 
   '@ungap/structured-clone@1.4.0': {}
+
+  '@vemetric/web@0.7.0': {}
 
   '@vercel/cli-config@0.3.5':
     dependencies:

@@ -5,6 +5,7 @@ import {
 	BookmarkCheck01Icon,
 } from "@hugeicons/core-free-icons";
 import { authClient } from "@repo/auth/client";
+import { track } from "@shared/lib/analytics";
 import { api } from "@shared/lib/api";
 import { Button } from "@ui/components/button";
 import { Input } from "@ui/components/input";
@@ -65,6 +66,7 @@ export function SaveRecipeButton({
 				if (!cancelled) {
 					setSaved(true);
 					setNeedsSignIn(false);
+					track("RecipeSaved");
 				}
 			} catch (error) {
 				if (!cancelled) {
@@ -98,6 +100,7 @@ export function SaveRecipeButton({
 			}
 			setSaved(nextSaved);
 			setNeedsSignIn(false);
+			track(nextSaved ? "RecipeSaved" : "RecipeUnsaved");
 		} catch (error) {
 			if (isUnauthorized(error)) {
 				setNeedsSignIn(true);
@@ -125,6 +128,9 @@ export function SaveRecipeButton({
 			callbackURL: callback.toString(),
 		});
 		setPending(false);
+		if (!error) {
+			track("LoginStarted", { method: "email" });
+		}
 		setNotice(
 			error
 				? t("saveFailed")

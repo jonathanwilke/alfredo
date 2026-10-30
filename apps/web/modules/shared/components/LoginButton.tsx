@@ -8,6 +8,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { LocaleLink, useLocalePathname } from "@i18n/routing";
 import { authClient } from "@repo/auth/client";
+import { track } from "@shared/lib/analytics";
 import { Button } from "@ui/components/button";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -108,7 +109,10 @@ export function LoginButton() {
 							type="button"
 							role="menuitem"
 							className="flex items-center gap-3 rounded-full px-4 py-2.5 text-left text-base text-foreground hover:bg-muted"
-							onClick={() => void authClient.signOut()}
+							onClick={() => {
+								track("SignedOut");
+								void authClient.signOut();
+							}}
 						>
 							<Icon
 								icon={Logout01Icon}

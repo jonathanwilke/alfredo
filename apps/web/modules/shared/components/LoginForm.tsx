@@ -3,6 +3,7 @@
 import { useLocaleRouter } from "@i18n/router";
 import { authClient } from "@repo/auth/client";
 import { config } from "@repo/config";
+import { track } from "@shared/lib/analytics";
 import { Button } from "@ui/components/button";
 import { Input } from "@ui/components/input";
 import { useLocale, useTranslations } from "next-intl";
@@ -99,6 +100,9 @@ export function LoginForm({
 		});
 		setPending(false);
 		setFailed(Boolean(error));
+		if (!error) {
+			track("LoginStarted", { method: "email" });
+		}
 		setNotice(
 			error
 				? t("loginFailed")
@@ -134,6 +138,8 @@ export function LoginForm({
 				setGooglePending(false);
 				setFailed(true);
 				setNotice(t("loginGoogleFailed"));
+			} else {
+				track("LoginStarted", { method: "google" });
 			}
 		} catch {
 			setGooglePending(false);

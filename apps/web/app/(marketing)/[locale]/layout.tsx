@@ -1,6 +1,7 @@
 import { BillingProvider } from "@billing/components/BillingProvider";
 import { routing } from "@i18n/routing";
 import { getBaseUrl } from "@repo/config";
+import { AnalyticsUser } from "@shared/components/AnalyticsUser";
 import { Document } from "@shared/components/Document";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -33,6 +34,7 @@ export default async function LocaleLayout({
 	return (
 		<Document locale={locale}>
 			<NextIntlClientProvider messages={messages}>
+				<AnalyticsUser />
 				<BillingProvider>{children}</BillingProvider>
 			</NextIntlClientProvider>
 		</Document>

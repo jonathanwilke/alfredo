@@ -2,6 +2,7 @@
 
 import { Link01Icon, SpoonIcon } from "@hugeicons/core-free-icons";
 import { useLocaleRouter } from "@i18n/router";
+import { track } from "@shared/lib/analytics";
 import { api } from "@shared/lib/api";
 import { Button } from "@ui/components/button";
 import { Input } from "@ui/components/input";
@@ -110,21 +111,27 @@ export function RecipeLinkForm({
 						locale: locale === "en" ? "en" : "de",
 					})
 					.then((result) => {
+						track("RecipeImported", { source: "form" });
 						router.push(`/recipes/${result.recipeId}`);
 					})
 					.catch((error: unknown) => {
 						const code = errorCode(error);
 						if (code === "INSUFFICIENT_CREDITS") {
+							track("CreditsRequired", { source: "import" });
 							onInsufficientCredits();
 							return;
 						}
 						if (code === "UNAUTHORIZED") {
+							track("LoginRequired", { source: "import" });
 							const next = `/?import=${encodeURIComponent(parsed.href)}`;
 							router.push(
 								`/login?next=${encodeURIComponent(next)}`,
 							);
 							return;
 						}
+						track("RecipeImportFailed", {
+							reason: importFailure(error),
+						});
 						setInvalid(true);
 						setMessage(t(importFailure(error)));
 					})

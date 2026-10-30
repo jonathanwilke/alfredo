@@ -3,6 +3,7 @@
 import { useLocaleRouter } from "@i18n/router";
 import { authClient } from "@repo/auth/client";
 import { RecipeLinkForm } from "@shared/components/RecipeLinkForm";
+import { track } from "@shared/lib/analytics";
 import { api } from "@shared/lib/api";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -70,6 +71,7 @@ function ResumePendingImport({
 				locale: locale === "en" ? "en" : "de",
 			})
 			.then((result) => {
+				track("RecipeImported", { source: "resume" });
 				router.replace(`/recipes/${result.recipeId}`);
 			})
 			.catch((error: unknown) => {
@@ -77,18 +79,20 @@ function ResumePendingImport({
 				onImportUrl(null);
 				router.replace("/");
 				if (code === "INSUFFICIENT_CREDITS") {
+					track("CreditsRequired", { source: "import" });
 					onInsufficientCredits();
 					return;
 				}
 				const message = error instanceof Error ? error.message : "";
-				onFailed(
+				const reason =
 					message === "fetch_failed" ||
-						message === "not_a_recipe" ||
-						message === "extract_failed" ||
-						message === "not_configured"
-						? t(message)
-						: t("extract_failed"),
-				);
+					message === "not_a_recipe" ||
+					message === "extract_failed" ||
+					message === "not_configured"
+						? message
+						: "extract_failed";
+				track("RecipeImportFailed", { reason });
+				onFailed(t(reason));
 			});
 	}, [
 		importUrl,

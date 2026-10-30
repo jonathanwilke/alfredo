@@ -3,6 +3,7 @@
 import { LocaleLink } from "@i18n/routing";
 import { SiteFooter } from "@shared/components/SiteFooter";
 import { Wordmark } from "@shared/components/Wordmark";
+import { track } from "@shared/lib/analytics";
 import { api } from "@shared/lib/api";
 import { Button } from "@ui/components/button";
 import { useTranslations } from "next-intl";
@@ -17,6 +18,12 @@ export function BillingReturn({
 	const t = useTranslations("billing");
 	const { openBuy } = useBilling();
 	const [balance, setBalance] = useState<number | null>(null);
+
+	useEffect(() => {
+		if (checkoutStatus) {
+			track("CheckoutReturned", { status: checkoutStatus });
+		}
+	}, [checkoutStatus]);
 
 	useEffect(() => {
 		let cancelled = false;
