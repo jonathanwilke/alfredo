@@ -6,6 +6,7 @@ import {
 	Sun03Icon,
 	UserIcon,
 } from "@hugeicons/core-free-icons";
+import { Image } from "expo-image";
 import { usePathname, useRouter } from "expo-router";
 import { type ReactNode, useState } from "react";
 import {
@@ -61,7 +62,16 @@ export function Header({ home }: { home?: boolean }) {
 						label={copy.home.account}
 						onPress={() => setOpen(true)}
 					>
-						<Icon icon={UserIcon} color={colors.foreground} />
+						{session.user.image ? (
+							<Image
+								source={{ uri: session.user.image }}
+								style={styles.avatar}
+								contentFit="cover"
+								accessibilityIgnoresInvertColors
+							/>
+						) : (
+							<Icon icon={UserIcon} color={colors.foreground} />
+						)}
 					</IconButton>
 				) : null}
 				{!isPending && !session ? (
@@ -272,6 +282,11 @@ const styles = StyleSheet.create({
 	loginSpacer: {
 		width: 88,
 		height: 44,
+	},
+	avatar: {
+		width: 44,
+		height: 44,
+		borderRadius: 22,
 	},
 	backdrop: {
 		flex: 1,

@@ -9,7 +9,9 @@ import {
 import { LocaleLink, useLocalePathname } from "@i18n/routing";
 import { authClient } from "@repo/auth/client";
 import { track } from "@shared/lib/analytics";
+import { optimizableImage } from "@shared/lib/optimizable-image";
 import { Button } from "@ui/components/button";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Icon } from "./Icon";
@@ -60,19 +62,37 @@ export function LoginButton() {
 	}
 
 	if (session) {
+		const image = session.user.image?.trim() || null;
 		return (
 			<div className="relative" ref={menuRef}>
 				<Button
 					type="button"
 					variant="outline"
 					size="icon"
-					className="rounded-full"
+					className="overflow-hidden rounded-full p-0"
 					aria-label={t("account")}
 					aria-expanded={open}
 					aria-haspopup="menu"
 					onClick={() => setOpen((current) => !current)}
 				>
-					<Icon icon={UserIcon} aria-hidden />
+					{image && optimizableImage(image) ? (
+						<Image
+							src={image}
+							alt=""
+							width={44}
+							height={44}
+							className="size-full object-cover"
+						/>
+					) : image ? (
+						// biome-ignore lint/performance/noImgElement: this host is outside the image optimizer
+						<img
+							src={image}
+							alt=""
+							className="size-full object-cover"
+						/>
+					) : (
+						<Icon icon={UserIcon} aria-hidden />
+					)}
 				</Button>
 				{open ? (
 					<div
