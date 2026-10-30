@@ -16,6 +16,8 @@ const config: ExpoConfig = {
 			UISupportedInterfaceOrientations: [
 				"UIInterfaceOrientationPortrait",
 			],
+			NSUserNotificationsUsageDescription:
+				"ulivo alerts you when a cooking timer finishes, including while the app is in the background.",
 			"UISupportedInterfaceOrientations~ipad": [
 				"UIInterfaceOrientationPortrait",
 				"UIInterfaceOrientationPortraitUpsideDown",
@@ -39,6 +41,13 @@ const config: ExpoConfig = {
 		"expo-localization",
 		"expo-web-browser",
 		"expo-screen-orientation",
+		[
+			"expo-notifications",
+			{
+				enableRemoteNotifications: false,
+				color: "#C3D56D",
+			},
+		],
 		[
 			"expo-splash-screen",
 			{

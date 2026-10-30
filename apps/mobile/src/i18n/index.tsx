@@ -159,6 +159,12 @@ function createCopy(locale: Locale) {
 						? "Dieses Gericht wird auf Englisch gezeigt."
 						: "This dish is shown in English.",
 			stepIngredients: de ? "In diesem Schritt" : "In this step",
+			stepLabel: (step: number) =>
+				de ? `Schritt ${step}` : `Step ${step}`,
+			timerPause: de ? "Pause" : "Pause",
+			timerResume: de ? "Fortsetzen" : "Resume",
+			timerCancel: de ? "Abbrechen" : "Cancel",
+			timerAdd: de ? "+1 Min." : "+1 min",
 		},
 		billing: {
 			pageTitle: de ? "Guthaben" : "Credits",

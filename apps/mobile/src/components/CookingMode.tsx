@@ -1,32 +1,47 @@
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
-import { Timer } from "lucide-react-native";
+import { ChevronDown, ChevronUp, Timer, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
-	Animated,
+	AccessibilityInfo,
 	Image,
 	Pressable,
 	ScrollView,
+	type ScrollViewInstance,
 	StyleSheet,
 	Text,
-	Vibration,
 	View,
 } from "react-native";
+import Animated, {
+	Extrapolation,
+	interpolate,
+	useAnimatedStyle,
+	useSharedValue,
+	withTiming,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useI18n } from "@/i18n";
 import {
-	findDuration,
-	findEmphasis,
-	highlightStep,
+	decorateStep,
 	ingredientIconKey,
-	placeDuration,
-	placeEmphasis,
 	type StepIngredient,
 	type StepPiece,
 } from "@/lib/highlight-step";
 import { useLayout } from "@/lib/layout";
+import {
+	addCookMinute,
+	cancelCookTimer,
+	pauseCookTimer,
+	remainingSeconds,
+	resumeCookTimer,
+	startCookTimer,
+	useCookTimers,
+	useTimerAlert,
+	useTimerClock,
+} from "@/lib/timers";
 import { fonts, palettes } from "@/theme/tokens";
 
 const KEEP_AWAKE = "cooking";
+const colors = palettes.dark;
 
 export interface CookingStep {
 	id: string;
@@ -34,6 +49,11 @@ export interface CookingStep {
 	ingredients: StepIngredient[];
 	timerSeconds: number | null;
 }
+
+type StepLayout = {
+	y: number;
+	height: number;
+};
 
 function formatClock(totalSeconds: number) {
 	const hours = Math.floor(totalSeconds / 3600);
@@ -45,8 +65,61 @@ function formatClock(totalSeconds: number) {
 	return `${minutes}:${seconds}`;
 }
 
-function secondsLeft(endsAt: number, now: number) {
-	return Math.max(0, Math.ceil((endsAt - now) / 1000));
+function fallbackDuration(seconds: number, locale: string) {
+	const unit =
+		seconds < 60 ? "second" : seconds % 3600 === 0 ? "hour" : "minute";
+	const value =
+		unit === "second"
+			? seconds
+			: unit === "hour"
+				? Math.max(1, Math.round(seconds / 3600))
+				: Math.max(1, Math.round(seconds / 60));
+	return new Intl.NumberFormat(locale, {
+		style: "unit",
+		unit,
+		unitDisplay: "long",
+	}).format(value);
+}
+
+function piecesFor(step: CookingStep, locale: string) {
+	const pieces = decorateStep(step.text, step.ingredients);
+	if (pieces.some((piece) => piece.timer) || step.timerSeconds == null) {
+		return pieces;
+	}
+	const text = fallbackDuration(step.timerSeconds, locale);
+	return [
+		...pieces,
+		{
+			text,
+			ingredient: null,
+			timer: true,
+			timerSeconds: step.timerSeconds,
+			sourceStart: step.text.length,
+			sourceEnd: step.text.length,
+		} satisfies StepPiece,
+	];
+}
+
+function closestStep(
+	scrollY: number,
+	viewport: number,
+	layouts: (StepLayout | undefined)[],
+) {
+	const focus = scrollY + viewport * 0.32;
+	let best = 0;
+	let bestDistance = Number.POSITIVE_INFINITY;
+	layouts.forEach((layout, index) => {
+		if (!layout) {
+			return;
+		}
+		const middle = layout.y + layout.height / 2;
+		const distance = Math.abs(middle - focus);
+		if (distance < bestDistance) {
+			best = index;
+			bestDistance = distance;
+		}
+	});
+	return best;
 }
 
 export function CookingMode({
@@ -59,19 +132,28 @@ export function CookingMode({
 	onExit: () => void;
 }) {
 	const { copy, locale } = useI18n();
-	const { split, pagePadding } = useLayout();
+	const { split, pagePadding, isTablet } = useLayout();
 	const insets = useSafeAreaInsets();
-	const colors = palettes.dark;
+	const { timers, now } = useTimerClock();
+	const alert = useTimerAlert();
 	const [index, setIndex] = useState(0);
-	const [now, setNow] = useState(() => Date.now());
-	const [running, setRunning] = useState<{
-		stepIndex: number;
-		endsAt: number;
-	} | null>(null);
-	const wiggle = useRef(new Animated.Value(0)).current;
-	const finishedAt = useRef<number | null>(null);
+	const [viewport, setViewport] = useState(0);
+	const [trayHeight, setTrayHeight] = useState(0);
+	const [banner, setBanner] = useState<string | null>(null);
+	const [reduceMotion, setReduceMotion] = useState(false);
+	const scrollRef = useRef<ScrollViewInstance>(null);
+	const layouts = useRef<(StepLayout | undefined)[]>([]);
+	const focusing = useRef(false);
+	const active = useSharedValue(0);
+	const fontSize = isTablet ? 40 : 30;
+	const lineHeight = isTablet ? 52 : 40;
 	const step = steps[index];
-	const isLast = index === steps.length - 1;
+
+	useEffect(() => {
+		if (timers.length === 0) {
+			setTrayHeight(0);
+		}
+	}, [timers.length]);
 
 	useEffect(() => {
 		void activateKeepAwakeAsync(KEEP_AWAKE);
@@ -81,129 +163,62 @@ export function CookingMode({
 	}, []);
 
 	useEffect(() => {
-		if (!running || running.endsAt <= Date.now()) {
-			return;
-		}
-		const timer = setInterval(() => {
-			const next = Date.now();
-			setNow(next);
-			if (next >= running.endsAt) {
-				clearInterval(timer);
+		let mounted = true;
+		void AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+			if (mounted) {
+				setReduceMotion(enabled);
 			}
-		}, 1000);
-		return () => clearInterval(timer);
-	}, [running]);
-
-	const remaining = running ? secondsLeft(running.endsAt, now) : null;
+		});
+		const subscription = AccessibilityInfo.addEventListener(
+			"reduceMotionChanged",
+			setReduceMotion,
+		);
+		return () => {
+			mounted = false;
+			subscription.remove();
+		};
+	}, []);
 
 	useEffect(() => {
-		if (
-			!running ||
-			remaining !== 0 ||
-			finishedAt.current === running.endsAt
-		) {
+		active.value = withTiming(index, {
+			duration: reduceMotion ? 0 : 280,
+		});
+	}, [active, index, reduceMotion]);
+
+	useEffect(() => {
+		if (!alert) {
 			return;
 		}
-		finishedAt.current = running.endsAt;
-		Vibration.vibrate(400);
-	}, [remaining, running]);
+		setBanner(alert.label);
+		const timeout = setTimeout(() => {
+			setBanner((current) => (current === alert.label ? null : current));
+		}, 4000);
+		return () => clearTimeout(timeout);
+	}, [alert]);
+
+	function focusStep(next: number) {
+		const layout = layouts.current[next];
+		if (!layout || viewport === 0) {
+			setIndex(next);
+			return;
+		}
+		focusing.current = true;
+		setIndex(next);
+		scrollRef.current?.scrollTo({
+			y: Math.max(0, layout.y - viewport * 0.22),
+			animated: !reduceMotion,
+		});
+		setTimeout(
+			() => {
+				focusing.current = false;
+			},
+			reduceMotion ? 0 : 420,
+		);
+	}
 
 	if (!step) {
 		return null;
 	}
-
-	const duration =
-		step.timerSeconds == null
-			? null
-			: findDuration(step.text, step.timerSeconds);
-	const pieces = placeDuration(
-		placeEmphasis(
-			highlightStep(step.text, step.ingredients),
-			findEmphasis(step.text),
-		),
-		duration,
-	);
-	const rotate = wiggle.interpolate({
-		inputRange: [-1, 1],
-		outputRange: ["-8deg", "8deg"],
-	});
-
-	function wiggleChip() {
-		wiggle.setValue(0);
-		Animated.sequence([
-			Animated.timing(wiggle, {
-				toValue: 1,
-				duration: 90,
-				useNativeDriver: true,
-			}),
-			Animated.timing(wiggle, {
-				toValue: -1,
-				duration: 90,
-				useNativeDriver: true,
-			}),
-			Animated.timing(wiggle, {
-				toValue: 0,
-				duration: 90,
-				useNativeDriver: true,
-			}),
-		]).start();
-	}
-
-	function startTimer() {
-		if (step?.timerSeconds == null) {
-			return;
-		}
-		if (running?.stepIndex === index) {
-			wiggleChip();
-			return;
-		}
-		const started = Date.now();
-		setNow(started);
-		setRunning({
-			stepIndex: index,
-			endsAt: started + step.timerSeconds * 1000,
-		});
-	}
-
-	function fallbackDuration(seconds: number) {
-		const unit =
-			seconds < 60 ? "second" : seconds % 3600 === 0 ? "hour" : "minute";
-		const value =
-			unit === "second"
-				? seconds
-				: unit === "hour"
-					? Math.max(1, Math.round(seconds / 3600))
-					: Math.max(1, Math.round(seconds / 60));
-		return new Intl.NumberFormat(locale, {
-			style: "unit",
-			unit,
-			unitDisplay: "long",
-		}).format(value);
-	}
-
-	const timerChip =
-		running && remaining != null ? (
-			<Animated.View style={{ transform: [{ rotate }] }}>
-				<Pressable
-					accessibilityRole="button"
-					accessibilityLabel={copy.recipe.timerReturn}
-					onPress={() => setIndex(running.stepIndex)}
-					style={[
-						styles.chip,
-						{ backgroundColor: `${colors.timer}1A` },
-					]}
-				>
-					<Timer color={colors.timer} size={20} strokeWidth={2.25} />
-					<Text style={[styles.chipText, { color: colors.timer }]}>
-						{remaining === 0
-							? copy.recipe.timerDone
-							: formatClock(remaining)}
-					</Text>
-				</Pressable>
-			</Animated.View>
-		) : (
-			<View style={styles.chipSpacer} />
-		);
 
 	return (
 		<View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -211,7 +226,7 @@ export function CookingMode({
 				style={[
 					styles.header,
 					{
-						paddingTop: Math.max(insets.top, 16),
+						paddingTop: Math.max(insets.top, 12),
 						paddingHorizontal: pagePadding,
 					},
 				]}
@@ -230,237 +245,529 @@ export function CookingMode({
 						{copy.recipe.overview}
 					</Text>
 				</Pressable>
-				{timerChip}
-				<Text style={[styles.headerText, { color: colors.foreground }]}>
-					{copy.recipe.progress(index + 1, steps.length)}
-				</Text>
-			</View>
-			<View style={[styles.body, split ? styles.bodySplit : null]}>
-				<ScrollView
-					style={styles.stepScroll}
-					contentContainerStyle={[
-						styles.stepContent,
-						{ paddingHorizontal: pagePadding },
-					]}
-				>
-					<Text
-						style={[
-							styles.step,
-							{
-								color: colors.foreground,
-								fontSize: split ? 40 : 30,
-								lineHeight: split ? 52 : 40,
-							},
-						]}
-					>
-						{pieces.map((piece, pieceIndex) => (
-							<StepFragment
-								key={`${piece.sourceStart}-${pieceIndex}`}
-								piece={piece}
-								iconsByKey={iconsByKey}
-								onStartTimer={startTimer}
-							/>
-						))}
-						{step.timerSeconds != null &&
-						!pieces.some((piece) => piece.timer) ? (
-							<Text
-								onPress={startTimer}
-								style={[
-									styles.timerText,
-									{ color: colors.timer },
-								]}
-							>
-								{` ${fallbackDuration(step.timerSeconds)}`}
-							</Text>
-						) : null}
-					</Text>
-				</ScrollView>
-				{split ? (
-					<ScrollView
-						style={styles.sideScroll}
-						contentContainerStyle={[
-							styles.side,
-							{
-								borderColor: colors.border,
-								backgroundColor: colors.card,
-							},
-						]}
-					>
-						<Text
-							style={[
-								styles.sideTitle,
-								{ color: colors.foreground },
-							]}
-						>
-							{copy.recipe.stepIngredients}
-						</Text>
-						{step.ingredients.length === 0 ? (
-							<Text
-								style={[
-									styles.sideEmpty,
-									{ color: colors.mutedForeground },
-								]}
-							>
-								—
-							</Text>
-						) : (
-							step.ingredients.map((ingredient) => {
-								const key = ingredient.canonicalKey
-									? ingredientIconKey(ingredient.canonicalKey)
-									: null;
-								const iconUrl = key ? iconsByKey[key] : null;
-								const amount = [
-									ingredient.scaledQuantity,
-									ingredient.scaledUnit ?? ingredient.unit,
-								]
-									.filter(Boolean)
-									.join(" ");
-								return (
-									<View
-										key={ingredient.id}
-										style={styles.sideRow}
-									>
-										{iconUrl ? (
-											<Image
-												source={{ uri: iconUrl }}
-												style={styles.sideIcon}
-											/>
-										) : (
-											<View
-												style={[
-													styles.sideIcon,
-													{
-														backgroundColor:
-															colors.accent,
-													},
-												]}
-											/>
-										)}
-										<View style={styles.sideCopy}>
-											<Text
-												style={[
-													styles.sideName,
-													{
-														color: colors.foreground,
-													},
-												]}
-											>
-												{ingredient.name}
-											</Text>
-											{amount ? (
-												<Text
-													style={[
-														styles.sideAmount,
-														{
-															color: colors.mutedForeground,
-														},
-													]}
-												>
-													{amount}
-												</Text>
-											) : null}
-										</View>
-									</View>
-								);
-							})
-						)}
-					</ScrollView>
-				) : null}
-			</View>
-			<View
-				style={[
-					styles.footer,
-					{
-						paddingHorizontal: pagePadding,
-						paddingBottom: Math.max(insets.bottom, 20),
-					},
-				]}
-			>
-				{index > 0 ? (
+				<View style={styles.headerNav}>
 					<Pressable
 						accessibilityRole="button"
-						onPress={() => setIndex((current) => current - 1)}
+						accessibilityLabel={copy.recipe.previous}
+						disabled={index === 0}
+						onPress={() => focusStep(Math.max(0, index - 1))}
+						hitSlop={8}
+						style={{ opacity: index === 0 ? 0.35 : 1 }}
+					>
+						<ChevronUp color={colors.foreground} size={26} />
+					</Pressable>
+					<Text
 						style={[
-							styles.navButton,
-							{ borderColor: colors.border },
+							styles.headerText,
+							{ color: colors.foreground },
 						]}
 					>
-						<Text
-							style={[
-								styles.navLabel,
-								{ color: colors.foreground },
-							]}
-						>
-							{copy.recipe.previous}
-						</Text>
-					</Pressable>
-				) : null}
-				<Pressable
-					accessibilityRole="button"
-					onPress={() => {
-						if (isLast) {
-							onExit();
-							return;
+						{copy.recipe.progress(index + 1, steps.length)}
+					</Text>
+					<Pressable
+						accessibilityRole="button"
+						accessibilityLabel={copy.recipe.next}
+						disabled={index === steps.length - 1}
+						onPress={() =>
+							focusStep(Math.min(steps.length - 1, index + 1))
 						}
-						setIndex((current) => current + 1);
-					}}
-					style={[
-						styles.navButton,
-						styles.navFill,
-						{ backgroundColor: colors.accent },
-					]}
+						hitSlop={8}
+						style={{
+							opacity: index === steps.length - 1 ? 0.35 : 1,
+						}}
+					>
+						<ChevronDown color={colors.foreground} size={26} />
+					</Pressable>
+				</View>
+			</View>
+			{banner ? (
+				<View
+					accessibilityRole="alert"
+					style={[styles.banner, { backgroundColor: colors.timer }]}
 				>
 					<Text
 						style={[
-							styles.navLabel,
-							{ color: colors.accentForeground },
+							styles.bannerText,
+							{ color: colors.background },
 						]}
 					>
-						{isLast ? copy.recipe.done : copy.recipe.next}
+						{copy.recipe.timerDone}
 					</Text>
-				</Pressable>
+				</View>
+			) : null}
+			<View style={[styles.body, split ? styles.bodySplit : null]}>
+				{split ? (
+					<IngredientColumn
+						ingredients={step.ingredients}
+						iconsByKey={iconsByKey}
+						title={copy.recipe.stepIngredients}
+					/>
+				) : null}
+				<ScrollView
+					ref={scrollRef}
+					style={styles.stepScroll}
+					onLayout={(event) =>
+						setViewport(event.nativeEvent.layout.height)
+					}
+					scrollEventThrottle={16}
+					onScroll={(event) => {
+						if (focusing.current || viewport === 0) {
+							return;
+						}
+						const next = closestStep(
+							event.nativeEvent.contentOffset.y,
+							viewport,
+							layouts.current,
+						);
+						setIndex((current) =>
+							current === next ? current : next,
+						);
+					}}
+					contentContainerStyle={{
+						paddingTop: Math.max(24, viewport * 0.12),
+						paddingBottom: viewport * 0.62 + trayHeight,
+						paddingHorizontal: pagePadding,
+					}}
+				>
+					{steps.map((item, stepIndex) => (
+						<StepBlock
+							key={item.id}
+							step={item}
+							index={stepIndex}
+							active={active}
+							fontSize={fontSize}
+							lineHeight={lineHeight}
+							locale={locale}
+							label={copy.recipe.stepLabel(stepIndex + 1)}
+							alertBody={copy.recipe.timerDone}
+							iconsByKey={iconsByKey}
+							onFocus={focusStep}
+							onLayout={(layout) => {
+								layouts.current[stepIndex] = layout;
+							}}
+						/>
+					))}
+				</ScrollView>
 			</View>
+			<TimerTray
+				timers={timers}
+				now={now}
+				paddingBottom={Math.max(insets.bottom, 12)}
+				onLayout={setTrayHeight}
+			/>
 		</View>
 	);
 }
 
-function StepFragment({
-	piece,
+function StepBlock({
+	step,
+	index,
+	active,
+	fontSize,
+	lineHeight,
+	locale,
+	label,
+	alertBody,
 	iconsByKey,
-	onStartTimer,
+	onFocus,
+	onLayout,
 }: {
-	piece: StepPiece;
+	step: CookingStep;
+	index: number;
+	active: { value: number };
+	fontSize: number;
+	lineHeight: number;
+	locale: string;
+	label: string;
+	alertBody: string;
 	iconsByKey: Record<string, string>;
-	onStartTimer: () => void;
+	onFocus: (index: number) => void;
+	onLayout: (layout: StepLayout) => void;
 }) {
-	const colors = palettes.dark;
-	if (piece.timer) {
-		return (
-			<Text
-				onPress={onStartTimer}
-				style={[styles.timerText, { color: colors.timer }]}
-			>
-				{piece.text}
-			</Text>
-		);
-	}
-	if (piece.emphasis) {
-		return <Text style={styles.emphasis}>{piece.text}</Text>;
-	}
-	if (!piece.ingredient) {
-		return <Text>{piece.text}</Text>;
-	}
-	const iconKey = piece.ingredient.canonicalKey
-		? ingredientIconKey(piece.ingredient.canonicalKey)
-		: null;
-	const iconUrl = iconKey ? iconsByKey[iconKey] : null;
+	const animated = useAnimatedStyle(() => {
+		const distance = Math.abs(active.value - index);
+		return {
+			opacity: interpolate(
+				distance,
+				[0, 1],
+				[1, 0.32],
+				Extrapolation.CLAMP,
+			),
+		};
+	});
+	const pieces = piecesFor(step, locale);
+
 	return (
-		<Text style={styles.emphasis}>
-			{iconUrl ? (
-				<Image source={{ uri: iconUrl }} style={styles.inlineIcon} />
-			) : null}
-			{piece.text}
-		</Text>
+		<Animated.View
+			style={[styles.stepBlock, animated]}
+			onLayout={(event) => {
+				const { y, height } = event.nativeEvent.layout;
+				onLayout({ y, height });
+			}}
+		>
+			<Pressable
+				accessibilityRole="button"
+				accessibilityLabel={label}
+				onPress={() => onFocus(index)}
+			>
+				<Text style={[styles.stepLabel, { color: colors.foreground }]}>
+					{label}
+				</Text>
+			</Pressable>
+			<StepCopy
+				pieces={pieces}
+				fontSize={fontSize}
+				lineHeight={lineHeight}
+				stepId={step.id}
+				stepIndex={index}
+				alertBody={alertBody}
+				iconsByKey={iconsByKey}
+				onFocus={() => onFocus(index)}
+			/>
+		</Animated.View>
+	);
+}
+
+function StepCopy({
+	pieces,
+	fontSize,
+	lineHeight,
+	stepId,
+	stepIndex,
+	alertBody,
+	iconsByKey,
+	onFocus,
+}: {
+	pieces: StepPiece[];
+	fontSize: number;
+	lineHeight: number;
+	stepId: string;
+	stepIndex: number;
+	alertBody: string;
+	iconsByKey: Record<string, string>;
+	onFocus: () => void;
+}) {
+	return (
+		<View style={styles.copy}>
+			{pieces.map((piece, pieceIndex) => {
+				if (piece.timer && piece.timerSeconds) {
+					return (
+						<TimerChip
+							key={`timer-${piece.sourceStart}`}
+							id={`${stepId}:${piece.sourceStart}`}
+							text={piece.text}
+							seconds={piece.timerSeconds}
+							stepIndex={stepIndex}
+							fontSize={fontSize}
+							alertBody={alertBody}
+						/>
+					);
+				}
+				const iconKey = piece.ingredient?.canonicalKey
+					? ingredientIconKey(piece.ingredient.canonicalKey)
+					: null;
+				const iconUrl = iconKey ? iconsByKey[iconKey] : null;
+				const tokens = piece.text.match(/\s+|\S+/g) ?? [];
+				return tokens.map((token, tokenIndex) => (
+					<Text
+						key={`${pieceIndex}-${tokenIndex}`}
+						onPress={onFocus}
+						suppressHighlighting
+						style={{
+							fontFamily:
+								piece.ingredient || piece.emphasis
+									? fonts.label
+									: fonts.body,
+							fontSize,
+							lineHeight,
+							color: colors.foreground,
+						}}
+					>
+						{iconUrl && tokenIndex === 0 ? (
+							<Image
+								source={{ uri: iconUrl }}
+								style={styles.inlineIcon}
+							/>
+						) : null}
+						{token}
+					</Text>
+				));
+			})}
+		</View>
+	);
+}
+
+function TimerChip({
+	id,
+	text,
+	seconds,
+	stepIndex,
+	fontSize,
+	alertBody,
+}: {
+	id: string;
+	text: string;
+	seconds: number;
+	stepIndex: number;
+	fontSize: number;
+	alertBody: string;
+}) {
+	const timers = useCookTimers();
+	const running = timers.some(
+		(timer) => timer.id === id && timer.status !== "done",
+	);
+	return (
+		<Pressable
+			accessibilityRole="button"
+			accessibilityLabel={text}
+			onPress={() => {
+				void startCookTimer({
+					id,
+					label: text,
+					stepIndex,
+					seconds,
+					alertBody: `${alertBody} · ${text}`,
+				});
+			}}
+			style={[
+				styles.chip,
+				{
+					backgroundColor: running
+						? "rgba(240, 148, 58, 0.28)"
+						: "rgba(240, 148, 58, 0.14)",
+				},
+			]}
+		>
+			<Timer
+				color={colors.timer}
+				size={Math.round(fontSize * 0.62)}
+				strokeWidth={2.25}
+			/>
+			<Text
+				style={{
+					fontFamily: fonts.label,
+					fontSize: fontSize * 0.72,
+					lineHeight: fontSize * 0.9,
+					color: colors.timer,
+				}}
+			>
+				{text}
+			</Text>
+		</Pressable>
+	);
+}
+
+function IngredientColumn({
+	ingredients,
+	iconsByKey,
+	title,
+}: {
+	ingredients: StepIngredient[];
+	iconsByKey: Record<string, string>;
+	title: string;
+}) {
+	return (
+		<ScrollView
+			style={styles.sideScroll}
+			contentContainerStyle={[
+				styles.side,
+				{
+					borderColor: colors.border,
+					backgroundColor: colors.card,
+				},
+			]}
+		>
+			<Text style={[styles.sideTitle, { color: colors.foreground }]}>
+				{title}
+			</Text>
+			{ingredients.length === 0 ? (
+				<Text
+					style={[
+						styles.sideEmpty,
+						{ color: colors.mutedForeground },
+					]}
+				>
+					—
+				</Text>
+			) : (
+				ingredients.map((ingredient) => {
+					const key = ingredient.canonicalKey
+						? ingredientIconKey(ingredient.canonicalKey)
+						: null;
+					const iconUrl = key ? iconsByKey[key] : null;
+					const amount = [
+						ingredient.scaledQuantity,
+						ingredient.scaledUnit ?? ingredient.unit,
+					]
+						.filter(Boolean)
+						.join(" ");
+					return (
+						<View key={ingredient.id} style={styles.sideRow}>
+							{iconUrl ? (
+								<Image
+									source={{ uri: iconUrl }}
+									style={styles.sideIcon}
+								/>
+							) : (
+								<View
+									style={[
+										styles.sideIcon,
+										{ backgroundColor: colors.accent },
+									]}
+								/>
+							)}
+							<View style={styles.sideCopy}>
+								<Text
+									style={[
+										styles.sideName,
+										{ color: colors.foreground },
+									]}
+								>
+									{ingredient.name}
+								</Text>
+								{amount ? (
+									<Text
+										style={[
+											styles.sideAmount,
+											{ color: colors.mutedForeground },
+										]}
+									>
+										{amount}
+									</Text>
+								) : null}
+							</View>
+						</View>
+					);
+				})
+			)}
+		</ScrollView>
+	);
+}
+
+function TimerTray({
+	timers,
+	now,
+	paddingBottom,
+	onLayout,
+}: {
+	timers: ReturnType<typeof useTimerClock>["timers"];
+	now: number;
+	paddingBottom: number;
+	onLayout: (height: number) => void;
+}) {
+	const { copy } = useI18n();
+	if (timers.length === 0) {
+		return null;
+	}
+	return (
+		<View
+			onLayout={(event) => onLayout(event.nativeEvent.layout.height)}
+			style={[
+				styles.tray,
+				{
+					paddingBottom,
+					backgroundColor: colors.card,
+					borderColor: colors.border,
+				},
+			]}
+		>
+			<ScrollView
+				style={styles.trayScroll}
+				contentContainerStyle={styles.trayList}
+			>
+				{timers.map((timer) => {
+					const remaining = remainingSeconds(timer, now);
+					const clock =
+						timer.status === "done"
+							? copy.recipe.timerDone
+							: formatClock(remaining);
+					const toggleLabel =
+						timer.status === "paused"
+							? copy.recipe.timerResume
+							: copy.recipe.timerPause;
+					return (
+						<View key={timer.id} style={styles.trayRow}>
+							<View style={styles.trayCopy}>
+								<Text
+									style={[
+										styles.trayTime,
+										{
+											color:
+												timer.status === "done"
+													? colors.timer
+													: colors.foreground,
+										},
+									]}
+								>
+									{clock}
+								</Text>
+								<Text
+									numberOfLines={1}
+									style={[
+										styles.trayLabel,
+										{ color: colors.mutedForeground },
+									]}
+								>
+									{timer.label}
+								</Text>
+							</View>
+							{timer.status === "done" ? null : (
+								<Pressable
+									accessibilityRole="button"
+									accessibilityLabel={toggleLabel}
+									onPress={() => {
+										if (timer.status === "paused") {
+											void resumeCookTimer(timer.id);
+											return;
+										}
+										void pauseCookTimer(timer.id);
+									}}
+									style={[
+										styles.trayButton,
+										{ borderColor: colors.border },
+									]}
+								>
+									<Text
+										style={[
+											styles.trayButtonText,
+											{ color: colors.foreground },
+										]}
+									>
+										{toggleLabel}
+									</Text>
+								</Pressable>
+							)}
+							<Pressable
+								accessibilityRole="button"
+								accessibilityLabel={copy.recipe.timerAdd}
+								onPress={() => void addCookMinute(timer.id)}
+								style={[
+									styles.trayButton,
+									{ borderColor: colors.border },
+								]}
+							>
+								<Text
+									style={[
+										styles.trayButtonText,
+										{ color: colors.foreground },
+									]}
+								>
+									{copy.recipe.timerAdd}
+								</Text>
+							</Pressable>
+							<Pressable
+								accessibilityRole="button"
+								accessibilityLabel={copy.recipe.timerCancel}
+								onPress={() => void cancelCookTimer(timer.id)}
+								hitSlop={6}
+							>
+								<X color={colors.mutedForeground} size={20} />
+							</Pressable>
+						</View>
+					);
+				})}
+			</ScrollView>
+		</View>
 	);
 }
 
@@ -469,7 +776,7 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	header: {
-		minHeight: 72,
+		minHeight: 64,
 		flexDirection: "row",
 		alignItems: "center",
 		justifyContent: "space-between",
@@ -479,20 +786,22 @@ const styles = StyleSheet.create({
 		fontFamily: fonts.body,
 		fontSize: 18,
 	},
-	chip: {
+	headerNav: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 6,
+		gap: 8,
+	},
+	banner: {
+		marginHorizontal: 20,
+		marginBottom: 8,
 		borderRadius: 999,
+		paddingVertical: 10,
 		paddingHorizontal: 16,
-		paddingVertical: 8,
+		alignItems: "center",
 	},
-	chipText: {
+	bannerText: {
 		fontFamily: fonts.label,
-		fontSize: 18,
-	},
-	chipSpacer: {
-		width: 24,
+		fontSize: 16,
 	},
 	body: {
 		flex: 1,
@@ -504,22 +813,30 @@ const styles = StyleSheet.create({
 	stepScroll: {
 		flex: 1,
 	},
-	stepContent: {
-		flexGrow: 1,
-		justifyContent: "center",
-		paddingVertical: 24,
+	stepBlock: {
+		paddingVertical: 28,
 	},
-	step: {
-		fontFamily: fonts.body,
-		fontSize: 32,
-		lineHeight: 42,
-	},
-	timerText: {
+	stepLabel: {
 		fontFamily: fonts.label,
-		backgroundColor: "rgba(240, 148, 58, 0.12)",
+		fontSize: 13,
+		letterSpacing: 1.4,
+		textTransform: "uppercase",
+		marginBottom: 10,
 	},
-	emphasis: {
-		fontFamily: fonts.label,
+	copy: {
+		flexDirection: "row",
+		flexWrap: "wrap",
+		alignItems: "center",
+	},
+	chip: {
+		flexDirection: "row",
+		alignItems: "center",
+		gap: 4,
+		borderRadius: 999,
+		paddingHorizontal: 10,
+		paddingVertical: 4,
+		marginHorizontal: 3,
+		marginVertical: 2,
 	},
 	inlineIcon: {
 		width: 28,
@@ -528,7 +845,7 @@ const styles = StyleSheet.create({
 	},
 	sideScroll: {
 		width: 320,
-		marginRight: 24,
+		marginLeft: 24,
 		marginBottom: 12,
 	},
 	side: {
@@ -567,25 +884,43 @@ const styles = StyleSheet.create({
 		fontFamily: fonts.body,
 		fontSize: 16,
 	},
-	footer: {
-		flexDirection: "row",
-		gap: 12,
+	tray: {
+		borderTopWidth: 1,
 		paddingTop: 8,
+		paddingHorizontal: 16,
 	},
-	navButton: {
-		minHeight: 64,
-		borderRadius: 999,
-		borderWidth: 1,
-		borderColor: "transparent",
-		paddingHorizontal: 24,
+	trayScroll: {
+		maxHeight: 180,
+	},
+	trayList: {
+		gap: 8,
+	},
+	trayRow: {
+		flexDirection: "row",
 		alignItems: "center",
-		justifyContent: "center",
+		gap: 8,
+		minHeight: 44,
 	},
-	navFill: {
+	trayCopy: {
 		flex: 1,
+		minWidth: 0,
 	},
-	navLabel: {
+	trayTime: {
 		fontFamily: fonts.label,
 		fontSize: 18,
+	},
+	trayLabel: {
+		fontFamily: fonts.body,
+		fontSize: 14,
+	},
+	trayButton: {
+		borderWidth: 1,
+		borderRadius: 999,
+		paddingHorizontal: 12,
+		paddingVertical: 6,
+	},
+	trayButtonText: {
+		fontFamily: fonts.label,
+		fontSize: 14,
 	},
 });

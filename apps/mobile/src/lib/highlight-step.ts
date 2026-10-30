@@ -12,6 +12,7 @@ export interface StepPiece {
 	text: string;
 	ingredient: StepIngredient | null;
 	timer?: boolean;
+	timerSeconds?: number;
 	emphasis?: boolean;
 	sourceStart: number;
 	sourceEnd: number;
@@ -308,6 +309,127 @@ export function findDuration(text: string, seconds: number) {
 	}
 
 	return best ? { start: best.start, end: best.end } : null;
+}
+
+export interface DurationSpan {
+	start: number;
+	end: number;
+	seconds: number;
+}
+
+const DURATION_RANGE = "[\\-\\u2013\\u2014]";
+
+function durationPattern() {
+	return new RegExp(
+		`(?<![\\p{L}\\p{N}])(\\d+(?:[.,]\\d+)?|${Object.keys(DURATION_WORDS).join("|")})(?:\\s*${DURATION_RANGE}\\s*(\\d+(?:[.,]\\d+)?))?\\s*(${DURATION_UNIT})(?![\\p{L}\\p{N}])`,
+		"giu",
+	);
+}
+
+/** Every duration in the sentence. A range uses the longer end. */
+export function findAllDurations(text: string): DurationSpan[] {
+	const found: DurationSpan[] = [];
+	for (const match of text.matchAll(durationPattern())) {
+		const raw = match[1]?.toLocaleLowerCase() ?? "";
+		const first = DURATION_WORDS[raw] ?? Number(raw.replace(",", "."));
+		if (!Number.isFinite(first) || first <= 0) {
+			continue;
+		}
+		const second = match[2] ? Number(match[2].replace(",", ".")) : null;
+		const amount =
+			second != null && Number.isFinite(second)
+				? Math.max(first, second)
+				: first;
+		const seconds = Math.round(amount * unitScale(match[3] ?? ""));
+		if (seconds <= 0) {
+			continue;
+		}
+		const start = match.index ?? 0;
+		found.push({ start, end: start + match[0].length, seconds });
+	}
+	return found;
+}
+
+export function decorateStep(text: string, ingredients: StepIngredient[]) {
+	const base = placeEmphasis(
+		highlightStep(text, ingredients),
+		findEmphasis(text),
+	);
+	const ranges = findAllDurations(text);
+	const placed = placeAllDurations(base, ranges);
+	const covered = new Set(
+		placed.filter((piece) => piece.timer).map((piece) => piece.sourceStart),
+	);
+	const extra = ranges
+		.filter((range) => !covered.has(range.start))
+		.map((range) => ({
+			text: text.slice(range.start, range.end),
+			ingredient: null,
+			timer: true,
+			timerSeconds: range.seconds,
+			sourceStart: range.start,
+			sourceEnd: range.end,
+		}));
+	return extra.length > 0 ? [...placed, ...extra] : placed;
+}
+
+function placeAllDurations(pieces: StepPiece[], ranges: DurationSpan[]) {
+	let current = pieces;
+	for (const range of ranges) {
+		current = placeOneDuration(current, range);
+	}
+	return current;
+}
+
+function placeOneDuration(pieces: StepPiece[], range: DurationSpan) {
+	const next: StepPiece[] = [];
+	let placed = false;
+
+	for (const piece of pieces) {
+		const contains =
+			range.start >= piece.sourceStart && range.end <= piece.sourceEnd;
+		const exact = piece.text.length === piece.sourceEnd - piece.sourceStart;
+		if (!contains || !exact || placed || piece.timer) {
+			next.push(piece);
+			continue;
+		}
+
+		const localStart = range.start - piece.sourceStart;
+		const localEnd = range.end - piece.sourceStart;
+		const before = piece.text.slice(0, localStart);
+		const middle = piece.text.slice(localStart, localEnd);
+		const after = piece.text.slice(localEnd);
+
+		if (before) {
+			next.push({
+				...piece,
+				text: before,
+				timer: false,
+				timerSeconds: undefined,
+				sourceEnd: range.start,
+			});
+		}
+		next.push({
+			text: middle,
+			ingredient: null,
+			timer: true,
+			timerSeconds: range.seconds,
+			sourceStart: range.start,
+			sourceEnd: range.end,
+		});
+		if (after) {
+			next.push({
+				...piece,
+				text: after,
+				timer: false,
+				timerSeconds: undefined,
+				sourceStart: range.end,
+			});
+		}
+		placed = true;
+	}
+
+	return next;
 }
 
 export function placeDuration(
