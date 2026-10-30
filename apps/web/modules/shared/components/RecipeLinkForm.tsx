@@ -6,7 +6,7 @@ import { Button } from "@ui/components/button";
 import { Input } from "@ui/components/input";
 import { LinkIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 function errorCode(error: unknown) {
 	if (typeof error === "object" && error !== null && "code" in error) {
@@ -40,10 +40,17 @@ export function RecipeLinkForm({
 	const router = useLocaleRouter();
 	const inputId = useId();
 	const messageId = useId();
+	const inputRef = useRef<HTMLInputElement>(null);
 	const [url, setUrl] = useState("");
 	const [message, setMessage] = useState<string | null>(null);
 	const [invalid, setInvalid] = useState(false);
 	const [pending, setPending] = useState(false);
+	const [dismissedResume, setDismissedResume] = useState(false);
+	const shownResume = dismissedResume ? null : resumeError;
+
+	useEffect(() => {
+		setDismissedResume(false);
+	}, [resumeError]);
 
 	return (
 		<form
@@ -52,6 +59,13 @@ export function RecipeLinkForm({
 			onSubmit={(event) => {
 				event.preventDefault();
 				if (pending) {
+					return;
+				}
+				if (!url.trim()) {
+					setInvalid(false);
+					setMessage(null);
+					setDismissedResume(true);
+					inputRef.current?.focus();
 					return;
 				}
 				let parsed: URL;
@@ -115,6 +129,7 @@ export function RecipeLinkForm({
 						className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-foreground"
 					/>
 					<Input
+						ref={inputRef}
 						id={inputId}
 						name="url"
 						type="url"
@@ -125,7 +140,7 @@ export function RecipeLinkForm({
 						value={url}
 						aria-invalid={invalid}
 						aria-describedby={
-							message || resumeError ? messageId : undefined
+							message || shownResume ? messageId : undefined
 						}
 						placeholder={t("placeholder")}
 						onChange={(event) => {
@@ -148,17 +163,17 @@ export function RecipeLinkForm({
 					{t("submit")}
 				</Button>
 			</div>
-			{(message ?? resumeError) ? (
+			{(message ?? shownResume) ? (
 				<p
 					id={messageId}
-					role={invalid || resumeError ? "alert" : "status"}
+					role={invalid || shownResume ? "alert" : "status"}
 					className={
-						invalid || resumeError
+						invalid || shownResume
 							? "text-base text-destructive"
 							: "text-base text-muted-foreground"
 					}
 				>
-					{message ?? resumeError}
+					{message ?? shownResume}
 				</p>
 			) : null}
 		</form>

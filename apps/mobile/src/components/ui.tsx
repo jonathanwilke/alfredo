@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentRef, ReactNode, Ref } from "react";
 import {
 	ActivityIndicator,
 	Pressable,
@@ -179,6 +179,7 @@ export function Field({
 	onChangeText,
 	invalid,
 	icon,
+	ref,
 	...props
 }: {
 	label: string;
@@ -186,6 +187,7 @@ export function Field({
 	onChangeText: (value: string) => void;
 	invalid?: boolean;
 	icon?: ReactNode;
+	ref?: Ref<ComponentRef<typeof TextInput>>;
 } & Omit<TextInputProps, "value" | "onChangeText">) {
 	const { colors } = useTheme();
 	return (
@@ -193,6 +195,7 @@ export function Field({
 			{icon ? <View style={styles.fieldIcon}>{icon}</View> : null}
 			<TextInput
 				{...props}
+				ref={ref}
 				accessibilityLabel={label}
 				value={value}
 				onChangeText={onChangeText}

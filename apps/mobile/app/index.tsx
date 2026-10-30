@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Link as LinkIcon } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
-import { ScrollView, View } from "react-native";
+import { type ComponentRef, useEffect, useRef, useState } from "react";
+import { ScrollView, type TextInput, View } from "react-native";
 import { api, apiCode } from "@/api/client";
 import type { StarterRecipe } from "@/api/types";
 import { Footer, Header } from "@/components/Chrome";
@@ -29,6 +29,7 @@ export default function HomeScreen() {
 	const [needsCredit, setNeedsCredit] = useState(false);
 	const [starters, setStarters] = useState<StarterRecipe[] | null>(null);
 	const started = useRef(false);
+	const inputRef = useRef<ComponentRef<typeof TextInput>>(null);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -84,6 +85,12 @@ export default function HomeScreen() {
 
 	function submit() {
 		if (pending) {
+			return;
+		}
+		if (!url.trim()) {
+			setInvalid(false);
+			setMessage(null);
+			inputRef.current?.focus();
 			return;
 		}
 		let parsed: URL;
@@ -164,6 +171,7 @@ export default function HomeScreen() {
 							}}
 						>
 							<Field
+								ref={inputRef}
 								label={copy.home.placeholder}
 								value={url}
 								onChangeText={(next) => {
