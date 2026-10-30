@@ -174,7 +174,7 @@ function StarterCard({ tile }: { tile: StarterTile }) {
 				href={`${tile.href}?cook=1`}
 				aria-label={t("start")}
 				onClick={(event) => event.stopPropagation()}
-				className="absolute right-3 bottom-3 z-10 grid size-10 place-items-center rounded-full bg-[#F3EDE3] text-[#40442A] no-underline shadow-[0_8px_16px_-8px_rgba(26,29,20,0.8)] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+				className="absolute right-3 bottom-3 z-10 grid size-10 place-items-center rounded-full bg-accent text-accent-foreground no-underline shadow-[0_8px_16px_-8px_rgba(26,29,20,0.8)] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
 			>
 				<Icon icon={SpoonIcon} aria-hidden />
 			</LocaleLink>
