@@ -294,7 +294,7 @@ export function CookingGuide({
 				</p>
 			) : null}
 			<div className="relative z-0 flex min-h-0 flex-1">
-				<TimerTray timers={timers} now={now} />
+				<TimerTray timers={timers} now={now} onShowStep={focusStep} />
 				<div
 					ref={scrollerRef}
 					onScroll={updateActive}
@@ -468,9 +468,11 @@ function StepFragment({
 function TimerTray({
 	timers,
 	now,
+	onShowStep,
 }: {
 	timers: ReturnType<typeof useTimerClock>["timers"];
 	now: number;
+	onShowStep: (stepIndex: number) => void;
 }) {
 	const t = useTranslations("recipe");
 	if (timers.length === 0) {
@@ -478,7 +480,7 @@ function TimerTray({
 	}
 	return (
 		<div className="pointer-events-none absolute inset-x-0 top-3 z-50 flex justify-center px-4">
-			<ul className="pointer-events-auto flex max-h-[46vh] w-max max-w-full flex-col items-center gap-2 overflow-y-auto">
+			<ul className="pointer-events-auto flex w-full max-w-full flex-row flex-wrap items-center justify-center gap-2">
 				{timers.map((timer) => {
 					const remaining = remainingSeconds(timer, now);
 					const clock =
@@ -501,9 +503,16 @@ function TimerTray({
 								aria-hidden
 								className="shrink-0"
 							/>
-							<p className="min-w-0 font-semibold text-lg tabular-nums">
+							<button
+								type="button"
+								aria-label={t("stepLabel", {
+									step: timer.stepIndex + 1,
+								})}
+								onClick={() => onShowStep(timer.stepIndex)}
+								className="min-w-0 cursor-pointer font-semibold text-lg tabular-nums"
+							>
 								{clock}
-							</p>
+							</button>
 							{timer.status === "done" ? null : (
 								<button
 									type="button"

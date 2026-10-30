@@ -354,7 +354,12 @@ export function CookingMode({
 						style={styles.fadeBottom}
 					/>
 				</View>
-				<TimerTray timers={timers} now={now} inset={pagePadding} />
+				<TimerTray
+					timers={timers}
+					now={now}
+					inset={pagePadding}
+					onShowStep={focusStep}
+				/>
 			</View>
 			<View
 				pointerEvents={atEnd ? "none" : "box-none"}
@@ -611,10 +616,12 @@ function TimerTray({
 	timers,
 	now,
 	inset,
+	onShowStep,
 }: {
 	timers: ReturnType<typeof useTimerClock>["timers"];
 	now: number;
 	inset: number;
+	onShowStep: (stepIndex: number) => void;
 }) {
 	const { copy } = useI18n();
 	if (timers.length === 0) {
@@ -625,10 +632,7 @@ function TimerTray({
 			pointerEvents="box-none"
 			style={[styles.floatWrap, { left: inset, right: inset }]}
 		>
-			<ScrollView
-				style={styles.trayScroll}
-				contentContainerStyle={styles.trayList}
-			>
+			<View style={styles.trayList}>
 				{timers.map((timer) => {
 					const remaining = remainingSeconds(timer, now);
 					const clock =
@@ -642,14 +646,23 @@ function TimerTray({
 					return (
 						<View key={timer.id} style={styles.trayRow}>
 							<Icon icon={Timer01Icon} color={colors.timer} />
-							<Text
-								style={[
-									styles.trayTime,
-									{ color: colors.timer },
-								]}
+							<Pressable
+								accessibilityRole="button"
+								accessibilityLabel={copy.recipe.stepLabel(
+									timer.stepIndex + 1,
+								)}
+								hitSlop={8}
+								onPress={() => onShowStep(timer.stepIndex)}
 							>
-								{clock}
-							</Text>
+								<Text
+									style={[
+										styles.trayTime,
+										{ color: colors.timer },
+									]}
+								>
+									{clock}
+								</Text>
+							</Pressable>
 							{timer.status === "done" ? null : (
 								<Pressable
 									accessibilityRole="button"
@@ -683,7 +696,7 @@ function TimerTray({
 						</View>
 					);
 				})}
-			</ScrollView>
+			</View>
 		</View>
 	);
 }
@@ -828,13 +841,12 @@ const styles = StyleSheet.create({
 		zIndex: 2,
 		elevation: 6,
 	},
-	trayScroll: {
-		maxHeight: 220,
-		width: "100%",
-	},
 	trayList: {
+		width: "100%",
+		flexDirection: "row",
+		flexWrap: "wrap",
+		justifyContent: "center",
 		gap: 8,
-		alignItems: "center",
 	},
 	trayRow: {
 		flexDirection: "row",
