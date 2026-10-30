@@ -103,6 +103,26 @@ describe("credit payment grant", () => {
 		}
 	});
 
+	it("grants a discounted payment, including a full discount", () => {
+		const parsed = payment({
+			total_amount: 0,
+			tax: 0,
+			discount_id: "dsc_full",
+			discounts: [{ discount_id: "dsc_full" }],
+		});
+		assert.ok(parsed);
+		assert.equal(parsed?.discounted, true);
+		const verdict = decideCreditGrant({
+			payment: parsed,
+			checkout,
+			productId: "pdt_credits",
+		});
+		assert.equal(verdict.ok, true);
+		if (verdict.ok) {
+			assert.equal(verdict.credits, 20);
+		}
+	});
+
 	it("treats a repeated payment for an already granted checkout as idempotent", () => {
 		const parsed = payment();
 		assert.ok(parsed);

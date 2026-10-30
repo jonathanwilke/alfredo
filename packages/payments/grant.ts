@@ -22,6 +22,7 @@ export type ParsedPayment = {
 	currency: string | null;
 	productId: string | null;
 	customerId: string | null;
+	discounted: boolean;
 };
 
 export type GrantDecision =
@@ -59,6 +60,19 @@ function integerValue(value: unknown) {
 		return Number(value.trim());
 	}
 	return null;
+}
+
+function paymentIsDiscounted(data: Record<string, unknown>) {
+	if (stringValue(data.discount_id)) {
+		return true;
+	}
+	if (!Array.isArray(data.discounts)) {
+		return false;
+	}
+	return data.discounts.some((item) => {
+		const row = asRecord(item);
+		return Boolean(stringValue(row?.discount_id));
+	});
 }
 
 export function amountBeforeTax(total: number | null, tax: number | null) {
@@ -119,6 +133,7 @@ export function parseSucceededPayment(event: unknown): ParsedPayment | null {
 		productId,
 		customerId:
 			stringValue(customer?.customer_id) ?? stringValue(data.customer_id),
+		discounted: paymentIsDiscounted(data),
 	};
 }
 
@@ -205,9 +220,16 @@ export function decideCreditGrant(input: {
 			checkoutId: checkout.id,
 		};
 	}
+	if (payment.amountBeforeTax == null || payment.amountBeforeTax < 0) {
+		return {
+			ok: false,
+			reason: "amount-mismatch",
+			checkoutId: checkout.id,
+		};
+	}
 	if (
-		payment.amountBeforeTax == null ||
-		payment.amountBeforeTax < checkout.priceCents
+		payment.amountBeforeTax < checkout.priceCents &&
+		!payment.discounted
 	) {
 		return {
 			ok: false,

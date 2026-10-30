@@ -212,6 +212,30 @@ describe("payment webhooks", () => {
 		assert.equal(memory.entries.size, 0);
 	});
 
+	it("grants a fully discounted pack", async () => {
+		useCreditsProduct();
+		const { store, memory, checkouts, addCheckout } = webhookStore();
+		addCheckout(CREDIT_PACKS[0]);
+		assert.equal(
+			await processVerifiedWebhook(
+				{
+					webhookId: "msg_discount",
+					event: paymentEvent("payment.succeeded", {
+						payment_id: "pay_free",
+						total_amount: 0,
+						tax: 0,
+						discount_id: "dsc_full",
+						discounts: [{ discount_id: "dsc_full" }],
+					}),
+				},
+				store,
+			),
+			"applied",
+		);
+		assert.equal(memory.balance("user_123"), 10);
+		assert.equal(checkouts.get("chk_10")?.status, "granted");
+	});
+
 	it("rejects a payment below the price stored at checkout", async () => {
 		useCreditsProduct();
 		const { store, memory, checkouts, addCheckout } = webhookStore();
