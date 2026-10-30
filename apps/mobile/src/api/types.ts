@@ -85,6 +85,13 @@ export type RecipeContent = z.infer<typeof recipeContentSchema>;
 export type StoredRecipe = z.infer<typeof storedRecipeSchema>;
 export type StarterRecipe = z.infer<typeof starterSchema>;
 export type RecipeIcon = z.infer<typeof iconSchema>;
+export const creditUsageSchema = z.object({
+	total: z.number().int().nonnegative(),
+	used: z.number().int().nonnegative(),
+	remaining: z.number().int().nonnegative(),
+});
+
 export type CreditBalance = z.infer<typeof balanceSchema>;
 export type CreditEntry = z.infer<typeof historyEntrySchema>;
+export type CreditUsage = z.infer<typeof creditUsageSchema>;
 export type IconStatus = RecipeIcon["status"];

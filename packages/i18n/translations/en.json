@@ -93,6 +93,8 @@
 		"checkoutPending": "Opening checkout",
 		"historyLink": "Purchases and usage",
 		"historyIntro": "One credit generates one recipe from a link. Saved recipes cost nothing.",
+		"usageOf": "{total, plural, one {{used, number} of {total, number} credit used} other {{used, number} of {total, number} credits used}}",
+		"usageRemaining": "{count, plural, one {# remaining} other {# remaining}}",
 		"historyEmpty": "Nothing here yet. Your free credits show up after you sign in with a verified email.",
 		"historyError": "Your credit history could not be loaded.",
 		"historyWelcome": "{count, plural, one {# free credit} other {# free credits}}",

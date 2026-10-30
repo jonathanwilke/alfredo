@@ -1,4 +1,4 @@
-import { listCreditHistory } from "@repo/payments";
+import { creditUsageSummary, listCreditHistory } from "@repo/payments";
 import { z } from "zod";
 import { protectedProcedure } from "../../../orpc/procedures";
 
@@ -27,14 +27,23 @@ export const history = protectedProcedure
 					packId: z.string().nullable(),
 				}),
 			),
+			usage: z.object({
+				total: z.number().int().nonnegative(),
+				used: z.number().int().nonnegative(),
+				remaining: z.number().int().nonnegative(),
+			}),
 		}),
 	)
 	.handler(async ({ context }) => {
-		const entries = await listCreditHistory(context.user.id);
+		const [entries, usage] = await Promise.all([
+			listCreditHistory(context.user.id),
+			creditUsageSummary(context.user.id),
+		]);
 		return {
 			entries: entries.map((entry) => ({
 				...entry,
 				createdAt: entry.createdAt.toISOString(),
 			})),
+			usage,
 		};
 	});

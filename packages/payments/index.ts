@@ -28,6 +28,7 @@ export {
 export {
 	assertCreditsAvailable,
 	billingSnapshot,
+	creditUsageSummary,
 	debitRecipeCredit,
 	getCreditBalance,
 	grantWelcomeCreditsForUser,

@@ -3,6 +3,8 @@ import {
 	balanceSchema,
 	type CreditBalance,
 	type CreditEntry,
+	type CreditUsage,
+	creditUsageSchema,
 	historyEntrySchema,
 	iconSchema,
 	type Locale,
@@ -206,9 +208,17 @@ export const api = {
 		const json = await request("/billing/balance");
 		return parse(balanceSchema, json);
 	},
-	async history(): Promise<CreditEntry[]> {
+	async history(): Promise<{
+		entries: CreditEntry[];
+		usage: CreditUsage;
+	}> {
 		const json = await request("/billing/history");
-		return parse(z.object({ entries: z.array(historyEntrySchema) }), json)
-			.entries;
+		return parse(
+			z.object({
+				entries: z.array(historyEntrySchema),
+				usage: creditUsageSchema,
+			}),
+			json,
+		);
 	},
 };

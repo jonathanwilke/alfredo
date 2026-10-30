@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { orpcCode } from "../lib/errors";
 import { formatCreditDate } from "../lib/format";
 import { useBilling } from "./BillingProvider";
+import { CreditUsageBar } from "./CreditUsageBar";
 
 type Entry = {
 	id: string;
@@ -29,6 +30,11 @@ export function CreditHistory() {
 	const router = useLocaleRouter();
 	const { openBuy } = useBilling();
 	const [entries, setEntries] = useState<Entry[] | null>(null);
+	const [usage, setUsage] = useState<{
+		total: number;
+		used: number;
+		remaining: number;
+	} | null>(null);
 	const [failed, setFailed] = useState(false);
 	const [attempt, setAttempt] = useState(0);
 
@@ -40,6 +46,7 @@ export function CreditHistory() {
 			.then((result) => {
 				if (!cancelled) {
 					setEntries(result.entries);
+					setUsage(result.usage);
 				}
 			})
 			.catch((error: unknown) => {
@@ -54,6 +61,7 @@ export function CreditHistory() {
 				}
 				setFailed(true);
 				setEntries([]);
+				setUsage(null);
 			});
 		return () => {
 			cancelled = true;
@@ -73,6 +81,13 @@ export function CreditHistory() {
 			>
 				{t("buyTitle")}
 			</Button>
+			{usage && !failed ? (
+				<CreditUsageBar
+					total={usage.total}
+					used={usage.used}
+					remaining={usage.remaining}
+				/>
+			) : null}
 			{failed ? (
 				<div className="flex flex-col items-start gap-3">
 					<p role="alert" className="text-lg text-destructive">

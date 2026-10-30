@@ -2,7 +2,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 import { api, apiCode } from "@/api/client";
-import type { CreditBalance, CreditEntry } from "@/api/types";
+import type { CreditBalance, CreditEntry, CreditUsage } from "@/api/types";
 import { authClient } from "@/auth/client";
 import { Footer, Header } from "@/components/Chrome";
 import { Body, Button, Display, Notice, Screen } from "@/components/ui";
@@ -19,6 +19,7 @@ export default function CreditsScreen() {
 	const { data: session, isPending } = authClient.useSession();
 	const [balance, setBalance] = useState<CreditBalance | null>(null);
 	const [entries, setEntries] = useState<CreditEntry[] | null>(null);
+	const [usage, setUsage] = useState<CreditUsage | null>(null);
 	const [failed, setFailed] = useState(false);
 	const [attempt, setAttempt] = useState(0);
 
@@ -48,6 +49,7 @@ export default function CreditsScreen() {
 		}
 		if (!session) {
 			setEntries([]);
+			setUsage(null);
 			return;
 		}
 		let cancelled = false;
@@ -55,7 +57,8 @@ export default function CreditsScreen() {
 			.history()
 			.then((result) => {
 				if (!cancelled) {
-					setEntries(result);
+					setEntries(result.entries);
+					setUsage(result.usage);
 				}
 			})
 			.catch((error: unknown) => {
@@ -68,6 +71,7 @@ export default function CreditsScreen() {
 				}
 				setFailed(true);
 				setEntries([]);
+				setUsage(null);
 			});
 		return () => {
 			cancelled = true;
@@ -100,6 +104,22 @@ export default function CreditsScreen() {
 					)}
 					<Body muted>{copy.billing.historyIntro}</Body>
 					<Body muted>{copy.billing.storeNote}</Body>
+					{session && usage && !failed ? (
+						<CreditUsageBar
+							usage={usage}
+							usedLabel={copy.billing.usageOf(
+								usage.used,
+								usage.total,
+							)}
+							remainingLabel={copy.billing.usageRemaining(
+								usage.remaining,
+							)}
+							track={colors.border}
+							fill={colors.accent}
+							labelColor={colors.foreground}
+							muted={colors.mutedForeground}
+						/>
+					) : null}
 					{!isPending && !session ? (
 						<Button
 							label={copy.home.login}
@@ -167,6 +187,86 @@ export default function CreditsScreen() {
 				<Footer />
 			</ScrollView>
 		</Screen>
+	);
+}
+
+function CreditUsageBar({
+	usage,
+	usedLabel,
+	remainingLabel,
+	track,
+	fill,
+	labelColor,
+	muted,
+}: {
+	usage: CreditUsage;
+	usedLabel: string;
+	remainingLabel: string;
+	track: string;
+	fill: string;
+	labelColor: string;
+	muted: string;
+}) {
+	const percent =
+		usage.total === 0 ? 0 : Math.min(100, (usage.used / usage.total) * 100);
+	return (
+		<View
+			accessible
+			accessibilityRole="progressbar"
+			accessibilityLabel={usedLabel}
+			accessibilityValue={{
+				min: 0,
+				max: usage.total,
+				now: usage.used,
+				text: `${usedLabel}, ${remainingLabel}`,
+			}}
+			style={{ gap: 10 }}
+		>
+			<View
+				style={{
+					flexDirection: "row",
+					flexWrap: "wrap",
+					justifyContent: "space-between",
+					gap: 8,
+				}}
+			>
+				<Text
+					style={{
+						fontFamily: fonts.body,
+						fontSize: 18,
+						color: labelColor,
+					}}
+				>
+					{usedLabel}
+				</Text>
+				<Text
+					style={{
+						fontFamily: fonts.body,
+						fontSize: 16,
+						color: muted,
+					}}
+				>
+					{remainingLabel}
+				</Text>
+			</View>
+			<View
+				style={{
+					height: 10,
+					borderRadius: 999,
+					backgroundColor: track,
+					overflow: "hidden",
+				}}
+			>
+				<View
+					style={{
+						width: `${percent}%`,
+						height: "100%",
+						borderRadius: 999,
+						backgroundColor: fill,
+					}}
+				/>
+			</View>
+		</View>
 	);
 }
 

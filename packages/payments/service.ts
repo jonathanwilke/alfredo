@@ -17,6 +17,7 @@ import {
 	type CreditStore,
 	InsufficientCreditsError,
 	type LedgerType,
+	presentCreditUsage,
 } from "./ledger";
 import { applyWelcomeGrant } from "./welcome";
 
@@ -214,6 +215,25 @@ export type CreditHistoryEntry = {
 	createdAt: Date;
 	packId: string | null;
 };
+
+export async function creditUsageSummary(userId: string) {
+	const rows = await db
+		.select({
+			type: creditLedger.type,
+			amount: creditLedger.amount,
+		})
+		.from(creditLedger)
+		.where(eq(creditLedger.userId, userId));
+
+	return presentCreditUsage(
+		rows.flatMap((row) => {
+			if (!isLedgerType(row.type)) {
+				return [];
+			}
+			return [{ type: row.type, amount: row.amount }];
+		}),
+	);
+}
 
 export async function listCreditHistory(userId: string, limit = 100) {
 	const rows = await db

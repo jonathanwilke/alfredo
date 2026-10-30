@@ -89,6 +89,58 @@ export async function applyDebit(
 	return { balance: next, debited: true as const };
 }
 
+/**
+ * Credits ever granted, minus refunds, disputes, and adjustments that remove
+ * credits. Imports are usage, not part of the total.
+ */
+export function summarizeCreditUsage(
+	entries: { type: LedgerType; amount: number }[],
+) {
+	let total = 0;
+	let used = 0;
+	for (const entry of entries) {
+		const amount = entry.amount;
+		if (!Number.isFinite(amount) || amount === 0) {
+			continue;
+		}
+		switch (entry.type) {
+			case "welcome":
+			case "purchase":
+				if (amount > 0) {
+					total += amount;
+				}
+				break;
+			case "refund":
+			case "dispute":
+				total -= Math.abs(amount);
+				break;
+			case "import":
+				used += Math.abs(amount);
+				break;
+			case "adjustment":
+				total += amount;
+				break;
+		}
+	}
+	return {
+		total: Math.max(0, total),
+		used: Math.max(0, used),
+	};
+}
+
+/** Display figures. The filled amount never exceeds the granted total. */
+export function presentCreditUsage(
+	entries: { type: LedgerType; amount: number }[],
+) {
+	const summary = summarizeCreditUsage(entries);
+	const used = Math.min(summary.used, summary.total);
+	return {
+		total: summary.total,
+		used,
+		remaining: summary.total - used,
+	};
+}
+
 export async function applyReversal(
 	store: CreditStore,
 	input: { paymentId: string; type: "refund" | "dispute" },

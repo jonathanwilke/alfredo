@@ -26,9 +26,13 @@ function deviceLocale(): Locale {
 	return getLocales()[0]?.languageCode === "de" ? "de" : "en";
 }
 
+function formatCount(locale: Locale, count: number) {
+	return new Intl.NumberFormat(locale).format(count);
+}
+
 function countLabel(locale: Locale, count: number, one: string, other: string) {
 	const word = locale === "en" && count === 1 ? one : other;
-	return `${count} ${word}`;
+	return `${formatCount(locale, count)} ${word}`;
 }
 
 function createCopy(locale: Locale) {
@@ -197,6 +201,20 @@ function createCopy(locale: Locale) {
 			historyIntro: de
 				? "Mit einem Guthaben lässt du ein Rezept aus einem Link erstellen. Gespeicherte Rezepte kosten nichts."
 				: "One credit generates one recipe from a link. Saved recipes cost nothing.",
+			usageOf: (used: number, total: number) => {
+				const usedText = formatCount(locale, used);
+				const totalText = formatCount(locale, total);
+				if (de) {
+					return `${usedText} von ${totalText} Guthaben verbraucht`;
+				}
+				return total === 1
+					? `${usedText} of ${totalText} credit used`
+					: `${usedText} of ${totalText} credits used`;
+			},
+			usageRemaining: (count: number) =>
+				de
+					? `${formatCount(locale, count)} übrig`
+					: `${formatCount(locale, count)} remaining`,
 			historyEmpty: de
 				? "Hier ist noch nichts. Dein kostenloses Guthaben steht hier, nachdem du dich mit einer bestätigten E-Mail angemeldet hast."
 				: "Nothing here yet. Your free credits show up after you sign in with a verified email.",

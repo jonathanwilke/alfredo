@@ -6,6 +6,7 @@ import {
 	applyGrant,
 	applyReversal,
 	InsufficientCreditsError,
+	presentCreditUsage,
 } from "./ledger";
 import { createMemoryStore } from "./memory-store";
 
@@ -173,6 +174,83 @@ describe("credit ledger", () => {
 				type: "refund",
 			}),
 			"ignored",
+		);
+	});
+});
+
+describe("presentCreditUsage", () => {
+	it("counts welcome credits and purchases, and treats imports as used", () => {
+		assert.deepEqual(
+			presentCreditUsage([
+				{ type: "welcome", amount: 3 },
+				{ type: "import", amount: -1 },
+			]),
+			{ total: 3, used: 1, remaining: 2 },
+		);
+		assert.deepEqual(
+			presentCreditUsage([
+				{ type: "welcome", amount: 3 },
+				{ type: "purchase", amount: 20 },
+				{ type: "import", amount: -1 },
+			]),
+			{ total: 23, used: 1, remaining: 22 },
+		);
+	});
+
+	it("reduces the total when a purchase is refunded or disputed", () => {
+		assert.deepEqual(
+			presentCreditUsage([
+				{ type: "welcome", amount: 3 },
+				{ type: "purchase", amount: 10 },
+				{ type: "refund", amount: -10 },
+				{ type: "import", amount: -1 },
+			]),
+			{ total: 3, used: 1, remaining: 2 },
+		);
+		assert.deepEqual(
+			presentCreditUsage([
+				{ type: "purchase", amount: 10 },
+				{ type: "dispute", amount: -10 },
+			]),
+			{ total: 0, used: 0, remaining: 0 },
+		);
+	});
+
+	it("treats added adjustments as grants and removed ones as reversals", () => {
+		assert.deepEqual(
+			presentCreditUsage([
+				{ type: "welcome", amount: 3 },
+				{ type: "adjustment", amount: 2 },
+				{ type: "adjustment", amount: -1 },
+				{ type: "import", amount: -1 },
+			]),
+			{ total: 4, used: 1, remaining: 3 },
+		);
+	});
+
+	it("stays empty at zero and clamps usage above the granted total", () => {
+		assert.deepEqual(presentCreditUsage([]), {
+			total: 0,
+			used: 0,
+			remaining: 0,
+		});
+		assert.deepEqual(
+			presentCreditUsage([
+				{ type: "welcome", amount: 3 },
+				{ type: "import", amount: -5 },
+			]),
+			{ total: 3, used: 3, remaining: 0 },
+		);
+	});
+
+	it("keeps large grant totals exact", () => {
+		assert.deepEqual(
+			presentCreditUsage([
+				{ type: "welcome", amount: 3 },
+				{ type: "purchase", amount: 1_000_000 },
+				{ type: "import", amount: -2 },
+			]),
+			{ total: 1_000_003, used: 2, remaining: 1_000_001 },
 		);
 	});
 });

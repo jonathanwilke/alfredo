@@ -93,6 +93,8 @@
 		"checkoutPending": "Kasse öffnet sich",
 		"historyLink": "Käufe und Verbrauch",
 		"historyIntro": "Mit einem Guthaben lässt du ein Rezept aus einem Link erstellen. Gespeicherte Rezepte kosten nichts.",
+		"usageOf": "{used, number} von {total, number} Guthaben verbraucht",
+		"usageRemaining": "{count, plural, one {# übrig} other {# übrig}}",
 		"historyEmpty": "Hier ist noch nichts. Dein kostenloses Guthaben steht hier, nachdem du dich mit einer bestätigten E-Mail angemeldet hast.",
 		"historyError": "Die Liste konnte nicht geladen werden.",
 		"historyWelcome": "{count, plural, one {# Guthaben gratis} other {# Guthaben gratis}}",
