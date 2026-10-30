@@ -185,20 +185,26 @@ function RecipeOverviewContent({
 					}
 				>
 					{photo || !settled || dish?.status === "pending" ? (
-						<DishImage
-							status={
-								photo ? "ready" : (dish?.status ?? "pending")
-							}
-							url={photo}
-							label={labelFor(
-								photo ? "ready" : (dish?.status ?? "pending"),
-							)}
-							loading="eager"
-							skeleton
-							sizes="(min-width: 1024px) 40vw, 100vw"
-						/>
+						<div className="lg:order-2">
+							<DishImage
+								status={
+									photo
+										? "ready"
+										: (dish?.status ?? "pending")
+								}
+								url={photo}
+								label={labelFor(
+									photo
+										? "ready"
+										: (dish?.status ?? "pending"),
+								)}
+								loading="eager"
+								skeleton
+								sizes="(min-width: 1024px) 40vw, 100vw"
+							/>
+						</div>
 					) : null}
-					<div className="flex flex-col gap-4">
+					<div className="flex flex-col gap-4 lg:order-1">
 						<h1 className="text-balance text-5xl leading-[1.05] font-semibold tracking-tight">
 							{content.title}
 						</h1>
