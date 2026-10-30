@@ -31,9 +31,11 @@ function importFailure(error: unknown) {
 
 export function RecipeLinkForm({
 	onInsufficientCredits,
+	resumeUrl,
 	resumeError,
 }: {
 	onInsufficientCredits: () => void;
+	resumeUrl?: string | null;
 	resumeError?: string | null;
 }) {
 	const t = useTranslations("home");
@@ -48,18 +50,29 @@ export function RecipeLinkForm({
 	const [pending, setPending] = useState(false);
 	const [dismissedResume, setDismissedResume] = useState(false);
 	const shownResume = dismissedResume ? null : resumeError;
+	const busy = pending || (Boolean(resumeUrl) && !shownResume);
 
 	useEffect(() => {
 		setDismissedResume(false);
 	}, [resumeError]);
 
+	useEffect(() => {
+		if (!resumeUrl) {
+			return;
+		}
+		setUrl(resumeUrl);
+		setInvalid(false);
+		setMessage(null);
+	}, [resumeUrl]);
+
 	return (
 		<form
 			className="flex flex-col gap-3"
 			noValidate
+			aria-busy={busy}
 			onSubmit={(event) => {
 				event.preventDefault();
-				if (pending) {
+				if (busy) {
 					return;
 				}
 				if (!url.trim()) {
@@ -138,7 +151,7 @@ export function RecipeLinkForm({
 						inputMode="url"
 						autoComplete="off"
 						required
-						disabled={pending}
+						disabled={busy}
 						value={url}
 						aria-invalid={invalid}
 						aria-describedby={
@@ -159,7 +172,7 @@ export function RecipeLinkForm({
 					type="submit"
 					variant="primary"
 					size="md"
-					loading={pending}
+					loading={busy}
 					className="h-12 rounded-full bg-accent px-6 text-lg text-accent-foreground shadow-none hover:bg-accent/90 [&>svg]:opacity-100"
 				>
 					<Icon icon={SpoonIcon} aria-hidden />

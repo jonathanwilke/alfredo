@@ -53,10 +53,14 @@ export default function HomeScreen() {
 
 	useEffect(() => {
 		if (!importUrl || resumed.has(importUrl) || started.current) {
+			if (importUrl) {
+				setUrl(importUrl);
+			}
 			return;
 		}
 		started.current = true;
 		resumed.add(importUrl);
+		setUrl(importUrl);
 		setPending(true);
 		void api
 			.importRecipe(importUrl, locale)

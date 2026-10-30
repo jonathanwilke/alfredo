@@ -1,4 +1,4 @@
-import { loadSharedRecipe } from "@repo/api";
+import { loadSharedRecipe, readyDishUrl } from "@repo/api";
 import { config, getBaseUrl } from "@repo/config";
 import { RecipeOverview } from "@shared/components/RecipeOverview";
 import type { Metadata } from "next";
@@ -68,11 +68,13 @@ export default async function SharedRecipePage({
 	if (!recipe) {
 		notFound();
 	}
+	const dishUrl = await readyDishUrl(recipe.recipeId);
 
 	return (
 		<RecipeOverview
 			recipeId={recipe.recipeId}
 			content={recipe.content}
+			dishUrl={dishUrl}
 			share={{
 				mode: "public",
 				shared: true,

@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { StarterCarousel } from "./StarterCard";
+import { StarterCarousel, tileImageUrl } from "./StarterCard";
 
 export async function StarterRecipes({
 	recipes,
@@ -34,7 +34,7 @@ export async function StarterRecipes({
 			id: recipe.recipeId,
 			href: `/recipes/${recipe.recipeId}`,
 			title: recipe.title,
-			imageUrl: recipe.image ?? recipe.heroIconUrl,
+			imageUrl: tileImageUrl(recipe.image, recipe.heroIconUrl),
 			meta: meta || null,
 		};
 	});

@@ -8,7 +8,7 @@ import { Wordmark } from "@shared/components/Wordmark";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export async function generateMetadata({
 	params,

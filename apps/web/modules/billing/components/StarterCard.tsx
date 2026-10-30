@@ -7,6 +7,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { LocaleLink } from "@i18n/routing";
 import { Icon } from "@shared/components/Icon";
+import { optimizableImage } from "@shared/lib/optimizable-image";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import {
@@ -24,6 +25,10 @@ export type StarterTile = {
 	imageUrl: string | null;
 	meta: string | null;
 };
+
+export function tileImageUrl(image: string | null, heroIconUrl: string | null) {
+	return heroIconUrl ?? image;
+}
 
 export function StarterCarousel({ tiles }: { tiles: StarterTile[] }) {
 	const t = useTranslations("home");
@@ -146,6 +151,7 @@ export function StarterCard({
 	const t = useTranslations("recipe");
 	const [loaded, setLoaded] = useState(false);
 	const initial = tile.title.trim().charAt(0).toUpperCase() || "·";
+	const imageClass = `object-cover transition duration-300 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${loaded ? "opacity-100" : "opacity-0"}`;
 
 	return (
 		<div className="relative">
@@ -158,15 +164,34 @@ export function StarterCard({
 						{loaded ? null : (
 							<div className="absolute inset-0 animate-pulse bg-muted" />
 						)}
-						<Image
-							src={tile.imageUrl}
-							alt=""
-							fill
-							loading={loading}
-							sizes={sizes}
-							className={`object-cover transition duration-300 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${loaded ? "opacity-100" : "opacity-0"}`}
-							onLoad={() => setLoaded(true)}
-						/>
+						{optimizableImage(tile.imageUrl) ? (
+							<Image
+								src={tile.imageUrl}
+								alt=""
+								fill
+								loading={loading}
+								sizes={sizes}
+								className={imageClass}
+								onLoad={() => setLoaded(true)}
+							/>
+						) : (
+							// biome-ignore lint/performance/noImgElement: source photos are not next/image hosts
+							<img
+								src={tile.imageUrl}
+								alt=""
+								loading={loading}
+								onLoad={() => setLoaded(true)}
+								ref={(node) => {
+									if (
+										node?.complete &&
+										node.naturalWidth > 0
+									) {
+										setLoaded(true);
+									}
+								}}
+								className={`absolute inset-0 size-full ${imageClass}`}
+							/>
+						)}
 					</>
 				) : (
 					<PlateFallback initial={initial} />

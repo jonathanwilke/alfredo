@@ -1,7 +1,8 @@
 import { dishName } from "@repo/ai";
 import { db, icons, recipes } from "@repo/database";
 import { starterCount } from "@repo/payments";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 
 function totalTimeSeconds(content: {
 	prepTimeSeconds: number | null;
@@ -16,12 +17,31 @@ function totalTimeSeconds(content: {
 	return parts.reduce((sum, value) => sum + value, 0);
 }
 
-export async function listStarterRecipes(locale: string) {
+function shuffle<T>(items: readonly T[]) {
+	const copy = [...items];
+	for (let index = copy.length - 1; index > 0; index--) {
+		const swap = Math.floor(Math.random() * (index + 1));
+		const left = copy[index];
+		const right = copy[swap];
+		if (left === undefined || right === undefined) {
+			continue;
+		}
+		copy[index] = right;
+		copy[swap] = left;
+	}
+	return copy;
+}
+
+const starterCatalog = unstable_cache(
+	async (locale: string) => loadStarterCatalog(locale),
+	["starter-catalog"],
+	{ revalidate: 300 },
+);
+
+async function loadStarterCatalog(locale: string) {
 	const rows = await db.query.recipes.findMany({
 		where: and(eq(recipes.isCurated, true), eq(recipes.source, "curated")),
 		with: { translations: true },
-		orderBy: sql`random()`,
-		limit: 10,
 	});
 
 	const ready = rows.flatMap((recipe) => {
@@ -46,8 +66,7 @@ export async function listStarterRecipes(locale: string) {
 		];
 	});
 
-	const shown = ready.slice(0, starterCount(ready.length));
-	const ids = shown.map((recipe) => recipe.recipeId);
+	const ids = ready.map((recipe) => recipe.recipeId);
 	const heroes =
 		ids.length === 0
 			? []
@@ -70,8 +89,13 @@ export async function listStarterRecipes(locale: string) {
 		),
 	);
 
-	return shown.map((recipe) => ({
+	return ready.map((recipe) => ({
 		...recipe,
 		heroIconUrl: heroById.get(recipe.recipeId) ?? null,
 	}));
+}
+
+export async function listStarterRecipes(locale: string) {
+	const catalog = await starterCatalog(locale);
+	return shuffle(catalog).slice(0, starterCount(catalog.length));
 }

@@ -16,6 +16,8 @@ import {
 	useTimerAlert,
 	useTimerClock,
 } from "@shared/lib/cook-timers";
+import { optimizableImage } from "@shared/lib/optimizable-image";
+import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -213,8 +215,17 @@ export function CookingGuide({
 	return (
 		<main className="dark flex h-dvh flex-col overflow-hidden bg-background text-foreground">
 			<header className="flex shrink-0 items-center gap-3 px-5 py-4 sm:px-8">
-				{imageUrl ? (
-					// biome-ignore lint/performance/noImgElement: the dish photo is a small remote thumbnail
+				{imageUrl && optimizableImage(imageUrl) ? (
+					<Image
+						src={imageUrl}
+						alt=""
+						width={72}
+						height={72}
+						sizes="36px"
+						className="size-9 shrink-0 rounded-lg object-cover"
+					/>
+				) : imageUrl ? (
+					// biome-ignore lint/performance/noImgElement: this host is outside the image optimizer
 					<img
 						src={imageUrl}
 						alt=""
@@ -316,6 +327,7 @@ export function CookingGuide({
 									url={imageUrl}
 									label={title}
 									loading="lazy"
+									sizes="(min-width: 768px) 720px, 100vw"
 								/>
 							</div>
 						) : null}

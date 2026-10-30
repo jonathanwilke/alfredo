@@ -1,6 +1,10 @@
 "use client";
 
-import { StarterCard, type StarterTile } from "@billing/components/StarterCard";
+import {
+	StarterCard,
+	type StarterTile,
+	tileImageUrl,
+} from "@billing/components/StarterCard";
 import { useLocaleRouter } from "@i18n/router";
 import { api } from "@shared/lib/api";
 import { useLocale, useTranslations } from "next-intl";
@@ -91,7 +95,7 @@ export function SavedRecipes() {
 			id: recipe.recipeId,
 			href: `/recipes/${recipe.recipeId}`,
 			title: recipe.title,
-			imageUrl: recipe.image ?? recipe.heroIconUrl,
+			imageUrl: tileImageUrl(recipe.image, recipe.heroIconUrl),
 			meta: meta || null,
 		};
 	});

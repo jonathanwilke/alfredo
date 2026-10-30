@@ -1,14 +1,13 @@
-import { loadRecipe } from "@repo/api";
-import { auth } from "@repo/auth";
-import { listRecipeIcons } from "@repo/icons";
+import { loadRecipe, readyDishUrl } from "@repo/api";
 import { defaultOgResponse, ogSize, recipeOgResponse } from "@shared/og";
-import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 
 export const alt = "ulivo";
 export const size = ogSize;
 export const contentType = "image/png";
 export const runtime = "nodejs";
+export const dynamic = "force-static";
+export const revalidate = 3600;
 
 export default async function Image({
 	params,
@@ -17,11 +16,10 @@ export default async function Image({
 }) {
 	const { locale, id } = await params;
 	const t = await getTranslations({ locale, namespace: "home" });
-	const session = await auth.api.getSession({ headers: await headers() });
 	const recipe = await loadRecipe({
 		recipeId: id,
 		locale,
-		viewerUserId: session?.user.id ?? null,
+		viewerUserId: null,
 	});
 	if (!recipe?.isCurated) {
 		return defaultOgResponse({
@@ -29,9 +27,7 @@ export default async function Image({
 			tagline: t("subtitle"),
 		});
 	}
-	const { recipeIcon } = await listRecipeIcons(id);
-	const imageUrl =
-		recipeIcon?.status === "ready" ? recipeIcon.storageUrl : null;
+	const imageUrl = await readyDishUrl(id);
 	return recipeOgResponse({
 		title: recipe.content.title,
 		description: recipe.content.description?.trim() || t("subtitle"),

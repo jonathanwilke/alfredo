@@ -1,4 +1,4 @@
-import { ensureRecipeDescription, loadRecipe } from "@repo/api";
+import { ensureRecipeDescription, loadRecipe, readyDishUrl } from "@repo/api";
 import { auth } from "@repo/auth";
 import { config, getBaseUrl } from "@repo/config";
 import { RecipeOverview } from "@shared/components/RecipeOverview";
@@ -6,21 +6,18 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { cache } from "react";
 
-async function viewerId() {
+const readableRecipe = cache(async (locale: string, id: string) => {
 	const session = await auth.api.getSession({
 		headers: await headers(),
 	});
-	return session?.user.id ?? null;
-}
-
-async function readableRecipe(locale: string, id: string) {
 	return loadRecipe({
 		recipeId: id,
 		locale,
-		viewerUserId: await viewerId(),
+		viewerUserId: session?.user.id ?? null,
 	});
-}
+});
 
 export async function generateMetadata({
 	params,
@@ -96,6 +93,7 @@ export default async function RecipePage({
 	}
 
 	const recipe = await ensureRecipeDescription(loaded, locale);
+	const dishUrl = await readyDishUrl(recipe.recipeId);
 	const t = await getTranslations("recipe");
 	const notice =
 		recipe.isCurated && recipe.servedLocale !== locale
@@ -107,6 +105,7 @@ export default async function RecipePage({
 			recipeId={recipe.recipeId}
 			content={recipe.content}
 			notice={notice}
+			dishUrl={dishUrl}
 			startCooking={cook === "1"}
 			share={{
 				mode: recipe.isCurated ? "public" : "owner",

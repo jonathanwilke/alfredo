@@ -1,6 +1,8 @@
 "use client";
 
 import { api } from "@shared/lib/api";
+import { optimizableImage } from "@shared/lib/optimizable-image";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -70,33 +72,50 @@ export function DishImage({
 	label,
 	loading,
 	skeleton = false,
+	sizes = "(min-width: 1024px) 960px, 100vw",
 }: {
 	status: IconRecord["status"];
 	url?: string | null;
 	label: string;
 	loading?: "eager" | "lazy";
 	skeleton?: boolean;
+	sizes?: string;
 }) {
 	const [shownUrl, setShownUrl] = useState<string | null>(null);
 	const ready = status === "ready" && Boolean(url);
 	const revealed = Boolean(url) && shownUrl === url;
+	const cover = `object-cover ${skeleton ? `transition-opacity duration-300 motion-reduce:transition-none ${revealed ? "opacity-100" : "opacity-0"}` : ""}`;
+
+	function reveal() {
+		if (url) {
+			setShownUrl(url);
+		}
+	}
 
 	return (
 		<div
 			className={`relative aspect-video w-full overflow-hidden rounded-[1.75rem] bg-muted shadow-[0_14px_28px_-18px_rgba(64,68,42,0.7)] ${skeleton && !revealed ? "animate-pulse motion-reduce:animate-none" : ""}`}
 			aria-busy={skeleton && !revealed ? true : undefined}
 		>
-			{ready ? (
-				// biome-ignore lint/performance/noImgElement: icon URLs are stored objects, not next/image assets
+			{ready && url && optimizableImage(url) ? (
+				<Image
+					src={url}
+					alt={label}
+					fill
+					sizes={sizes}
+					className={cover}
+					onLoad={reveal}
+					{...(loading === "eager"
+						? { priority: true }
+						: { loading: "lazy" as const })}
+				/>
+			) : ready ? (
+				// biome-ignore lint/performance/noImgElement: this host is outside the image optimizer
 				<img
 					src={url ?? undefined}
 					alt={label}
 					loading={loading}
-					onLoad={() => {
-						if (url) {
-							setShownUrl(url);
-						}
-					}}
+					onLoad={reveal}
 					ref={(node) => {
 						if (
 							url &&
@@ -107,7 +126,7 @@ export function DishImage({
 							setShownUrl(url);
 						}
 					}}
-					className={`size-full object-cover ${skeleton ? `transition-opacity duration-300 motion-reduce:transition-none ${revealed ? "opacity-100" : "opacity-0"}` : ""}`}
+					className={`size-full ${cover}`}
 				/>
 			) : skeleton ? (
 				<div className="size-full" role="img" aria-label={label} />

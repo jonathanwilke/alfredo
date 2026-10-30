@@ -56,11 +56,13 @@ export function RecipeOverview({
 	content,
 	notice,
 	share,
+	dishUrl = null,
 	startCooking = false,
 }: {
 	recipeId: string;
 	content: RecipeContent;
 	notice?: string | null;
+	dishUrl?: string | null;
 	startCooking?: boolean;
 	share?: {
 		mode: "public" | "owner";
@@ -91,14 +93,18 @@ export function RecipeOverview({
 		settled,
 	} = useRecipeIcons(recipeId);
 	const iconsByKey = new Map(dishIngredients.map((icon) => [icon.key, icon]));
+	const photo =
+		dish?.status === "ready" && dish.url
+			? dish.url
+			: !settled
+				? dishUrl
+				: null;
 
 	if (cooking) {
 		return (
 			<CookingGuide
 				title={content.title}
-				imageUrl={
-					dish?.status === "ready" && dish.url ? dish.url : null
-				}
+				imageUrl={photo}
 				onExit={() => {
 					setCooking(false);
 					router.replace(pathname);
@@ -150,59 +156,72 @@ export function RecipeOverview({
 				</div>
 			</header>
 			<article className="flex flex-col gap-10 pb-16">
-				{!settled ||
-				dish?.status === "pending" ||
-				(dish?.status === "ready" && dish.url) ? (
-					<DishImage
-						status={dish?.status ?? "pending"}
-						url={dish?.url}
-						label={labelFor(dish?.status ?? "pending")}
-						loading="eager"
-						skeleton
-					/>
-				) : null}
-				<div className="flex flex-col gap-4">
-					<h1 className="text-balance text-5xl leading-[1.05] font-semibold tracking-tight">
-						{content.title}
-					</h1>
-					{description ? (
-						<p className="text-lg leading-relaxed">{description}</p>
+				<div
+					className={
+						photo || !settled || dish?.status === "pending"
+							? "grid items-center gap-8 lg:grid-cols-2 lg:gap-12"
+							: undefined
+					}
+				>
+					{photo || !settled || dish?.status === "pending" ? (
+						<DishImage
+							status={
+								photo ? "ready" : (dish?.status ?? "pending")
+							}
+							url={photo}
+							label={labelFor(
+								photo ? "ready" : (dish?.status ?? "pending"),
+							)}
+							loading="eager"
+							skeleton
+							sizes="(min-width: 1024px) 40vw, 100vw"
+						/>
 					) : null}
-					{notice ? (
-						<p className="max-w-[42ch] text-lg leading-relaxed text-muted-foreground">
-							{notice}
-						</p>
-					) : null}
-					{prep || cook ? (
-						<div className="flex flex-wrap gap-x-6 gap-y-2 text-lg text-muted-foreground">
-							{prep ? (
-								<p className="flex items-center gap-2">
-									<Icon
-										icon={SpoonIcon}
-										className="shrink-0"
-										aria-hidden
-									/>
-									<span>
-										{t("prep")}{" "}
-										{t("minutes", { count: prep })}
-									</span>
-								</p>
-							) : null}
-							{cook ? (
-								<p className="flex items-center gap-2">
-									<Icon
-										icon={Pot01Icon}
-										className="shrink-0"
-										aria-hidden
-									/>
-									<span>
-										{t("cook")}{" "}
-										{t("minutes", { count: cook })}
-									</span>
-								</p>
-							) : null}
-						</div>
-					) : null}
+					<div className="flex flex-col gap-4">
+						<h1 className="text-balance text-5xl leading-[1.05] font-semibold tracking-tight">
+							{content.title}
+						</h1>
+						{description ? (
+							<p className="text-lg leading-relaxed">
+								{description}
+							</p>
+						) : null}
+						{notice ? (
+							<p className="max-w-[42ch] text-lg leading-relaxed text-muted-foreground">
+								{notice}
+							</p>
+						) : null}
+						{prep || cook ? (
+							<div className="flex flex-wrap gap-x-6 gap-y-2 text-lg text-muted-foreground">
+								{prep ? (
+									<p className="flex items-center gap-2">
+										<Icon
+											icon={SpoonIcon}
+											className="shrink-0"
+											aria-hidden
+										/>
+										<span>
+											{t("prep")}{" "}
+											{t("minutes", { count: prep })}
+										</span>
+									</p>
+								) : null}
+								{cook ? (
+									<p className="flex items-center gap-2">
+										<Icon
+											icon={Pot01Icon}
+											className="shrink-0"
+											aria-hidden
+										/>
+										<span>
+											{t("cook")}{" "}
+											{t("minutes", { count: cook })}
+										</span>
+									</p>
+								) : null}
+							</div>
+						) : null}
+					</div>
 				</div>
 				<SaveRecipeButton recipeId={recipeId}>
 					{content.steps.length > 0 ? (

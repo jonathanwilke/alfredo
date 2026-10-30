@@ -34,9 +34,11 @@ function errorCode(error: unknown) {
 }
 
 function ResumePendingImport({
+	onImportUrl,
 	onInsufficientCredits,
 	onFailed,
 }: {
+	onImportUrl: (url: string | null) => void;
 	onInsufficientCredits: () => void;
 	onFailed: (message: string) => void;
 }) {
@@ -48,6 +50,7 @@ function ResumePendingImport({
 	const importUrl = recipeUrlFromImportParam(searchParams.get("import"));
 
 	useEffect(() => {
+		onImportUrl(importUrl);
 		if (!importUrl || isPending) {
 			return;
 		}
@@ -71,6 +74,7 @@ function ResumePendingImport({
 			})
 			.catch((error: unknown) => {
 				const code = errorCode(error);
+				onImportUrl(null);
 				router.replace("/");
 				if (code === "INSUFFICIENT_CREDITS") {
 					onInsufficientCredits();
@@ -92,6 +96,7 @@ function ResumePendingImport({
 		session,
 		locale,
 		router,
+		onImportUrl,
 		onInsufficientCredits,
 		onFailed,
 		t,
@@ -102,18 +107,21 @@ function ResumePendingImport({
 
 export function HomeImport() {
 	const { openEmpty } = useBilling();
+	const [resumeUrl, setResumeUrl] = useState<string | null>(null);
 	const [resumeError, setResumeError] = useState<string | null>(null);
 
 	return (
 		<div className="flex flex-col gap-8">
 			<Suspense fallback={null}>
 				<ResumePendingImport
+					onImportUrl={setResumeUrl}
 					onInsufficientCredits={openEmpty}
 					onFailed={setResumeError}
 				/>
 			</Suspense>
 			<RecipeLinkForm
 				onInsufficientCredits={openEmpty}
+				resumeUrl={resumeUrl}
 				resumeError={resumeError}
 			/>
 		</div>

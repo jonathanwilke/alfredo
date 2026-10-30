@@ -31,6 +31,16 @@ const nextConfig: NextConfig = {
 				hostname: "**.aws.neon.tech",
 				pathname: "/icons/**",
 			},
+			{
+				protocol: "http",
+				hostname: "localhost",
+				pathname: "/icons/**",
+			},
+			{
+				protocol: "http",
+				hostname: "127.0.0.1",
+				pathname: "/icons/**",
+			},
 		],
 	},
 	webpack: (config, { webpack }) => {

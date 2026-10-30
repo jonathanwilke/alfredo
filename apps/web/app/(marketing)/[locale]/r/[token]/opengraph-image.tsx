@@ -7,6 +7,7 @@ export const alt = "ulivo";
 export const size = ogSize;
 export const contentType = "image/png";
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export default async function Image({
 	params,
