@@ -13,7 +13,9 @@ const config: ExpoConfig = {
 		supportsTablet: true,
 		bundleIdentifier: "app.ulivo.mobile",
 		infoPlist: {
-			UISupportedInterfaceOrientations: ["UIInterfaceOrientationPortrait"],
+			UISupportedInterfaceOrientations: [
+				"UIInterfaceOrientationPortrait",
+			],
 			"UISupportedInterfaceOrientations~ipad": [
 				"UIInterfaceOrientationPortrait",
 				"UIInterfaceOrientationPortraitUpsideDown",
