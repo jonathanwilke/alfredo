@@ -1,10 +1,13 @@
 "use client";
 
+import {
+	Bookmark01Icon,
+	BookmarkCheck01Icon,
+} from "@hugeicons/core-free-icons";
 import { authClient } from "@repo/auth/client";
 import { api } from "@shared/lib/api";
 import { Button } from "@ui/components/button";
 import { Input } from "@ui/components/input";
-import { Bookmark, BookmarkCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
 	type FormEvent,
@@ -13,6 +16,7 @@ import {
 	useId,
 	useState,
 } from "react";
+import { Icon } from "./Icon";
 
 function isUnauthorized(error: unknown) {
 	return (
@@ -141,9 +145,9 @@ export function SaveRecipeButton({
 					className="h-12 rounded-full px-6 text-lg [&>svg]:opacity-100"
 				>
 					{saved ? (
-						<BookmarkCheck aria-hidden className="size-5" />
+						<Icon icon={BookmarkCheck01Icon} aria-hidden />
 					) : (
-						<Bookmark aria-hidden className="size-5" />
+						<Icon icon={Bookmark01Icon} aria-hidden />
 					)}
 					{saved ? t("saved") : t("save")}
 				</Button>

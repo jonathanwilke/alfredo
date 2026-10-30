@@ -1,6 +1,12 @@
 "use client";
 
 import {
+	Cancel01Icon,
+	ChevronDownIcon,
+	ChevronUpIcon,
+	Timer01Icon,
+} from "@hugeicons/core-free-icons";
+import {
 	addCookMinute,
 	cancelCookTimer,
 	pauseCookTimer,
@@ -10,7 +16,6 @@ import {
 	useTimerAlert,
 	useTimerClock,
 } from "@shared/lib/cook-timers";
-import { ChevronDown, ChevronUp, Timer, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -18,6 +23,7 @@ import {
 	type StepIngredient,
 	type StepPiece,
 } from "./highlight-step";
+import { Icon } from "./Icon";
 
 interface CookingStep {
 	id: string;
@@ -71,9 +77,13 @@ function piecesFor(step: CookingStep, locale: string) {
 }
 
 export function CookingGuide({
+	title,
+	imageUrl,
 	steps,
 	onExit,
 }: {
+	title: string;
+	imageUrl?: string | null;
 	steps: CookingStep[];
 	onExit: () => void;
 }) {
@@ -201,8 +211,23 @@ export function CookingGuide({
 
 	return (
 		<main className="dark flex h-dvh flex-col overflow-hidden bg-background text-foreground">
-			<header className="flex shrink-0 items-center justify-between gap-4 px-5 py-5 sm:px-8">
-				<button type="button" onClick={onExit} className="text-lg">
+			<header className="flex shrink-0 items-center gap-3 px-5 py-4 sm:px-8">
+				{imageUrl ? (
+					// biome-ignore lint/performance/noImgElement: the dish photo is a small remote thumbnail
+					<img
+						src={imageUrl}
+						alt=""
+						className="size-9 shrink-0 rounded-lg object-cover"
+					/>
+				) : null}
+				<p className="min-w-0 flex-1 truncate font-heading text-xl leading-tight">
+					{title}
+				</p>
+				<button
+					type="button"
+					onClick={onExit}
+					className="shrink-0 text-lg"
+				>
 					{t("overview")}
 				</button>
 				<div className="flex items-center gap-2">
@@ -213,7 +238,7 @@ export function CookingGuide({
 						onClick={() => focusStep(Math.max(0, index - 1))}
 						className="disabled:opacity-50"
 					>
-						<ChevronUp aria-hidden className="size-7" />
+						<Icon icon={ChevronUpIcon} size={28} aria-hidden />
 					</button>
 					<p className="text-lg tabular-nums">
 						{t("progress", {
@@ -230,7 +255,7 @@ export function CookingGuide({
 						}
 						className="disabled:opacity-50"
 					>
-						<ChevronDown aria-hidden className="size-7" />
+						<Icon icon={ChevronDownIcon} size={28} aria-hidden />
 					</button>
 				</div>
 			</header>
@@ -392,10 +417,10 @@ function TimerTray({
 							key={timer.id}
 							className="flex items-center gap-2 rounded-full bg-timer/10 px-3 py-1.5 text-timer shadow-lg"
 						>
-							<Timer
+							<Icon
+								icon={Timer01Icon}
 								aria-hidden
-								strokeWidth={2.25}
-								className="size-5 shrink-0"
+								className="shrink-0"
 							/>
 							<p className="min-w-0 font-semibold text-lg tabular-nums">
 								{clock}
@@ -431,7 +456,7 @@ function TimerTray({
 								onClick={() => cancelCookTimer(timer.id)}
 								className="grid size-8 place-items-center rounded-full text-foreground/80"
 							>
-								<X aria-hidden className="size-5" />
+								<Icon icon={Cancel01Icon} aria-hidden />
 							</button>
 						</li>
 					);

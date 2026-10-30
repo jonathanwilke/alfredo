@@ -1,7 +1,11 @@
+import {
+	ChevronLeftIcon,
+	ChevronRightIcon,
+	SpoonIcon,
+} from "@hugeicons/core-free-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { type ReactNode, useRef, useState } from "react";
 import {
 	AccessibilityInfo,
@@ -17,6 +21,7 @@ import { useI18n } from "@/i18n";
 import { useLayout } from "@/lib/layout";
 import { useTheme } from "@/theme/theme";
 import { fonts, radii } from "@/theme/tokens";
+import { Icon } from "./Icon";
 import { Body, Display } from "./ui";
 
 const GAP = 16;
@@ -134,7 +139,8 @@ export function StarterCarousel({
 								onPress={() => void scrollByCard(-1)}
 								side="left"
 							>
-								<ChevronLeft
+								<Icon
+									icon={ChevronLeftIcon}
 									color={colors.foreground}
 									size={22}
 								/>
@@ -145,7 +151,8 @@ export function StarterCarousel({
 								onPress={() => void scrollByCard(1)}
 								side="right"
 							>
-								<ChevronRight
+								<Icon
+									icon={ChevronRightIcon}
 									color={colors.foreground}
 									size={22}
 								/>
@@ -173,53 +180,67 @@ function StarterTile({
 	const initial = recipe.title.trim().charAt(0).toUpperCase() || "·";
 
 	return (
-		<Pressable
-			accessibilityRole="link"
-			accessibilityLabel={
-				meta ? `${recipe.title}, ${meta}` : recipe.title
-			}
-			onPress={() => router.push(`/recipes/${recipe.recipeId}`)}
-			style={({ pressed }) => [
+		<View
+			style={[
 				styles.tile,
-				{
-					width: width || 220,
-					backgroundColor: colors.muted,
-					opacity: pressed ? 0.9 : 1,
-				},
+				{ width: width || 220, backgroundColor: colors.muted },
 			]}
 		>
-			{imageUrl ? (
-				<Image
-					source={{ uri: imageUrl }}
-					style={StyleSheet.absoluteFill}
-					contentFit="cover"
-					transition={200}
-					accessibilityIgnoresInvertColors
-				/>
-			) : (
-				<PlateFallback initial={initial} />
-			)}
-			<LinearGradient
-				colors={["transparent", "rgba(26,29,20,0.9)"]}
-				style={styles.scrim}
+			<Pressable
+				accessibilityRole="link"
+				accessibilityLabel={
+					meta ? `${recipe.title}, ${meta}` : recipe.title
+				}
+				onPress={() => router.push(`/recipes/${recipe.recipeId}`)}
+				style={StyleSheet.absoluteFill}
 			>
-				<Body
-					style={{
-						fontFamily: fonts.display,
-						fontSize: 20,
-						lineHeight: 24,
-						color: "#FFFFFF",
-					}}
+				{imageUrl ? (
+					<Image
+						source={{ uri: imageUrl }}
+						style={StyleSheet.absoluteFill}
+						contentFit="cover"
+						transition={200}
+						accessibilityIgnoresInvertColors
+					/>
+				) : (
+					<PlateFallback initial={initial} />
+				)}
+				<LinearGradient
+					colors={["transparent", "rgba(26,29,20,0.9)"]}
+					style={styles.scrim}
 				>
-					{recipe.title}
-				</Body>
-				{meta ? (
-					<Body size={14} style={{ color: "rgba(255,255,255,0.85)" }}>
-						{meta}
+					<Body
+						style={{
+							fontFamily: fonts.display,
+							fontSize: 20,
+							lineHeight: 24,
+							color: "#FFFFFF",
+						}}
+					>
+						{recipe.title}
 					</Body>
-				) : null}
-			</LinearGradient>
-		</Pressable>
+					{meta ? (
+						<Body
+							size={14}
+							style={{ color: "rgba(255,255,255,0.85)" }}
+						>
+							{meta}
+						</Body>
+					) : null}
+				</LinearGradient>
+			</Pressable>
+			<Pressable
+				accessibilityRole="button"
+				accessibilityLabel={copy.recipe.start}
+				onPress={(event) => {
+					event.stopPropagation();
+					router.push(`/recipes/${recipe.recipeId}?cook=1`);
+				}}
+				style={styles.spoon}
+			>
+				<Icon icon={SpoonIcon} size={20} color="#40442A" />
+			</Pressable>
+		</View>
 	);
 }
 
@@ -318,12 +339,25 @@ const styles = StyleSheet.create({
 		borderRadius: radii.icon,
 		overflow: "hidden",
 	},
+	spoon: {
+		position: "absolute",
+		right: 12,
+		bottom: 12,
+		width: 40,
+		height: 40,
+		borderRadius: 20,
+		backgroundColor: "#F3EDE3",
+		alignItems: "center",
+		justifyContent: "center",
+		zIndex: 2,
+	},
 	scrim: {
 		position: "absolute",
 		left: 0,
 		right: 0,
 		bottom: 0,
-		paddingHorizontal: 14,
+		paddingLeft: 14,
+		paddingRight: 62,
 		paddingTop: 48,
 		paddingBottom: 14,
 		gap: 2,

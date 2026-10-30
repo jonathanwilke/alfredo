@@ -1,7 +1,12 @@
 "use client";
 
+import {
+	ChevronLeftIcon,
+	ChevronRightIcon,
+	SpoonIcon,
+} from "@hugeicons/core-free-icons";
 import { LocaleLink } from "@i18n/routing";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Icon } from "@shared/components/Icon";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import {
@@ -86,7 +91,7 @@ export function StarterCarousel({ tiles }: { tiles: StarterTile[] }) {
 				onClick={() => scrollByCard(-1)}
 				className="left-3 sm:left-4"
 			>
-				<ChevronLeft aria-hidden className="size-5" />
+				<Icon icon={ChevronLeftIcon} aria-hidden />
 			</CarouselButton>
 			<CarouselButton
 				label={t("startersNext")}
@@ -94,7 +99,7 @@ export function StarterCarousel({ tiles }: { tiles: StarterTile[] }) {
 				onClick={() => scrollByCard(1)}
 				className="right-3 sm:right-4"
 			>
-				<ChevronRight aria-hidden className="size-5" />
+				<Icon icon={ChevronRightIcon} aria-hidden />
 			</CarouselButton>
 		</div>
 	);
@@ -127,40 +132,53 @@ function CarouselButton({
 }
 
 function StarterCard({ tile }: { tile: StarterTile }) {
+	const t = useTranslations("recipe");
 	const [loaded, setLoaded] = useState(false);
 	const initial = tile.title.trim().charAt(0).toUpperCase() || "·";
 
 	return (
-		<LocaleLink
-			href={tile.href}
-			className="group relative block aspect-[4/3] overflow-hidden rounded-[1.75rem] bg-muted text-white no-underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background"
-		>
-			{tile.imageUrl ? (
-				<>
-					{loaded ? null : (
-						<div className="absolute inset-0 animate-pulse bg-muted" />
-					)}
-					<Image
-						src={tile.imageUrl}
-						alt=""
-						fill
-						sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 62vw"
-						className={`object-cover transition duration-300 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${loaded ? "opacity-100" : "opacity-0"}`}
-						onLoad={() => setLoaded(true)}
-					/>
-				</>
-			) : (
-				<PlateFallback initial={initial} />
-			)}
-			<div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#1A1D14]/90 via-[#1A1D14]/40 to-transparent px-4 pt-16 pb-4">
-				<h3 className="font-heading text-lg leading-tight text-balance text-white sm:text-xl">
-					{tile.title}
-				</h3>
-				{tile.meta ? (
-					<p className="mt-1 text-sm text-white/80">{tile.meta}</p>
-				) : null}
-			</div>
-		</LocaleLink>
+		<div className="relative">
+			<LocaleLink
+				href={tile.href}
+				className="group relative block aspect-[4/3] overflow-hidden rounded-[1.75rem] bg-muted text-white no-underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-background"
+			>
+				{tile.imageUrl ? (
+					<>
+						{loaded ? null : (
+							<div className="absolute inset-0 animate-pulse bg-muted" />
+						)}
+						<Image
+							src={tile.imageUrl}
+							alt=""
+							fill
+							sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 62vw"
+							className={`object-cover transition duration-300 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${loaded ? "opacity-100" : "opacity-0"}`}
+							onLoad={() => setLoaded(true)}
+						/>
+					</>
+				) : (
+					<PlateFallback initial={initial} />
+				)}
+				<div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#1A1D14]/90 via-[#1A1D14]/40 to-transparent pt-16 pr-16 pb-4 pl-4">
+					<h3 className="font-heading text-lg leading-tight text-balance text-white sm:text-xl">
+						{tile.title}
+					</h3>
+					{tile.meta ? (
+						<p className="mt-1 text-sm text-white/80">
+							{tile.meta}
+						</p>
+					) : null}
+				</div>
+			</LocaleLink>
+			<LocaleLink
+				href={`${tile.href}?cook=1`}
+				aria-label={t("start")}
+				onClick={(event) => event.stopPropagation()}
+				className="absolute right-3 bottom-3 z-10 grid size-10 place-items-center rounded-full bg-[#F3EDE3] text-[#40442A] no-underline shadow-[0_8px_16px_-8px_rgba(26,29,20,0.8)] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+			>
+				<Icon icon={SpoonIcon} aria-hidden />
+			</LocaleLink>
+		</div>
 	);
 }
 

@@ -1,11 +1,17 @@
 "use client";
 
+import {
+	Bookmark01Icon,
+	Coins01Icon,
+	Logout01Icon,
+	UserIcon,
+} from "@hugeicons/core-free-icons";
 import { LocaleLink, useLocalePathname } from "@i18n/routing";
 import { authClient } from "@repo/auth/client";
 import { Button } from "@ui/components/button";
-import { Bookmark, Coins, LogOut, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Icon } from "./Icon";
 
 function subscribe() {
 	return () => {};
@@ -65,7 +71,7 @@ export function LoginButton() {
 					aria-haspopup="menu"
 					onClick={() => setOpen((current) => !current)}
 				>
-					<User className="size-5" />
+					<Icon icon={UserIcon} aria-hidden />
 				</Button>
 				{open ? (
 					<div
@@ -78,7 +84,11 @@ export function LoginButton() {
 							className="flex items-center gap-3 rounded-full px-4 py-2.5 text-base text-foreground no-underline hover:bg-muted"
 							onClick={() => setOpen(false)}
 						>
-							<Coins aria-hidden className="size-5 shrink-0" />
+							<Icon
+								icon={Coins01Icon}
+								aria-hidden
+								className="shrink-0"
+							/>
 							{t("recipeCredits")}
 						</LocaleLink>
 						<LocaleLink
@@ -87,7 +97,11 @@ export function LoginButton() {
 							className="flex items-center gap-3 rounded-full px-4 py-2.5 text-base text-foreground no-underline hover:bg-muted"
 							onClick={() => setOpen(false)}
 						>
-							<Bookmark aria-hidden className="size-5 shrink-0" />
+							<Icon
+								icon={Bookmark01Icon}
+								aria-hidden
+								className="shrink-0"
+							/>
 							{t("savedRecipes")}
 						</LocaleLink>
 						<button
@@ -96,7 +110,11 @@ export function LoginButton() {
 							className="flex items-center gap-3 rounded-full px-4 py-2.5 text-left text-base text-foreground hover:bg-muted"
 							onClick={() => void authClient.signOut()}
 						>
-							<LogOut aria-hidden className="size-5 shrink-0" />
+							<Icon
+								icon={Logout01Icon}
+								aria-hidden
+								className="shrink-0"
+							/>
 							{t("logout")}
 						</button>
 					</div>

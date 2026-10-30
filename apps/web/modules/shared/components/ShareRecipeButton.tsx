@@ -1,9 +1,10 @@
 "use client";
 
+import { Share01Icon } from "@hugeicons/core-free-icons";
 import { api } from "@shared/lib/api";
 import { Button } from "@ui/components/button";
-import { Share2 } from "lucide-react";
 import { useState } from "react";
+import { Icon } from "./Icon";
 
 function absolute(path: string) {
 	return new URL(path, window.location.origin).toString();
@@ -107,7 +108,7 @@ export function ShareRecipeButton({
 				onClick={() => void share()}
 				className="h-12 rounded-full px-6 text-lg [&>svg]:opacity-100"
 			>
-				<Share2 aria-hidden className="size-5" />
+				<Icon icon={Share01Icon} aria-hidden />
 				{labels.share}
 			</Button>
 			{mode === "owner" && shared ? (

@@ -1,5 +1,12 @@
+import {
+	Bookmark01Icon,
+	Coins01Icon,
+	Logout01Icon,
+	Moon02Icon,
+	Sun03Icon,
+	UserIcon,
+} from "@hugeicons/core-free-icons";
 import { usePathname, useRouter } from "expo-router";
-import { Bookmark, Coins, LogOut, Moon, Sun, User } from "lucide-react-native";
 import { type ReactNode, useState } from "react";
 import {
 	Linking,
@@ -15,6 +22,7 @@ import { useI18n } from "@/i18n";
 import { useLayout } from "@/lib/layout";
 import { useTheme } from "@/theme/theme";
 import { fonts } from "@/theme/tokens";
+import { Icon } from "./Icon";
 import { IconButton } from "./ui";
 import { Wordmark } from "./Wordmark";
 
@@ -53,7 +61,7 @@ export function Header({ home }: { home?: boolean }) {
 						label={copy.home.account}
 						onPress={() => setOpen(true)}
 					>
-						<User color={colors.foreground} size={20} />
+						<Icon icon={UserIcon} color={colors.foreground} />
 					</IconButton>
 				) : null}
 				{!isPending && !session ? (
@@ -74,9 +82,9 @@ export function Header({ home }: { home?: boolean }) {
 				) : null}
 				<IconButton label={copy.home.theme} onPress={toggle}>
 					{scheme === "dark" ? (
-						<Sun color={colors.foreground} size={20} />
+						<Icon icon={Sun03Icon} color={colors.foreground} />
 					) : (
-						<Moon color={colors.foreground} size={20} />
+						<Icon icon={Moon02Icon} color={colors.foreground} />
 					)}
 				</IconButton>
 			</View>
@@ -103,7 +111,12 @@ export function Header({ home }: { home?: boolean }) {
 					>
 						<MenuItem
 							label={copy.home.recipeCredits}
-							icon={<Coins color={colors.foreground} size={20} />}
+							icon={
+								<Icon
+									icon={Coins01Icon}
+									color={colors.foreground}
+								/>
+							}
 							onPress={() => {
 								setOpen(false);
 								router.push("/credits");
@@ -112,7 +125,10 @@ export function Header({ home }: { home?: boolean }) {
 						<MenuItem
 							label={copy.home.savedRecipes}
 							icon={
-								<Bookmark color={colors.foreground} size={20} />
+								<Icon
+									icon={Bookmark01Icon}
+									color={colors.foreground}
+								/>
 							}
 							onPress={() => {
 								setOpen(false);
@@ -122,7 +138,10 @@ export function Header({ home }: { home?: boolean }) {
 						<MenuItem
 							label={copy.home.logout}
 							icon={
-								<LogOut color={colors.foreground} size={20} />
+								<Icon
+									icon={Logout01Icon}
+									color={colors.foreground}
+								/>
 							}
 							onPress={() => {
 								setOpen(false);

@@ -1,10 +1,11 @@
+import { Link01Icon, SpoonIcon } from "@hugeicons/core-free-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Link as LinkIcon } from "lucide-react-native";
 import { type ComponentRef, useEffect, useRef, useState } from "react";
 import { ScrollView, type TextInput, View } from "react-native";
 import { api, apiCode } from "@/api/client";
 import type { StarterRecipe } from "@/api/types";
 import { Footer, Header } from "@/components/Chrome";
+import { Icon } from "@/components/Icon";
 import { importFailureMessage } from "@/components/RecipeScreen";
 import { StarterCarousel } from "@/components/StarterCarousel";
 import { Body, Button, Display, Field, Notice, Screen } from "@/components/ui";
@@ -189,9 +190,9 @@ export default function HomeScreen() {
 								editable={!pending}
 								onSubmitEditing={submit}
 								icon={
-									<LinkIcon
+									<Icon
+										icon={Link01Icon}
 										color={colors.foreground}
-										size={20}
 									/>
 								}
 							/>
@@ -199,6 +200,12 @@ export default function HomeScreen() {
 								label={copy.home.submit}
 								loading={pending}
 								onPress={submit}
+								icon={
+									<Icon
+										icon={SpoonIcon}
+										color={colors.accentForeground}
+									/>
+								}
 							/>
 						</View>
 						{message ? (

@@ -1,13 +1,14 @@
 "use client";
 
-import { LocaleLink } from "@i18n/routing";
+import { ChefHatIcon, Pot01Icon, SpoonIcon } from "@hugeicons/core-free-icons";
+import { LocaleLink, useLocalePathname, useLocaleRouter } from "@i18n/routing";
 import { ThemeToggle } from "@shared/components/ThemeToggle";
 import { Button } from "@ui/components/button";
-import { ChefHat, CookingPot, Utensils } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { CookingGuide } from "./CookingGuide";
 import { ingredientIconKey } from "./highlight-step";
+import { Icon } from "./Icon";
 import { IconTile } from "./IconTile";
 import {
 	formatAmount,
@@ -55,10 +56,12 @@ export function RecipeOverview({
 	content,
 	notice,
 	share,
+	startCooking = false,
 }: {
 	recipeId: string;
 	content: RecipeContent;
 	notice?: string | null;
+	startCooking?: boolean;
 	share?: {
 		mode: "public" | "owner";
 		shared: boolean;
@@ -67,8 +70,12 @@ export function RecipeOverview({
 }) {
 	const t = useTranslations("recipe");
 	const locale = useLocale();
+	const pathname = useLocalePathname();
+	const router = useLocaleRouter();
 	const [servings, setServings] = useState(content.servings);
-	const [cooking, setCooking] = useState(false);
+	const [cooking, setCooking] = useState(
+		startCooking && content.steps.length > 0,
+	);
 	const factor = content.servings > 0 ? servings / content.servings : 1;
 	const maxServings = Math.max(12, Math.ceil(content.servings * 3));
 	const prep = formatMinutes(content.prepTimeSeconds);
@@ -87,7 +94,14 @@ export function RecipeOverview({
 	if (cooking) {
 		return (
 			<CookingGuide
-				onExit={() => setCooking(false)}
+				title={content.title}
+				imageUrl={
+					dish?.status === "ready" && dish.url ? dish.url : null
+				}
+				onExit={() => {
+					setCooking(false);
+					router.replace(pathname);
+				}}
 				steps={content.steps.map((step) => ({
 					id: step.id,
 					text: step.text,
@@ -159,8 +173,9 @@ export function RecipeOverview({
 						<div className="flex flex-wrap gap-x-6 gap-y-2 text-lg text-muted-foreground">
 							{prep ? (
 								<p className="flex items-center gap-2">
-									<Utensils
-										className="size-5 shrink-0"
+									<Icon
+										icon={SpoonIcon}
+										className="shrink-0"
 										aria-hidden
 									/>
 									<span>
@@ -171,8 +186,9 @@ export function RecipeOverview({
 							) : null}
 							{cook ? (
 								<p className="flex items-center gap-2">
-									<CookingPot
-										className="size-5 shrink-0"
+									<Icon
+										icon={Pot01Icon}
+										className="shrink-0"
 										aria-hidden
 									/>
 									<span>
@@ -192,7 +208,7 @@ export function RecipeOverview({
 							onClick={() => setCooking(true)}
 							className="order-first h-12 rounded-full bg-accent px-8 text-lg text-accent-foreground shadow-none hover:bg-accent/90 [&>svg]:opacity-100"
 						>
-							<ChefHat aria-hidden className="size-5" />
+							<Icon icon={ChefHatIcon} aria-hidden />
 							{t("start")}
 						</Button>
 					) : null}

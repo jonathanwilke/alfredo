@@ -1,10 +1,13 @@
+import { Loading03Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@ui/lib";
-import { Loader2Icon } from "lucide-react";
+import { Icon } from "./Icon";
 
 export function Spinner({ className }: { className?: string }) {
 	return (
-		<Loader2Icon
-			className={cn("size-4 animate-spin text-primary", className)}
+		<Icon
+			icon={Loading03Icon}
+			size={16}
+			className={cn("animate-spin text-primary", className)}
 		/>
 	);
 }

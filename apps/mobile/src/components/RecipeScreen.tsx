@@ -1,13 +1,13 @@
+import {
+	Bookmark01Icon,
+	BookmarkCheck01Icon,
+	ChefHatIcon,
+	Pot01Icon,
+	SpoonIcon,
+} from "@hugeicons/core-free-icons";
 import Slider from "@react-native-community/slider";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import {
-	Bookmark,
-	BookmarkCheck,
-	ChefHat,
-	CookingPot,
-	Utensils,
-} from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
@@ -36,6 +36,7 @@ import { useTheme } from "@/theme/theme";
 import { fonts } from "@/theme/tokens";
 import { Footer, Header } from "./Chrome";
 import { CookingMode, type CookingStep } from "./CookingMode";
+import { Icon } from "./Icon";
 import { DishImage, IconTile } from "./IconTile";
 import { Body, Button, Display, Field, Notice, Screen } from "./ui";
 
@@ -46,7 +47,13 @@ function minutes(seconds: number | null) {
 	return Math.max(1, Math.round(seconds / 60));
 }
 
-export function RecipeScreen({ recipeId }: { recipeId: string }) {
+export function RecipeScreen({
+	recipeId,
+	startCooking = false,
+}: {
+	recipeId: string;
+	startCooking?: boolean;
+}) {
 	const { locale, copy } = useI18n();
 	const params = useLocalSearchParams<{ save?: string }>();
 	const saveFlag = oneParam(params.save);
@@ -113,15 +120,23 @@ export function RecipeScreen({ recipeId }: { recipeId: string }) {
 		);
 	}
 
-	return <RecipeBody recipe={recipe} saveFlag={saveFlag === "1"} />;
+	return (
+		<RecipeBody
+			recipe={recipe}
+			saveFlag={saveFlag === "1"}
+			startCooking={startCooking}
+		/>
+	);
 }
 
 function RecipeBody({
 	recipe,
 	saveFlag,
+	startCooking,
 }: {
 	recipe: StoredRecipe;
 	saveFlag: boolean;
+	startCooking: boolean;
 }) {
 	const { locale, copy } = useI18n();
 	const { colors } = useTheme();
@@ -130,7 +145,9 @@ function RecipeBody({
 	const { data: session } = authClient.useSession();
 	const content = recipe.content;
 	const [servings, setServings] = useState(content.servings);
-	const [cooking, setCooking] = useState(false);
+	const [cooking, setCooking] = useState(
+		startCooking && content.steps.length > 0,
+	);
 	const [saved, setSaved] = useState(false);
 	const [shared, setShared] = useState(recipe.shared ?? false);
 	const [pending, setPending] = useState(false);
@@ -277,7 +294,19 @@ function RecipeBody({
 		return (
 			<>
 				<StatusBar style="light" />
-				<CookingMode steps={steps} onExit={() => setCooking(false)} />
+				<CookingMode
+					title={content.title}
+					imageUrl={
+						icons.recipe?.status === "ready"
+							? icons.recipe.url
+							: null
+					}
+					steps={steps}
+					onExit={() => {
+						setCooking(false);
+						router.setParams({ cook: "" });
+					}}
+				/>
 			</>
 		);
 	}
@@ -359,9 +388,9 @@ function RecipeBody({
 								gap: 8,
 							}}
 						>
-							<Utensils
+							<Icon
+								icon={SpoonIcon}
 								color={colors.mutedForeground}
-								size={20}
 							/>
 							<Body muted>{prepLabel}</Body>
 						</View>
@@ -374,9 +403,9 @@ function RecipeBody({
 								gap: 8,
 							}}
 						>
-							<CookingPot
+							<Icon
+								icon={Pot01Icon}
 								color={colors.mutedForeground}
-								size={20}
 							/>
 							<Body muted>{cookLabel}</Body>
 						</View>
@@ -395,9 +424,9 @@ function RecipeBody({
 						<Button
 							label={copy.recipe.start}
 							icon={
-								<ChefHat
+								<Icon
+									icon={ChefHatIcon}
 									color={colors.accentForeground}
-									size={20}
 								/>
 							}
 							onPress={() => setCooking(true)}
@@ -423,12 +452,15 @@ function RecipeBody({
 						loading={pending && !needsSignIn}
 						icon={
 							saved ? (
-								<BookmarkCheck
+								<Icon
+									icon={BookmarkCheck01Icon}
 									color={colors.foreground}
-									size={20}
 								/>
 							) : (
-								<Bookmark color={colors.foreground} size={20} />
+								<Icon
+									icon={Bookmark01Icon}
+									color={colors.foreground}
+								/>
 							)
 						}
 						onPress={() => void persist(!saved)}

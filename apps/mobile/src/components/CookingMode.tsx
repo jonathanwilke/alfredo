@@ -1,5 +1,11 @@
+import {
+	Cancel01Icon,
+	ChevronDownIcon,
+	ChevronUpIcon,
+	Timer01Icon,
+} from "@hugeicons/core-free-icons";
+import { Image } from "expo-image";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
-import { ChevronDown, ChevronUp, Timer, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
 	AccessibilityInfo,
@@ -37,6 +43,7 @@ import {
 	useTimerClock,
 } from "@/lib/timers";
 import { fonts, palettes } from "@/theme/tokens";
+import { Icon } from "./Icon";
 
 const KEEP_AWAKE = "cooking";
 const colors = palettes.dark;
@@ -121,9 +128,13 @@ function closestStep(
 }
 
 export function CookingMode({
+	title,
+	imageUrl,
 	steps,
 	onExit,
 }: {
+	title: string;
+	imageUrl?: string | null;
 	steps: CookingStep[];
 	onExit: () => void;
 }) {
@@ -220,6 +231,23 @@ export function CookingMode({
 					},
 				]}
 			>
+				{imageUrl ? (
+					<Image
+						source={{ uri: imageUrl }}
+						style={styles.thumb}
+						contentFit="cover"
+						accessibilityIgnoresInvertColors
+					/>
+				) : null}
+				<Text
+					numberOfLines={1}
+					style={[
+						styles.title,
+						{ color: colors.foreground, flex: 1 },
+					]}
+				>
+					{title}
+				</Text>
 				<Pressable
 					accessibilityRole="button"
 					onPress={onExit}
@@ -243,7 +271,11 @@ export function CookingMode({
 						hitSlop={8}
 						style={{ opacity: index === 0 ? 0.35 : 1 }}
 					>
-						<ChevronUp color={colors.foreground} size={26} />
+						<Icon
+							icon={ChevronUpIcon}
+							color={colors.foreground}
+							size={26}
+						/>
 					</Pressable>
 					<Text
 						style={[
@@ -265,7 +297,11 @@ export function CookingMode({
 							opacity: index === steps.length - 1 ? 0.35 : 1,
 						}}
 					>
-						<ChevronDown color={colors.foreground} size={26} />
+						<Icon
+							icon={ChevronDownIcon}
+							color={colors.foreground}
+							size={26}
+						/>
 					</Pressable>
 				</View>
 			</View>
@@ -555,11 +591,7 @@ function TimerTray({
 								{ backgroundColor: `${colors.timer}1A` },
 							]}
 						>
-							<Timer
-								color={colors.timer}
-								size={20}
-								strokeWidth={2.25}
-							/>
+							<Icon icon={Timer01Icon} color={colors.timer} />
 							<View style={styles.trayCopy}>
 								<Text
 									numberOfLines={1}
@@ -629,7 +661,10 @@ function TimerTray({
 								onPress={() => void cancelCookTimer(timer.id)}
 								hitSlop={6}
 							>
-								<X color={colors.mutedForeground} size={20} />
+								<Icon
+									icon={Cancel01Icon}
+									color={colors.mutedForeground}
+								/>
 							</Pressable>
 						</View>
 					);
@@ -653,6 +688,16 @@ const styles = StyleSheet.create({
 	headerText: {
 		fontFamily: fonts.body,
 		fontSize: 18,
+	},
+	title: {
+		fontFamily: fonts.display,
+		fontSize: 20,
+		lineHeight: 24,
+	},
+	thumb: {
+		width: 36,
+		height: 36,
+		borderRadius: 8,
 	},
 	headerNav: {
 		flexDirection: "row",

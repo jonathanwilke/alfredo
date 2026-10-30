@@ -1,12 +1,13 @@
 "use client";
 
+import { Link01Icon, SpoonIcon } from "@hugeicons/core-free-icons";
 import { useLocaleRouter } from "@i18n/routing";
 import { api } from "@shared/lib/api";
 import { Button } from "@ui/components/button";
 import { Input } from "@ui/components/input";
-import { LinkIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState } from "react";
+import { Icon } from "./Icon";
 
 function errorCode(error: unknown) {
 	if (typeof error === "object" && error !== null && "code" in error) {
@@ -124,9 +125,10 @@ export function RecipeLinkForm({
 			</label>
 			<div className="flex flex-col gap-3 sm:flex-row">
 				<div className="relative min-w-0 flex-1">
-					<LinkIcon
+					<Icon
+						icon={Link01Icon}
 						aria-hidden
-						className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-foreground"
+						className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-foreground"
 					/>
 					<Input
 						ref={inputRef}
@@ -158,8 +160,9 @@ export function RecipeLinkForm({
 					variant="primary"
 					size="md"
 					loading={pending}
-					className="h-12 rounded-full bg-accent px-6 text-lg text-accent-foreground shadow-none hover:bg-accent/90"
+					className="h-12 rounded-full bg-accent px-6 text-lg text-accent-foreground shadow-none hover:bg-accent/90 [&>svg]:opacity-100"
 				>
+					<Icon icon={SpoonIcon} aria-hidden />
 					{t("submit")}
 				</Button>
 			</div>
