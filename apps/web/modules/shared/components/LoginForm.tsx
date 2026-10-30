@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocaleRouter } from "@i18n/routing";
+import { useLocaleRouter } from "@i18n/router";
 import { authClient } from "@repo/auth/client";
 import { config } from "@repo/config";
 import { Button } from "@ui/components/button";

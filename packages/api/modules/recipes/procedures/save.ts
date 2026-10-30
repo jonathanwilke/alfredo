@@ -144,6 +144,10 @@ export const listSavedRecipes = protectedProcedure
 			z.object({
 				recipeId: z.string().uuid(),
 				title: z.string(),
+				image: z.string().nullable(),
+				heroIconUrl: z.string().nullable(),
+				servings: z.number().positive(),
+				totalTimeSeconds: z.number().int().nonnegative().nullable(),
 			}),
 		),
 	)
@@ -158,7 +162,7 @@ export const listSavedRecipes = protectedProcedure
 			},
 		});
 
-		return rows.flatMap((row) => {
+		const shown = rows.flatMap((row) => {
 			const translations = row.recipe?.translations ?? [];
 			const translation =
 				translations.find((item) => item.locale === input.locale) ??
@@ -166,13 +170,52 @@ export const listSavedRecipes = protectedProcedure
 			if (!translation) {
 				return [];
 			}
+			const content = translation.content;
+			const parts = [
+				content.prepTimeSeconds,
+				content.cookTimeSeconds,
+			].filter((value): value is number => value != null && value > 0);
 			return [
 				{
 					recipeId: row.recipeId,
-					title: dishName(translation.content.title),
+					title: dishName(content.title),
+					image: content.image?.trim() || null,
+					servings: content.servings > 0 ? content.servings : 1,
+					totalTimeSeconds:
+						parts.length === 0
+							? null
+							: parts.reduce((sum, value) => sum + value, 0),
 				},
 			];
 		});
+
+		const ids = shown.map((recipe) => recipe.recipeId);
+		const heroes =
+			ids.length === 0
+				? []
+				: await db
+						.select({
+							key: icons.key,
+							storageUrl: icons.storageUrl,
+						})
+						.from(icons)
+						.where(
+							and(
+								eq(icons.kind, "recipe"),
+								eq(icons.status, "ready"),
+								inArray(icons.key, ids),
+							),
+						);
+		const heroById = new Map(
+			heroes.flatMap((icon) =>
+				icon.storageUrl ? [[icon.key, icon.storageUrl] as const] : [],
+			),
+		);
+
+		return shown.map((recipe) => ({
+			...recipe,
+			heroIconUrl: heroById.get(recipe.recipeId) ?? null,
+		}));
 	});
 
 export const unsaveRecipe = protectedProcedure

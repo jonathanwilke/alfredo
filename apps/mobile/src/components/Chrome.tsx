@@ -27,7 +27,7 @@ import { IconButton } from "./ui";
 import { Wordmark } from "./Wordmark";
 
 export function Header({ home }: { home?: boolean }) {
-	const { colors, scheme, toggle } = useTheme();
+	const { colors } = useTheme();
 	const { copy } = useI18n();
 	const { data: session, isPending } = authClient.useSession();
 	const pathname = usePathname();
@@ -80,13 +80,6 @@ export function Header({ home }: { home?: boolean }) {
 						</Text>
 					</Pressable>
 				) : null}
-				<IconButton label={copy.home.theme} onPress={toggle}>
-					{scheme === "dark" ? (
-						<Icon icon={Sun03Icon} color={colors.foreground} />
-					) : (
-						<Icon icon={Moon02Icon} color={colors.foreground} />
-					)}
-				</IconButton>
 			</View>
 			<Modal
 				visible={open}
@@ -183,7 +176,7 @@ function MenuItem({
 }
 
 export function Footer() {
-	const { colors } = useTheme();
+	const { colors, scheme, toggle } = useTheme();
 	const { locale, setLocale, copy } = useI18n();
 	return (
 		<View style={styles.footer}>
@@ -232,6 +225,19 @@ export function Footer() {
 						</Pressable>
 					</View>
 				))}
+				<Text style={{ color: colors.mutedForeground }}> · </Text>
+				<Pressable
+					accessibilityRole="button"
+					accessibilityLabel={copy.home.theme}
+					onPress={toggle}
+					hitSlop={8}
+				>
+					<Icon
+						icon={scheme === "dark" ? Sun03Icon : Moon02Icon}
+						color={colors.mutedForeground}
+						size={14}
+					/>
+				</Pressable>
 			</View>
 		</View>
 	);

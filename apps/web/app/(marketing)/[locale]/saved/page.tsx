@@ -3,7 +3,6 @@ import { config } from "@repo/config";
 import { LoginButton } from "@shared/components/LoginButton";
 import { SavedRecipes } from "@shared/components/SavedRecipes";
 import { SiteFooter } from "@shared/components/SiteFooter";
-import { ThemeToggle } from "@shared/components/ThemeToggle";
 import { Wordmark } from "@shared/components/Wordmark";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -31,14 +30,13 @@ export default async function SavedPage({
 	const t = await getTranslations("home");
 
 	return (
-		<main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-5 py-8 sm:px-8">
+		<main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-8 sm:px-8">
 			<header className="flex flex-wrap items-center justify-between gap-3">
 				<LocaleLink href="/" className="text-foreground no-underline">
 					<Wordmark />
 				</LocaleLink>
 				<div className="flex flex-wrap items-center justify-end gap-2">
 					<LoginButton />
-					<ThemeToggle />
 				</div>
 			</header>
 			<section className="flex flex-1 flex-col gap-8 py-10">

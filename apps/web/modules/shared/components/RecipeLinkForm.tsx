@@ -1,7 +1,7 @@
 "use client";
 
 import { Link01Icon, SpoonIcon } from "@hugeicons/core-free-icons";
-import { useLocaleRouter } from "@i18n/routing";
+import { useLocaleRouter } from "@i18n/router";
 import { api } from "@shared/lib/api";
 import { Button } from "@ui/components/button";
 import { Input } from "@ui/components/input";

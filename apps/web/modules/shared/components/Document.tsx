@@ -3,6 +3,7 @@ import { cn } from "@ui/lib";
 import { Inter, PT_Serif } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import type { PropsWithChildren } from "react";
+import { NavigationProgress } from "./NavigationProgress";
 
 const ptSerif = PT_Serif({
 	subsets: ["latin"],
@@ -35,7 +36,7 @@ export function Document({
 					defaultTheme={config.ui.defaultTheme}
 					themes={config.ui.enabledThemes}
 				>
-					{children}
+					<NavigationProgress>{children}</NavigationProgress>
 				</ThemeProvider>
 			</body>
 		</html>

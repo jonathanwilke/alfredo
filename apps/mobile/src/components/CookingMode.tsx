@@ -42,7 +42,7 @@ import {
 	useTimerAlert,
 	useTimerClock,
 } from "@/lib/timers";
-import { fonts, palettes } from "@/theme/tokens";
+import { fonts, palettes, radii } from "@/theme/tokens";
 import { Icon } from "./Icon";
 
 const KEEP_AWAKE = "cooking";
@@ -365,6 +365,20 @@ export function CookingMode({
 								}}
 							/>
 						))}
+						{imageUrl ? (
+							<View
+								accessibilityRole="image"
+								accessibilityLabel={title}
+								style={styles.dish}
+							>
+								<Image
+									source={{ uri: imageUrl }}
+									style={styles.dishPhoto}
+									contentFit="cover"
+									accessibilityIgnoresInvertColors
+								/>
+							</View>
+						) : null}
 					</ScrollView>
 				</View>
 				<TimerTray timers={timers} now={now} inset={pagePadding} />
@@ -724,6 +738,23 @@ const styles = StyleSheet.create({
 	},
 	stepScroll: {
 		flex: 1,
+	},
+	dish: {
+		marginVertical: 28,
+		width: "100%",
+		aspectRatio: 16 / 9,
+		borderRadius: radii.icon,
+		backgroundColor: colors.muted,
+		overflow: "hidden",
+		shadowColor: "#40442A",
+		shadowOffset: { width: 0, height: 14 },
+		shadowOpacity: 0.28,
+		shadowRadius: 18,
+		elevation: 3,
+	},
+	dishPhoto: {
+		width: "100%",
+		height: "100%",
 	},
 	stepBlock: {
 		paddingVertical: 28,

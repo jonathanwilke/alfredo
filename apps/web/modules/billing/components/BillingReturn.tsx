@@ -2,7 +2,6 @@
 
 import { LocaleLink } from "@i18n/routing";
 import { SiteFooter } from "@shared/components/SiteFooter";
-import { ThemeToggle } from "@shared/components/ThemeToggle";
 import { Wordmark } from "@shared/components/Wordmark";
 import { api } from "@shared/lib/api";
 import { Button } from "@ui/components/button";
@@ -71,9 +70,6 @@ export function BillingReturn({
 				<LocaleLink href="/" className="text-foreground no-underline">
 					<Wordmark />
 				</LocaleLink>
-				<div className="flex flex-wrap items-center justify-end gap-2">
-					<ThemeToggle />
-				</div>
 			</header>
 			<section className="flex flex-1 flex-col items-center gap-6 py-10 sm:justify-center sm:py-16">
 				<h1 className="max-w-[16ch] text-balance text-center text-5xl leading-[1.05] font-semibold tracking-tight sm:text-6xl">

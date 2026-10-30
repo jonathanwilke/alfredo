@@ -75,13 +75,16 @@ export function StarterCarousel({ tiles }: { tiles: StarterTile[] }) {
 				onScroll={updateEnds}
 				className="no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth motion-reduce:scroll-auto"
 			>
-				{tiles.map((tile) => (
+				{tiles.map((tile, index) => (
 					<div
 						key={tile.id}
 						data-starter-card
 						className="w-[62%] shrink-0 snap-start md:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-3rem)/4)]"
 					>
-						<StarterCard tile={tile} />
+						<StarterCard
+							tile={tile}
+							loading={index < 4 ? "eager" : "lazy"}
+						/>
 					</div>
 				))}
 			</div>
@@ -131,7 +134,15 @@ function CarouselButton({
 	);
 }
 
-function StarterCard({ tile }: { tile: StarterTile }) {
+export function StarterCard({
+	tile,
+	loading,
+	sizes = "(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 62vw",
+}: {
+	tile: StarterTile;
+	loading: "eager" | "lazy";
+	sizes?: string;
+}) {
 	const t = useTranslations("recipe");
 	const [loaded, setLoaded] = useState(false);
 	const initial = tile.title.trim().charAt(0).toUpperCase() || "·";
@@ -151,7 +162,8 @@ function StarterCard({ tile }: { tile: StarterTile }) {
 							src={tile.imageUrl}
 							alt=""
 							fill
-							sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 62vw"
+							loading={loading}
+							sizes={sizes}
 							className={`object-cover transition duration-300 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${loaded ? "opacity-100" : "opacity-0"}`}
 							onLoad={() => setLoaded(true)}
 						/>

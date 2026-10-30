@@ -16,5 +16,5 @@ export const {
 	Link: LocaleLink,
 	redirect: localeRedirect,
 	usePathname: useLocalePathname,
-	useRouter: useLocaleRouter,
+	useRouter: useNextIntlRouter,
 } = createNavigation(routing);

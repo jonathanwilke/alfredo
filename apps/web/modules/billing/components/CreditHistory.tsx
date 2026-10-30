@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocaleRouter } from "@i18n/routing";
+import { useLocaleRouter } from "@i18n/router";
 import { api } from "@shared/lib/api";
 import { Button } from "@ui/components/button";
 import { useLocale, useTranslations } from "next-intl";

@@ -1,8 +1,8 @@
 "use client";
 
 import { ChefHatIcon, Pot01Icon, SpoonIcon } from "@hugeicons/core-free-icons";
-import { LocaleLink, useLocalePathname, useLocaleRouter } from "@i18n/routing";
-import { ThemeToggle } from "@shared/components/ThemeToggle";
+import { useLocaleRouter } from "@i18n/router";
+import { LocaleLink, useLocalePathname } from "@i18n/routing";
 import { Button } from "@ui/components/button";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
@@ -88,6 +88,7 @@ export function RecipeOverview({
 		recipe: dish,
 		ingredients: dishIngredients,
 		labelFor,
+		settled,
 	} = useRecipeIcons(recipeId);
 	const iconsByKey = new Map(dishIngredients.map((icon) => [icon.key, icon]));
 
@@ -146,15 +147,18 @@ export function RecipeOverview({
 				</LocaleLink>
 				<div className="flex flex-wrap items-center justify-end gap-2">
 					<LoginButton />
-					<ThemeToggle />
 				</div>
 			</header>
 			<article className="flex flex-col gap-10 pb-16">
-				{dish?.status === "ready" && dish.url ? (
+				{!settled ||
+				dish?.status === "pending" ||
+				(dish?.status === "ready" && dish.url) ? (
 					<DishImage
-						status="ready"
-						url={dish.url}
-						label={labelFor("ready")}
+						status={dish?.status ?? "pending"}
+						url={dish?.url}
+						label={labelFor(dish?.status ?? "pending")}
+						loading="eager"
+						skeleton
 					/>
 				) : null}
 				<div className="flex flex-col gap-4">

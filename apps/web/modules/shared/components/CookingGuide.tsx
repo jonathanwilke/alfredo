@@ -24,6 +24,7 @@ import {
 	type StepPiece,
 } from "./highlight-step";
 import { Icon } from "./Icon";
+import { DishImage } from "./RecipeIcons";
 
 interface CookingStep {
 	id: string;
@@ -308,6 +309,16 @@ export function CookingGuide({
 								</article>
 							);
 						})}
+						{imageUrl ? (
+							<div className="py-8">
+								<DishImage
+									status="ready"
+									url={imageUrl}
+									label={title}
+									loading="lazy"
+								/>
+							</div>
+						) : null}
 					</div>
 				</div>
 			</div>

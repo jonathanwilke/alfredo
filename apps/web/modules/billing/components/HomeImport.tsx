@@ -1,6 +1,6 @@
 "use client";
 
-import { useLocaleRouter } from "@i18n/routing";
+import { useLocaleRouter } from "@i18n/router";
 import { authClient } from "@repo/auth/client";
 import { RecipeLinkForm } from "@shared/components/RecipeLinkForm";
 import { api } from "@shared/lib/api";

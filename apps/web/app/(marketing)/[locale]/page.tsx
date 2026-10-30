@@ -4,7 +4,6 @@ import { listStarterRecipes } from "@repo/api";
 import { config, getBaseUrl } from "@repo/config";
 import { LoginButton } from "@shared/components/LoginButton";
 import { SiteFooter } from "@shared/components/SiteFooter";
-import { ThemeToggle } from "@shared/components/ThemeToggle";
 import { Wordmark } from "@shared/components/Wordmark";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -55,7 +54,6 @@ export default async function HomePage({
 				</p>
 				<div className="flex flex-wrap items-center justify-end gap-2">
 					<LoginButton />
-					<ThemeToggle />
 				</div>
 			</header>
 			<section className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-8 py-8">

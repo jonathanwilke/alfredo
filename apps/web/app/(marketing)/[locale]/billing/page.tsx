@@ -2,7 +2,7 @@ import { CreditHistory } from "@billing/components/CreditHistory";
 import { LocaleLink } from "@i18n/routing";
 import { config } from "@repo/config";
 import { LoginButton } from "@shared/components/LoginButton";
-import { ThemeToggle } from "@shared/components/ThemeToggle";
+import { SiteFooter } from "@shared/components/SiteFooter";
 import { Wordmark } from "@shared/components/Wordmark";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -37,15 +37,15 @@ export default async function BillingPage({
 				</LocaleLink>
 				<div className="flex flex-wrap items-center justify-end gap-2">
 					<LoginButton />
-					<ThemeToggle />
 				</div>
 			</header>
-			<section className="flex flex-col gap-8 py-10">
+			<section className="flex flex-1 flex-col gap-8 py-10">
 				<h1 className="text-balance text-5xl leading-[1.05] font-semibold tracking-tight">
 					{t("pageTitle")}
 				</h1>
 				<CreditHistory />
 			</section>
+			<SiteFooter />
 		</main>
 	);
 }

@@ -3,7 +3,6 @@ import { config } from "@repo/config";
 import { LoginButton } from "@shared/components/LoginButton";
 import { LoginForm } from "@shared/components/LoginForm";
 import { SiteFooter } from "@shared/components/SiteFooter";
-import { ThemeToggle } from "@shared/components/ThemeToggle";
 import { Wordmark } from "@shared/components/Wordmark";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -42,10 +41,7 @@ export default async function LoginPage({
 				<LocaleLink href="/" className="text-foreground no-underline">
 					<Wordmark />
 				</LocaleLink>
-				<div className="flex items-center gap-2">
-					<LoginButton />
-					<ThemeToggle />
-				</div>
+				<LoginButton />
 			</header>
 			<section className="flex flex-1 flex-col gap-8 py-10 sm:justify-center sm:py-16">
 				<div className="flex flex-col gap-5">

@@ -1,6 +1,7 @@
 "use client";
 
-import { LocaleLink, useLocaleRouter } from "@i18n/routing";
+import { StarterCard, type StarterTile } from "@billing/components/StarterCard";
+import { useLocaleRouter } from "@i18n/router";
 import { api } from "@shared/lib/api";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -16,10 +17,19 @@ function isUnauthorized(error: unknown) {
 
 export function SavedRecipes() {
 	const t = useTranslations("home");
+	const recipeT = useTranslations("recipe");
 	const locale = useLocale();
 	const router = useLocaleRouter();
 	const [recipes, setRecipes] = useState<
-		{ recipeId: string; title: string }[] | null
+		| {
+				recipeId: string;
+				title: string;
+				image: string | null;
+				heroIconUrl: string | null;
+				servings: number;
+				totalTimeSeconds: number | null;
+		  }[]
+		| null
 	>(null);
 	const [failed, setFailed] = useState(false);
 
@@ -66,16 +76,35 @@ export function SavedRecipes() {
 		);
 	}
 
+	const tiles: StarterTile[] = recipes.map((recipe) => {
+		const minutes =
+			recipe.totalTimeSeconds != null && recipe.totalTimeSeconds > 0
+				? Math.max(1, Math.round(recipe.totalTimeSeconds / 60))
+				: null;
+		const meta = [
+			minutes != null ? recipeT("minutes", { count: minutes }) : null,
+			recipeT("servings", { count: recipe.servings }),
+		]
+			.filter(Boolean)
+			.join(" · ");
+		return {
+			id: recipe.recipeId,
+			href: `/recipes/${recipe.recipeId}`,
+			title: recipe.title,
+			imageUrl: recipe.image ?? recipe.heroIconUrl,
+			meta: meta || null,
+		};
+	});
+
 	return (
-		<ul className="flex flex-col gap-3">
-			{recipes.map((recipe) => (
-				<li key={recipe.recipeId}>
-					<LocaleLink
-						href={`/recipes/${recipe.recipeId}`}
-						className="text-lg text-foreground no-underline hover:underline"
-					>
-						{recipe.title}
-					</LocaleLink>
+		<ul className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+			{tiles.map((tile, index) => (
+				<li key={tile.id}>
+					<StarterCard
+						tile={tile}
+						loading={index < 4 ? "eager" : "lazy"}
+						sizes="(min-width: 1024px) 22vw, (min-width: 768px) 30vw, 45vw"
+					/>
 				</li>
 			))}
 		</ul>
