@@ -246,8 +246,9 @@ function ArrowButton({
 			onPress={onPress}
 			style={{
 				position: "absolute",
-				top: "38%",
-				[side]: 0,
+				top: "50%",
+				transform: [{ translateY: "-50%" }],
+				[side]: 16,
 				width: 44,
 				height: 44,
 				borderRadius: 22,

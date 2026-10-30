@@ -84,7 +84,7 @@ export function StarterCarousel({ tiles }: { tiles: StarterTile[] }) {
 				label={t("startersPrevious")}
 				disabled={!canPrev}
 				onClick={() => scrollByCard(-1)}
-				className="left-0"
+				className="left-3 sm:left-4"
 			>
 				<ChevronLeft aria-hidden className="size-5" />
 			</CarouselButton>
@@ -92,7 +92,7 @@ export function StarterCarousel({ tiles }: { tiles: StarterTile[] }) {
 				label={t("startersNext")}
 				disabled={!canNext}
 				onClick={() => scrollByCard(1)}
-				className="right-0"
+				className="right-3 sm:right-4"
 			>
 				<ChevronRight aria-hidden className="size-5" />
 			</CarouselButton>
@@ -119,7 +119,7 @@ function CarouselButton({
 			aria-label={label}
 			disabled={disabled}
 			onClick={onClick}
-			className={`absolute top-[38%] z-10 hidden size-11 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 text-foreground disabled:pointer-events-none disabled:opacity-40 lg:flex ${className}`}
+			className={`absolute top-1/2 z-10 hidden size-11 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 text-foreground disabled:pointer-events-none disabled:opacity-40 lg:flex ${className}`}
 		>
 			{children}
 		</button>
