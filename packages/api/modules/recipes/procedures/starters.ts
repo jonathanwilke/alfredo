@@ -20,6 +20,10 @@ export const starters = publicProcedure
 				recipeId: z.string().uuid(),
 				title: z.string(),
 				servedLocale: z.string(),
+				image: z.string().nullable(),
+				heroIconUrl: z.string().nullable(),
+				servings: z.number().positive(),
+				totalTimeSeconds: z.number().int().nonnegative().nullable(),
 			}),
 		),
 	)

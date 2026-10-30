@@ -36,7 +36,7 @@ export default async function HomePage({
 	const starters = await listStarterRecipes(locale).catch(() => []);
 
 	return (
-		<main className="mx-auto flex min-h-svh w-full max-w-3xl flex-col px-5 pt-8 [--home-nav:calc(2rem+2.75rem)] sm:px-8">
+		<main className="mx-auto flex min-h-svh w-full max-w-6xl flex-col px-5 pt-8 [--home-nav:calc(2rem+2.75rem)] sm:px-8">
 			<header className="flex min-h-11 shrink-0 flex-wrap items-center justify-between gap-3">
 				<p className="leading-none">
 					<Wordmark />
@@ -46,7 +46,7 @@ export default async function HomePage({
 					<ThemeToggle />
 				</div>
 			</header>
-			<section className="flex flex-1 flex-col justify-center gap-8 py-8">
+			<section className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center gap-8 py-8">
 				<div className="flex flex-col gap-5">
 					<h1 className="text-balance text-center text-5xl leading-[1.05] font-semibold tracking-tight sm:text-6xl">
 						{t("title")}
