@@ -2,10 +2,13 @@ import {
 	Cancel01Icon,
 	ChevronDownIcon,
 	ChevronUpIcon,
+	PauseIcon,
+	PlayIcon,
 	Timer01Icon,
 } from "@hugeicons/core-free-icons";
 import { Image } from "expo-image";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
+import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
 import {
 	AccessibilityInfo,
@@ -32,7 +35,6 @@ import {
 } from "@/lib/highlight-step";
 import { useLayout } from "@/lib/layout";
 import {
-	addCookMinute,
 	cancelCookTimer,
 	pauseCookTimer,
 	remainingSeconds,
@@ -146,6 +148,7 @@ export function CookingMode({
 	const [index, setIndex] = useState(0);
 	const [viewport, setViewport] = useState(0);
 	const [banner, setBanner] = useState<string | null>(null);
+	const [atEnd, setAtEnd] = useState(false);
 	const [reduceMotion, setReduceMotion] = useState(false);
 	const scrollRef = useRef<ScrollViewInstance>(null);
 	const layouts = useRef<(StepLayout | undefined)[]>([]);
@@ -223,85 +226,33 @@ export function CookingMode({
 	return (
 		<View style={[styles.root, { backgroundColor: colors.background }]}>
 			<View
-				style={[
-					styles.header,
-					{
-						paddingTop: Math.max(insets.top, 12),
-						paddingHorizontal: pagePadding,
-					},
-				]}
+				style={{
+					paddingTop: Math.max(insets.top, 12),
+					paddingHorizontal: pagePadding,
+					zIndex: 2,
+					elevation: 12,
+				}}
 			>
-				{imageUrl ? (
-					<Image
-						source={{ uri: imageUrl }}
-						style={styles.thumb}
-						contentFit="cover"
-						accessibilityIgnoresInvertColors
-					/>
-				) : null}
-				<Text
-					numberOfLines={1}
-					style={[
-						styles.title,
-						{ color: colors.foreground, flex: 1 },
-					]}
-				>
-					{title}
-				</Text>
-				<Pressable
-					accessibilityRole="button"
-					onPress={onExit}
-					hitSlop={8}
-				>
-					<Text
-						style={[
-							styles.headerText,
-							{ color: colors.foreground },
-						]}
-					>
-						{copy.recipe.overview}
-					</Text>
-				</Pressable>
-				<View style={styles.headerNav}>
+				<View style={styles.header}>
 					<Pressable
 						accessibilityRole="button"
-						accessibilityLabel={copy.recipe.previous}
-						disabled={index === 0}
-						onPress={() => focusStep(Math.max(0, index - 1))}
-						hitSlop={8}
-						style={{ opacity: index === 0 ? 0.35 : 1 }}
+						onPress={onExit}
+						style={styles.titleButton}
 					>
-						<Icon
-							icon={ChevronUpIcon}
-							color={colors.foreground}
-							size={26}
-						/>
-					</Pressable>
-					<Text
-						style={[
-							styles.headerText,
-							{ color: colors.foreground },
-						]}
-					>
-						{copy.recipe.progress(index + 1, steps.length)}
-					</Text>
-					<Pressable
-						accessibilityRole="button"
-						accessibilityLabel={copy.recipe.next}
-						disabled={index === steps.length - 1}
-						onPress={() =>
-							focusStep(Math.min(steps.length - 1, index + 1))
-						}
-						hitSlop={8}
-						style={{
-							opacity: index === steps.length - 1 ? 0.35 : 1,
-						}}
-					>
-						<Icon
-							icon={ChevronDownIcon}
-							color={colors.foreground}
-							size={26}
-						/>
+						{imageUrl ? (
+							<Image
+								source={{ uri: imageUrl }}
+								style={styles.thumb}
+								contentFit="cover"
+								accessibilityIgnoresInvertColors
+							/>
+						) : null}
+						<Text
+							numberOfLines={1}
+							style={[styles.title, { color: colors.foreground }]}
+						>
+							{title}
+						</Text>
 					</Pressable>
 				</View>
 			</View>
@@ -330,6 +281,18 @@ export function CookingMode({
 						}
 						scrollEventThrottle={16}
 						onScroll={(event) => {
+							const {
+								contentOffset,
+								layoutMeasurement,
+								contentSize,
+							} = event.nativeEvent;
+							const atEndNow =
+								contentOffset.y > 48 &&
+								contentOffset.y + layoutMeasurement.height >=
+									contentSize.height - 48;
+							setAtEnd((current) =>
+								current === atEndNow ? current : atEndNow,
+							);
 							if (focusing.current || viewport === 0) {
 								return;
 							}
@@ -344,7 +307,7 @@ export function CookingMode({
 						}}
 						contentContainerStyle={{
 							paddingTop: Math.max(24, viewport * 0.12),
-							paddingBottom: viewport * 0.62,
+							paddingBottom: 88 + Math.max(insets.bottom, 16),
 							paddingHorizontal: pagePadding,
 						}}
 					>
@@ -380,8 +343,82 @@ export function CookingMode({
 							</View>
 						) : null}
 					</ScrollView>
+					<LinearGradient
+						pointerEvents="none"
+						colors={[colors.background, `${colors.background}00`]}
+						style={styles.fadeTop}
+					/>
+					<LinearGradient
+						pointerEvents="none"
+						colors={[`${colors.background}00`, colors.background]}
+						style={styles.fadeBottom}
+					/>
 				</View>
 				<TimerTray timers={timers} now={now} inset={pagePadding} />
+			</View>
+			<View
+				pointerEvents={atEnd ? "none" : "box-none"}
+				style={[
+					styles.stepNav,
+					{
+						bottom: Math.max(insets.bottom, 16),
+						opacity: atEnd ? 0 : 1,
+					},
+				]}
+			>
+				<View
+					style={[
+						styles.stepNavBar,
+						{ backgroundColor: colors.muted },
+					]}
+				>
+					<Pressable
+						accessibilityRole="button"
+						accessibilityLabel={copy.recipe.previous}
+						disabled={index === 0}
+						onPress={() => focusStep(Math.max(0, index - 1))}
+						hitSlop={8}
+						style={[
+							styles.stepNavButton,
+							{ opacity: index === 0 ? 0.35 : 1 },
+						]}
+					>
+						<Icon
+							icon={ChevronUpIcon}
+							color={colors.foreground}
+							size={26}
+						/>
+					</Pressable>
+					<Text
+						style={[
+							styles.headerText,
+							{ color: colors.foreground },
+						]}
+					>
+						{copy.recipe.progress(index + 1, steps.length)}
+					</Text>
+					<Pressable
+						accessibilityRole="button"
+						accessibilityLabel={copy.recipe.next}
+						disabled={index === steps.length - 1}
+						onPress={() =>
+							focusStep(Math.min(steps.length - 1, index + 1))
+						}
+						hitSlop={8}
+						style={[
+							styles.stepNavButton,
+							{
+								opacity: index === steps.length - 1 ? 0.35 : 1,
+							},
+						]}
+					>
+						<Icon
+							icon={ChevronDownIcon}
+							color={colors.foreground}
+							size={26}
+						/>
+					</Pressable>
+				</View>
 			</View>
 		</View>
 	);
@@ -551,6 +588,11 @@ function TimerChip({
 				},
 			]}
 		>
+			<Icon
+				icon={Timer01Icon}
+				color={colors.timer}
+				size={Math.round(fontSize * 0.72)}
+			/>
 			<Text
 				style={{
 					fontFamily: fonts.label,
@@ -593,82 +635,40 @@ function TimerTray({
 						timer.status === "done"
 							? copy.recipe.timerDone
 							: formatClock(remaining);
-					const toggleLabel =
-						timer.status === "paused"
-							? copy.recipe.timerResume
-							: copy.recipe.timerPause;
+					const paused = timer.status === "paused";
+					const toggleLabel = paused
+						? copy.recipe.timerResume
+						: copy.recipe.timerPause;
 					return (
-						<View
-							key={timer.id}
-							style={[
-								styles.trayRow,
-								{ backgroundColor: `${colors.timer}1A` },
-							]}
-						>
+						<View key={timer.id} style={styles.trayRow}>
 							<Icon icon={Timer01Icon} color={colors.timer} />
-							<View style={styles.trayCopy}>
-								<Text
-									numberOfLines={1}
-									style={[
-										styles.trayTime,
-										{ color: colors.timer },
-									]}
-								>
-									{clock}
-									<Text
-										style={[
-											styles.trayLabel,
-											{ color: colors.foreground },
-										]}
-									>
-										{`  ${timer.label}`}
-									</Text>
-								</Text>
-							</View>
+							<Text
+								style={[
+									styles.trayTime,
+									{ color: colors.timer },
+								]}
+							>
+								{clock}
+							</Text>
 							{timer.status === "done" ? null : (
 								<Pressable
 									accessibilityRole="button"
 									accessibilityLabel={toggleLabel}
+									hitSlop={8}
 									onPress={() => {
-										if (timer.status === "paused") {
+										if (paused) {
 											void resumeCookTimer(timer.id);
 											return;
 										}
 										void pauseCookTimer(timer.id);
 									}}
-									style={[
-										styles.trayButton,
-										{ backgroundColor: colors.background },
-									]}
 								>
-									<Text
-										style={[
-											styles.trayButtonText,
-											{ color: colors.foreground },
-										]}
-									>
-										{toggleLabel}
-									</Text>
+									<Icon
+										icon={paused ? PlayIcon : PauseIcon}
+										color={colors.foreground}
+									/>
 								</Pressable>
 							)}
-							<Pressable
-								accessibilityRole="button"
-								accessibilityLabel={copy.recipe.timerAdd}
-								onPress={() => void addCookMinute(timer.id)}
-								style={[
-									styles.trayButton,
-									{ backgroundColor: colors.background },
-								]}
-							>
-								<Text
-									style={[
-										styles.trayButtonText,
-										{ color: colors.foreground },
-									]}
-								>
-									{copy.recipe.timerAdd}
-								</Text>
-							</Pressable>
 							<Pressable
 								accessibilityRole="button"
 								accessibilityLabel={copy.recipe.timerCancel}
@@ -694,16 +694,22 @@ const styles = StyleSheet.create({
 	},
 	header: {
 		minHeight: 64,
-		flexDirection: "row",
 		alignItems: "center",
-		justifyContent: "space-between",
-		gap: 12,
+		justifyContent: "center",
 	},
 	headerText: {
 		fontFamily: fonts.body,
 		fontSize: 18,
 	},
+	titleButton: {
+		maxWidth: "100%",
+		flexDirection: "row",
+		alignItems: "center",
+		justifyContent: "center",
+		gap: 12,
+	},
 	title: {
+		flexShrink: 1,
 		fontFamily: fonts.display,
 		fontSize: 20,
 		lineHeight: 24,
@@ -713,10 +719,27 @@ const styles = StyleSheet.create({
 		height: 36,
 		borderRadius: 8,
 	},
-	headerNav: {
+	stepNav: {
+		position: "absolute",
+		left: 0,
+		right: 0,
+		alignItems: "center",
+		zIndex: 2,
+	},
+	stepNavBar: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 8,
+		gap: 4,
+		borderRadius: 999,
+		paddingHorizontal: 8,
+		paddingVertical: 4,
+		elevation: 8,
+	},
+	stepNavButton: {
+		width: 44,
+		height: 44,
+		alignItems: "center",
+		justifyContent: "center",
 	},
 	banner: {
 		marginHorizontal: 20,
@@ -732,12 +755,29 @@ const styles = StyleSheet.create({
 	},
 	stage: {
 		flex: 1,
+		zIndex: 0,
 	},
 	body: {
 		flex: 1,
 	},
 	stepScroll: {
 		flex: 1,
+	},
+	fadeTop: {
+		position: "absolute",
+		top: 0,
+		left: 0,
+		right: 0,
+		height: 72,
+		zIndex: 1,
+	},
+	fadeBottom: {
+		position: "absolute",
+		bottom: 0,
+		left: 0,
+		right: 0,
+		height: 140,
+		zIndex: 1,
 	},
 	dish: {
 		marginVertical: 28,
@@ -785,7 +825,8 @@ const styles = StyleSheet.create({
 		position: "absolute",
 		top: 8,
 		alignItems: "center",
-		zIndex: 20,
+		zIndex: 2,
+		elevation: 6,
 	},
 	trayScroll: {
 		maxHeight: 220,
@@ -798,38 +839,15 @@ const styles = StyleSheet.create({
 	trayRow: {
 		flexDirection: "row",
 		alignItems: "center",
-		gap: 8,
+		gap: 4,
 		minHeight: 44,
 		maxWidth: "100%",
 		borderRadius: 999,
-		paddingVertical: 6,
-		paddingLeft: 12,
-		paddingRight: 8,
-		shadowColor: "#1A1D14",
-		shadowOpacity: 0.16,
-		shadowRadius: 12,
-		shadowOffset: { width: 0, height: 6 },
-		elevation: 4,
-	},
-	trayCopy: {
-		flexShrink: 1,
-		minWidth: 0,
+		paddingHorizontal: 10,
+		backgroundColor: "#F2DDC5",
 	},
 	trayTime: {
 		fontFamily: fonts.label,
 		fontSize: 18,
-	},
-	trayLabel: {
-		fontFamily: fonts.body,
-		fontSize: 14,
-	},
-	trayButton: {
-		borderRadius: 999,
-		paddingHorizontal: 12,
-		paddingVertical: 6,
-	},
-	trayButtonText: {
-		fontFamily: fonts.label,
-		fontSize: 14,
 	},
 });

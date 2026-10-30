@@ -4,10 +4,11 @@ import {
 	Cancel01Icon,
 	ChevronDownIcon,
 	ChevronUpIcon,
+	PauseIcon,
+	PlayIcon,
 	Timer01Icon,
 } from "@hugeicons/core-free-icons";
 import {
-	addCookMinute,
 	cancelCookTimer,
 	pauseCookTimer,
 	remainingSeconds,
@@ -19,6 +20,7 @@ import {
 import { optimizableImage } from "@shared/lib/optimizable-image";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
+import { parseAsInteger, useQueryState } from "nuqs";
 import { useEffect, useRef, useState } from "react";
 import {
 	decorateStep,
@@ -79,6 +81,13 @@ function piecesFor(step: CookingStep, locale: string) {
 	];
 }
 
+function stepIndexFromParam(value: number | null, count: number) {
+	if (value == null || count <= 0) {
+		return 0;
+	}
+	return Math.min(count - 1, Math.max(0, value - 1));
+}
+
 export function CookingGuide({
 	title,
 	imageUrl,
@@ -94,12 +103,38 @@ export function CookingGuide({
 	const locale = useLocale();
 	const { timers, now } = useTimerClock();
 	const alert = useTimerAlert();
-	const [index, setIndex] = useState(0);
+	const [stepParam, setStepParam] = useQueryState(
+		"step",
+		parseAsInteger.withOptions({ history: "replace" }),
+	);
+	const [index, setIndex] = useState(() =>
+		stepIndexFromParam(stepParam, steps.length),
+	);
 	const [banner, setBanner] = useState<string | null>(null);
+	const [atEnd, setAtEnd] = useState(false);
 	const scrollerRef = useRef<HTMLDivElement>(null);
 	const stepRefs = useRef<(HTMLElement | null)[]>([]);
 	const focusing = useRef(false);
+	const restored = useRef(false);
 	const step = steps[index];
+
+	useEffect(() => {
+		const number = index + 1;
+		if ((stepParam ?? 1) === number) {
+			return;
+		}
+		void setStepParam(number === 1 ? null : number);
+	}, [index, setStepParam, stepParam]);
+
+	useEffect(() => {
+		if (restored.current) {
+			return;
+		}
+		restored.current = true;
+		if (index > 0) {
+			focusStep(index);
+		}
+	}, [index]);
 
 	useEffect(() => {
 		let lock: WakeLockSentinel | null = null;
@@ -164,7 +199,15 @@ export function CookingGuide({
 
 	function updateActive() {
 		const scroller = scrollerRef.current;
-		if (!scroller || focusing.current) {
+		if (!scroller) {
+			return;
+		}
+		const atEndNow =
+			scroller.scrollTop > 48 &&
+			scroller.scrollTop + scroller.clientHeight >=
+				scroller.scrollHeight - 48;
+		setAtEnd((current) => (current === atEndNow ? current : atEndNow));
+		if (focusing.current) {
 			return;
 		}
 		const root = scroller.getBoundingClientRect();
@@ -213,63 +256,34 @@ export function CookingGuide({
 	}
 
 	return (
-		<main className="dark flex h-dvh flex-col overflow-hidden bg-background text-foreground">
-			<header className="flex shrink-0 items-center gap-3 px-5 py-4 sm:px-8">
-				{imageUrl && optimizableImage(imageUrl) ? (
-					<Image
-						src={imageUrl}
-						alt=""
-						width={72}
-						height={72}
-						sizes="36px"
-						className="size-9 shrink-0 rounded-lg object-cover"
-					/>
-				) : imageUrl ? (
-					// biome-ignore lint/performance/noImgElement: this host is outside the image optimizer
-					<img
-						src={imageUrl}
-						alt=""
-						className="size-9 shrink-0 rounded-lg object-cover"
-					/>
-				) : null}
-				<p className="min-w-0 flex-1 truncate font-heading text-xl leading-tight">
-					{title}
-				</p>
+		<main className="dark relative flex h-dvh flex-col overflow-hidden bg-background text-foreground">
+			<header className="relative z-40 flex shrink-0 items-center justify-center bg-background px-5 py-4 sm:px-8">
 				<button
 					type="button"
 					onClick={onExit}
-					className="shrink-0 text-lg"
+					className="flex min-w-0 max-w-full cursor-pointer items-center gap-3 border-0 bg-transparent p-0"
 				>
-					{t("overview")}
+					{imageUrl && optimizableImage(imageUrl) ? (
+						<Image
+							src={imageUrl}
+							alt=""
+							width={72}
+							height={72}
+							sizes="36px"
+							className="size-9 shrink-0 rounded-lg object-cover"
+						/>
+					) : imageUrl ? (
+						// biome-ignore lint/performance/noImgElement: this host is outside the image optimizer
+						<img
+							src={imageUrl}
+							alt=""
+							className="size-9 shrink-0 rounded-lg object-cover"
+						/>
+					) : null}
+					<span className="min-w-0 truncate font-heading text-xl leading-tight">
+						{title}
+					</span>
 				</button>
-				<div className="flex items-center gap-2">
-					<button
-						type="button"
-						aria-label={t("previous")}
-						disabled={index === 0}
-						onClick={() => focusStep(Math.max(0, index - 1))}
-						className="disabled:opacity-50"
-					>
-						<Icon icon={ChevronUpIcon} size={28} aria-hidden />
-					</button>
-					<p className="text-lg tabular-nums">
-						{t("progress", {
-							current: index + 1,
-							total: steps.length,
-						})}
-					</p>
-					<button
-						type="button"
-						aria-label={t("next")}
-						disabled={index === steps.length - 1}
-						onClick={() =>
-							focusStep(Math.min(steps.length - 1, index + 1))
-						}
-						className="disabled:opacity-50"
-					>
-						<Icon icon={ChevronDownIcon} size={28} aria-hidden />
-					</button>
-				</div>
 			</header>
 			{banner ? (
 				<p
@@ -279,14 +293,14 @@ export function CookingGuide({
 					{t("timerDone")}
 				</p>
 			) : null}
-			<div className="relative flex min-h-0 flex-1">
+			<div className="relative z-0 flex min-h-0 flex-1">
 				<TimerTray timers={timers} now={now} />
 				<div
 					ref={scrollerRef}
 					onScroll={updateActive}
-					className="min-h-0 flex-1 overflow-y-auto px-5 sm:px-8"
+					className="min-h-0 flex-1 overflow-y-auto px-5 [mask-image:linear-gradient(to_bottom,transparent,#000_4.5rem,#000_calc(100%_-_8rem),transparent)] [mask-repeat:no-repeat] [mask-size:100%_100%] [-webkit-mask-image:linear-gradient(to_bottom,transparent,#000_4.5rem,#000_calc(100%_-_8rem),transparent)] [-webkit-mask-repeat:no-repeat] [-webkit-mask-size:100%_100%] sm:px-8"
 				>
-					<div className="mx-auto w-full max-w-3xl pt-[12vh] pb-[62vh]">
+					<div className="mx-auto w-full max-w-3xl pt-[12vh] pb-24">
 						{steps.map((item, stepIndex) => {
 							const distance = Math.abs(index - stepIndex);
 							return (
@@ -332,6 +346,41 @@ export function CookingGuide({
 							</div>
 						) : null}
 					</div>
+				</div>
+			</div>
+			<div
+				className={`pointer-events-none absolute inset-x-0 bottom-6 z-30 flex justify-center transition-opacity duration-300 motion-reduce:transition-none ${atEnd ? "opacity-0" : "opacity-100"}`}
+			>
+				<div
+					inert={atEnd}
+					className={`flex items-center gap-1 rounded-full bg-muted px-2 py-1 ${atEnd ? "pointer-events-none" : "pointer-events-auto"}`}
+				>
+					<button
+						type="button"
+						aria-label={t("previous")}
+						disabled={index === 0}
+						onClick={() => focusStep(Math.max(0, index - 1))}
+						className="grid size-11 place-items-center disabled:opacity-35"
+					>
+						<Icon icon={ChevronUpIcon} size={28} aria-hidden />
+					</button>
+					<p className="text-lg tabular-nums">
+						{t("progress", {
+							current: index + 1,
+							total: steps.length,
+						})}
+					</p>
+					<button
+						type="button"
+						aria-label={t("next")}
+						disabled={index === steps.length - 1}
+						onClick={() =>
+							focusStep(Math.min(steps.length - 1, index + 1))
+						}
+						className="grid size-11 place-items-center disabled:opacity-35"
+					>
+						<Icon icon={ChevronDownIcon} size={28} aria-hidden />
+					</button>
 				</div>
 			</div>
 		</main>
@@ -395,8 +444,13 @@ function StepFragment({
 						alertBody: `${alertBody} · ${piece.text}`,
 					});
 				}}
-				className={`mx-[0.12em] inline cursor-pointer rounded-full border-0 px-[0.35em] py-[0.02em] align-baseline font-semibold text-[0.72em] text-timer ${running ? "bg-timer/25" : "bg-timer/10"}`}
+				className={`mx-[0.12em] inline-flex cursor-pointer items-center gap-[0.28em] rounded-full border-0 px-[0.4em] py-[0.02em] align-baseline font-semibold text-[0.72em] text-timer ${running ? "bg-timer/25" : "bg-timer/10"}`}
 			>
+				<Icon
+					icon={Timer01Icon}
+					aria-hidden
+					className="size-[1.05em] shrink-0"
+				/>
 				{piece.text}
 			</button>
 		);
@@ -423,7 +477,7 @@ function TimerTray({
 		return null;
 	}
 	return (
-		<div className="pointer-events-none absolute inset-x-0 top-3 z-30 flex justify-center px-4">
+		<div className="pointer-events-none absolute inset-x-0 top-3 z-50 flex justify-center px-4">
 			<ul className="pointer-events-auto flex max-h-[46vh] w-max max-w-full flex-col items-center gap-2 overflow-y-auto">
 				{timers.map((timer) => {
 					const remaining = remainingSeconds(timer, now);
@@ -431,14 +485,16 @@ function TimerTray({
 						timer.status === "done"
 							? t("timerDone")
 							: formatClock(remaining);
-					const toggle =
-						timer.status === "paused"
-							? t("timerResume")
-							: t("timerPause");
+					const paused = timer.status === "paused";
+					const toggle = paused ? t("timerResume") : t("timerPause");
 					return (
 						<li
 							key={timer.id}
-							className="flex items-center gap-2 rounded-full bg-timer/10 px-3 py-1.5 text-timer shadow-lg"
+							className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-timer"
+							style={{
+								backgroundColor:
+									"color-mix(in srgb, var(--timer) 18%, #f3ede3)",
+							}}
 						>
 							<Icon
 								icon={Timer01Icon}
@@ -447,37 +503,31 @@ function TimerTray({
 							/>
 							<p className="min-w-0 font-semibold text-lg tabular-nums">
 								{clock}
-								<span className="ml-2 font-normal text-base text-foreground/80">
-									{timer.label}
-								</span>
 							</p>
 							{timer.status === "done" ? null : (
 								<button
 									type="button"
+									aria-label={toggle}
 									onClick={() => {
-										if (timer.status === "paused") {
+										if (paused) {
 											resumeCookTimer(timer.id);
 											return;
 										}
 										pauseCookTimer(timer.id);
 									}}
-									className="rounded-full bg-background/70 px-3 py-1 font-semibold text-sm text-foreground"
+									className="grid size-8 place-items-center text-foreground"
 								>
-									{toggle}
+									<Icon
+										icon={paused ? PlayIcon : PauseIcon}
+										aria-hidden
+									/>
 								</button>
 							)}
 							<button
 								type="button"
-								onClick={() => addCookMinute(timer.id)}
-								className="rounded-full bg-background/70 px-3 py-1 font-semibold text-sm text-foreground"
-							>
-								{t("timerAdd")}
-							</button>
-							<button
-								type="button"
 								aria-label={t("timerCancel")}
 								onClick={() => cancelCookTimer(timer.id)}
-								className="grid size-8 place-items-center rounded-full text-foreground/80"
+								className="grid size-8 place-items-center text-foreground/80"
 							>
 								<Icon icon={Cancel01Icon} aria-hidden />
 							</button>

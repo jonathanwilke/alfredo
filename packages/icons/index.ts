@@ -1,5 +1,6 @@
 export type { RecipeIconRequest } from "./jobs";
 export {
+	enqueueMissingIngredientIcons,
 	enqueueRecipeIcons,
 	listRecipeIcons,
 	processIconJobs,

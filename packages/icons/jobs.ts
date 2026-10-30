@@ -93,6 +93,33 @@ export async function loadDishPrompt(recipeId: string, fallbackTitle = "") {
 	);
 }
 
+function normalizedIngredientKeys(values: string[]) {
+	const keys = new Set<string>();
+	for (const value of values) {
+		try {
+			keys.add(normalizeIngredientKey(value));
+		} catch {
+			// An ingredient with no usable name cannot have an icon.
+		}
+	}
+	return [...keys];
+}
+
+async function ingredientKeysForRecipe(recipeId: string) {
+	const translations = await db
+		.select({ content: recipeTranslations.content })
+		.from(recipeTranslations)
+		.where(eq(recipeTranslations.recipeId, recipeId));
+
+	return normalizedIngredientKeys(
+		translations.flatMap((translation) =>
+			translation.content.ingredients.map(
+				(ingredient) => ingredient.canonicalKey,
+			),
+		),
+	);
+}
+
 /**
  * Records icon jobs for a recipe. Does not generate images and does not
  * write an imports row or a credit ledger row, so it never spends a credit.
@@ -101,9 +128,7 @@ export async function loadDishPrompt(recipeId: string, fallbackTitle = "") {
  * only queue ingredient icons.
  */
 export async function enqueueRecipeIcons(input: RecipeIconRequest) {
-	const ingredientKeys = [
-		...new Set(input.ingredientKeys.map(normalizeIngredientKey)),
-	];
+	const ingredientKeys = normalizedIngredientKeys(input.ingredientKeys);
 	const dish = await loadDishPrompt(input.recipeId, input.title);
 	const rows = await Promise.all([
 		ensureRow({
@@ -127,6 +152,45 @@ export async function enqueueRecipeIcons(input: RecipeIconRequest) {
 	]);
 
 	return rows.filter((row) => row.status === "pending").map((row) => row.id);
+}
+
+/**
+ * Inserts pending rows for ingredient icons that were never queued.
+ * Ready, pending, and failed icons are left unchanged.
+ */
+export async function enqueueMissingIngredientIcons(recipeId: string) {
+	const keys = await ingredientKeysForRecipe(recipeId);
+	if (keys.length === 0) {
+		return [];
+	}
+
+	const existing = await db
+		.select({ key: icons.key })
+		.from(icons)
+		.where(and(eq(icons.kind, "ingredient"), inArray(icons.key, keys)));
+	const present = new Set(existing.map((icon) => icon.key));
+	const missing = keys.filter((key) => !present.has(key));
+	const ids: string[] = [];
+
+	for (const key of missing) {
+		const [created] = await db
+			.insert(icons)
+			.values({
+				kind: "ingredient",
+				key,
+				recipeId: null,
+				prompt: subjectPrompt(key.replaceAll("-", " "), "ingredient"),
+				model: imageModelId(),
+				status: "pending",
+			})
+			.onConflictDoNothing({ target: [icons.kind, icons.key] })
+			.returning({ id: icons.id });
+		if (created) {
+			ids.push(created.id);
+		}
+	}
+
+	return ids;
 }
 
 /**
@@ -242,19 +306,7 @@ export async function listRecipeIcons(recipeId: string) {
 	const recipeIcon = await db.query.icons.findFirst({
 		where: and(eq(icons.kind, "recipe"), eq(icons.key, recipeId)),
 	});
-	const translations = await db
-		.select({ content: recipeTranslations.content })
-		.from(recipeTranslations)
-		.where(eq(recipeTranslations.recipeId, recipeId));
-	const keys = [
-		...new Set(
-			translations.flatMap((translation) =>
-				translation.content.ingredients.map((ingredient) =>
-					normalizeIngredientKey(ingredient.canonicalKey),
-				),
-			),
-		),
-	];
+	const keys = await ingredientKeysForRecipe(recipeId);
 	const ingredientIcons =
 		keys.length === 0
 			? []

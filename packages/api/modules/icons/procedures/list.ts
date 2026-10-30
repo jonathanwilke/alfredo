@@ -1,7 +1,12 @@
 import { auth } from "@repo/auth";
 import { db, imports, recipes } from "@repo/database";
-import { listRecipeIcons } from "@repo/icons";
+import {
+	enqueueMissingIngredientIcons,
+	listRecipeIcons,
+	processIconJobs,
+} from "@repo/icons";
 import { and, eq } from "drizzle-orm";
+import { after } from "next/server";
 import { z } from "zod";
 import { publicProcedure } from "../../../orpc/procedures";
 import { canReadRecipeIcons } from "../../recipes/access";
@@ -57,6 +62,13 @@ export const listIcons = publicProcedure
 			});
 		if (!allowed) {
 			return { recipe: null, ingredients: [] };
+		}
+
+		const queued = await enqueueMissingIngredientIcons(input.recipeId);
+		if (queued.length > 0) {
+			after(async () => {
+				await processIconJobs(queued);
+			});
 		}
 
 		const { recipeIcon, ingredientIcons } = await listRecipeIcons(

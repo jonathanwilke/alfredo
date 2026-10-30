@@ -1,10 +1,11 @@
 "use client";
 
 import { ChefHatIcon, Pot01Icon, SpoonIcon } from "@hugeicons/core-free-icons";
-import { useLocaleRouter } from "@i18n/router";
-import { LocaleLink, useLocalePathname } from "@i18n/routing";
+import { LocaleLink } from "@i18n/routing";
 import { Button } from "@ui/components/button";
 import { useLocale, useTranslations } from "next-intl";
+import { parseAsInteger, parseAsStringLiteral, useQueryStates } from "nuqs";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { useState } from "react";
 import { CookingGuide } from "./CookingGuide";
 import { ingredientIconKey } from "./highlight-step";
@@ -51,19 +52,40 @@ function formatMinutes(seconds: number | null) {
 	return Math.max(1, Math.round(seconds / 60));
 }
 
-export function RecipeOverview({
+const cookingQuery = {
+	cook: parseAsStringLiteral(["1"]),
+	step: parseAsInteger,
+};
+
+export function RecipeOverview(props: {
+	recipeId: string;
+	content: RecipeContent;
+	notice?: string | null;
+	dishUrl?: string | null;
+	share?: {
+		mode: "public" | "owner";
+		shared: boolean;
+		path?: string;
+	};
+}) {
+	return (
+		<NuqsAdapter>
+			<RecipeOverviewContent {...props} />
+		</NuqsAdapter>
+	);
+}
+
+function RecipeOverviewContent({
 	recipeId,
 	content,
 	notice,
 	share,
 	dishUrl = null,
-	startCooking = false,
 }: {
 	recipeId: string;
 	content: RecipeContent;
 	notice?: string | null;
 	dishUrl?: string | null;
-	startCooking?: boolean;
 	share?: {
 		mode: "public" | "owner";
 		shared: boolean;
@@ -72,12 +94,12 @@ export function RecipeOverview({
 }) {
 	const t = useTranslations("recipe");
 	const locale = useLocale();
-	const pathname = useLocalePathname();
-	const router = useLocaleRouter();
 	const [servings, setServings] = useState(content.servings);
-	const [cooking, setCooking] = useState(
-		startCooking && content.steps.length > 0,
+	const [{ cook: cookingParam }, setCookingQuery] = useQueryStates(
+		cookingQuery,
+		{ history: "replace" },
 	);
+	const cooking = cookingParam === "1" && content.steps.length > 0;
 	const factor = content.servings > 0 ? servings / content.servings : 1;
 	const maxServings = Math.max(12, Math.ceil(content.servings * 3));
 	const prep = formatMinutes(content.prepTimeSeconds);
@@ -106,8 +128,7 @@ export function RecipeOverview({
 				title={content.title}
 				imageUrl={photo}
 				onExit={() => {
-					setCooking(false);
-					router.replace(pathname);
+					void setCookingQuery({ cook: null, step: null });
 				}}
 				steps={content.steps.map((step) => ({
 					id: step.id,
@@ -228,7 +249,9 @@ export function RecipeOverview({
 						<Button
 							type="button"
 							variant="primary"
-							onClick={() => setCooking(true)}
+							onClick={() => {
+								void setCookingQuery({ cook: "1", step: null });
+							}}
 							className="order-first h-12 rounded-full bg-accent px-8 text-lg text-accent-foreground shadow-none hover:bg-accent/90 [&>svg]:opacity-100"
 						>
 							<Icon icon={ChefHatIcon} aria-hidden />

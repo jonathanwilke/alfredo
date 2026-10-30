@@ -78,13 +78,10 @@ export async function generateMetadata({
 
 export default async function RecipePage({
 	params,
-	searchParams,
 }: {
 	params: Promise<{ locale: string; id: string }>;
-	searchParams: Promise<{ cook?: string }>;
 }) {
 	const { locale, id } = await params;
-	const { cook } = await searchParams;
 	setRequestLocale(locale);
 	const loaded = await readableRecipe(locale, id);
 
@@ -106,7 +103,6 @@ export default async function RecipePage({
 			content={recipe.content}
 			notice={notice}
 			dishUrl={dishUrl}
-			startCooking={cook === "1"}
 			share={{
 				mode: recipe.isCurated ? "public" : "owner",
 				shared: recipe.shared ?? false,
