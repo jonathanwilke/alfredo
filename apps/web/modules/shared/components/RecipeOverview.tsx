@@ -1,6 +1,6 @@
 "use client";
 
-import { ChefHatIcon, Pot01Icon, SpoonIcon } from "@hugeicons/core-free-icons";
+import { Pot01Icon, SpoonIcon } from "@hugeicons/core-free-icons";
 import { LocaleLink } from "@i18n/routing";
 import { track } from "@shared/lib/analytics";
 import { Button } from "@ui/components/button";
@@ -262,7 +262,7 @@ function RecipeOverviewContent({
 							}}
 							className="order-first h-12 rounded-full bg-accent px-8 text-lg text-accent-foreground shadow-none hover:bg-accent/90 [&>svg]:opacity-100"
 						>
-							<Icon icon={ChefHatIcon} aria-hidden />
+							<Icon icon={SpoonIcon} aria-hidden />
 							{t("start")}
 						</Button>
 					) : null}

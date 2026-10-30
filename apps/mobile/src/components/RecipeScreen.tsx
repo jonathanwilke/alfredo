@@ -1,7 +1,6 @@
 import {
 	Bookmark01Icon,
 	BookmarkCheck01Icon,
-	ChefHatIcon,
 	Pot01Icon,
 	SpoonIcon,
 } from "@hugeicons/core-free-icons";
@@ -425,7 +424,7 @@ function RecipeBody({
 							label={copy.recipe.start}
 							icon={
 								<Icon
-									icon={ChefHatIcon}
+									icon={SpoonIcon}
 									color={colors.accentForeground}
 								/>
 							}
