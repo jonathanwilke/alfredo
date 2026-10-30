@@ -34,7 +34,9 @@
 		"iconReady": "Recipe icon",
 		"accountRequired": "Import needs an account. You start with 3 free credits. Log in above.",
 		"startersLabel": "Free starter recipes",
-		"startersTitle": "Or start with a dish"
+		"startersTitle": "Or start with a dish",
+		"startersPrevious": "Previous dishes",
+		"startersNext": "Next dishes"
 	},
 	"recipe": {
 		"servings": "{count, plural, one {# serving} other {# servings}}",

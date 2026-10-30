@@ -101,9 +101,8 @@ function createCopy(locale: Locale) {
 			startersTitle: de
 				? "Oder fang mit einem Gericht an"
 				: "Or start with a dish",
-			startersBody: de
-				? "Ein paar Gerichte, die wir vorbereitet haben. Sie verbrauchen kein Guthaben."
-				: "A few dishes we already prepared. They do not use a credit.",
+			startersPrevious: de ? "Vorherige Gerichte" : "Previous dishes",
+			startersNext: de ? "Nächste Gerichte" : "Next dishes",
 			startersEmpty: de
 				? "Gerade sind keine Startrezepte da. Ein Link funktioniert trotzdem."
 				: "No starter dishes are listed right now. A link still works.",

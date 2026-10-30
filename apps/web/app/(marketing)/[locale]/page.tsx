@@ -56,8 +56,8 @@ export default async function HomePage({
 					</p>
 				</div>
 				<HomeImport />
-				<StarterRecipes recipes={starters} />
 			</section>
+			<StarterRecipes recipes={starters} />
 			<SiteFooter />
 		</main>
 	);

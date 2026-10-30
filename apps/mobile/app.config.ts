@@ -38,6 +38,7 @@ const config: ExpoConfig = {
 		"expo-status-bar",
 		"expo-secure-store",
 		"expo-font",
+		"expo-image",
 		"expo-localization",
 		"expo-web-browser",
 		"expo-screen-orientation",

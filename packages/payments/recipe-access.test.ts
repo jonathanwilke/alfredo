@@ -127,23 +127,10 @@ describe("curated recipes", () => {
 		assert.equal(row.source, "import");
 	});
 
-	it("shows four to six starters when the collection is large", () => {
+	it("shows every starter up to ten", () => {
 		assert.equal(starterCount(0), 0);
-		assert.equal(
-			starterCount(2, () => 0),
-			2,
-		);
-		assert.equal(
-			starterCount(40, () => 0),
-			4,
-		);
-		assert.equal(
-			starterCount(40, () => 0.5),
-			5,
-		);
-		assert.equal(
-			starterCount(40, () => 0.99),
-			6,
-		);
+		assert.equal(starterCount(2), 2);
+		assert.equal(starterCount(10), 10);
+		assert.equal(starterCount(40), 10);
 	});
 });

@@ -81,11 +81,10 @@ export function userImportedRecipeValues(sourceUrl: string) {
 	};
 }
 
-/** How many starter dishes to show. 4–6 when the collection is large enough. */
-export function starterCount(available: number, random = Math.random) {
+/** How many starter dishes to show. Every curated dish, up to 10. */
+export function starterCount(available: number) {
 	if (available <= 0) {
 		return 0;
 	}
-	const wanted = 4 + Math.floor(random() * 3);
-	return Math.min(available, wanted);
+	return Math.min(available, 10);
 }

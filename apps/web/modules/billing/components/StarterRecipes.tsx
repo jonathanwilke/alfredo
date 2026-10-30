@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { StarterCard } from "./StarterCard";
+import { StarterCarousel } from "./StarterCard";
 
 export async function StarterRecipes({
 	recipes,
@@ -19,6 +19,25 @@ export async function StarterRecipes({
 
 	const t = await getTranslations("home");
 	const recipeT = await getTranslations("recipe");
+	const tiles = recipes.map((recipe) => {
+		const minutes =
+			recipe.totalTimeSeconds != null && recipe.totalTimeSeconds > 0
+				? Math.max(1, Math.round(recipe.totalTimeSeconds / 60))
+				: null;
+		const meta = [
+			minutes != null ? recipeT("minutes", { count: minutes }) : null,
+			recipeT("servings", { count: recipe.servings }),
+		]
+			.filter(Boolean)
+			.join(" · ");
+		return {
+			id: recipe.recipeId,
+			href: `/recipes/${recipe.recipeId}`,
+			title: recipe.title,
+			imageUrl: recipe.image ?? recipe.heroIconUrl,
+			meta: meta || null,
+		};
+	});
 
 	return (
 		<section
@@ -28,36 +47,7 @@ export async function StarterRecipes({
 			<h2 className="text-balance text-center font-heading text-3xl leading-tight sm:text-4xl">
 				{t("startersTitle")}
 			</h2>
-			<ul className="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 lg:grid-cols-4">
-				{recipes.map((recipe) => {
-					const minutes =
-						recipe.totalTimeSeconds != null &&
-						recipe.totalTimeSeconds > 0
-							? Math.max(
-									1,
-									Math.round(recipe.totalTimeSeconds / 60),
-								)
-							: null;
-					const meta = [
-						minutes != null
-							? recipeT("minutes", { count: minutes })
-							: null,
-						recipeT("servings", { count: recipe.servings }),
-					]
-						.filter(Boolean)
-						.join(" · ");
-					return (
-						<li key={recipe.recipeId} className="min-w-0">
-							<StarterCard
-								href={`/recipes/${recipe.recipeId}`}
-								title={recipe.title}
-								imageUrl={recipe.image ?? recipe.heroIconUrl}
-								meta={meta || null}
-							/>
-						</li>
-					);
-				})}
-			</ul>
+			<StarterCarousel tiles={tiles} />
 		</section>
 	);
 }

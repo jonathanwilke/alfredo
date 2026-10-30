@@ -1,16 +1,17 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Link as LinkIcon } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import { api, apiCode } from "@/api/client";
+import type { StarterRecipe } from "@/api/types";
 import { Footer, Header } from "@/components/Chrome";
 import { importFailureMessage } from "@/components/RecipeScreen";
+import { StarterCarousel } from "@/components/StarterCarousel";
 import { Body, Button, Display, Field, Notice, Screen } from "@/components/ui";
 import { useI18n } from "@/i18n";
 import { useLayout } from "@/lib/layout";
 import { oneParam, recipeUrlFromImport } from "@/lib/params";
 import { useTheme } from "@/theme/theme";
-import { fonts } from "@/theme/tokens";
 
 const resumed = new Set<string>();
 
@@ -26,9 +27,7 @@ export default function HomeScreen() {
 	const [invalid, setInvalid] = useState(false);
 	const [pending, setPending] = useState(false);
 	const [needsCredit, setNeedsCredit] = useState(false);
-	const [starters, setStarters] = useState<
-		{ recipeId: string; title: string }[] | null
-	>(null);
+	const [starters, setStarters] = useState<StarterRecipe[] | null>(null);
 	const started = useRef(false);
 
 	useEffect(() => {
@@ -126,8 +125,6 @@ export default function HomeScreen() {
 			.finally(() => setPending(false));
 	}
 
-	const columns = layout.isTablet ? 2 : 1;
-
 	return (
 		<Screen>
 			<Header home />
@@ -216,57 +213,8 @@ export default function HomeScreen() {
 							</View>
 						) : null}
 					</View>
-					{starters && starters.length > 0 ? (
-						<View
-							accessibilityRole="list"
-							accessibilityLabel={copy.home.startersLabel}
-							style={{ gap: 12 }}
-						>
-							<Display size={layout.isTablet ? 36 : 30}>
-								{copy.home.startersTitle}
-							</Display>
-							<Body muted>{copy.home.startersBody}</Body>
-							<View
-								style={{
-									flexDirection: "row",
-									flexWrap: "wrap",
-									columnGap: 24,
-								}}
-							>
-								{starters.map((recipe) => (
-									<Pressable
-										key={recipe.recipeId}
-										accessibilityRole="link"
-										onPress={() =>
-											router.push(
-												`/recipes/${recipe.recipeId}`,
-											)
-										}
-										style={{
-											flexBasis:
-												columns === 2 ? "46%" : "100%",
-											minHeight: 48,
-											justifyContent: "center",
-										}}
-									>
-										<Body
-											style={{
-												fontFamily: fonts.body,
-												color: colors.foreground,
-												textDecorationLine: "underline",
-											}}
-										>
-											{recipe.title}
-										</Body>
-									</Pressable>
-								))}
-							</View>
-						</View>
-					) : null}
-					{starters && starters.length === 0 ? (
-						<Body muted>{copy.home.startersEmpty}</Body>
-					) : null}
 				</View>
+				<StarterCarousel recipes={starters} />
 				<Footer />
 			</ScrollView>
 		</Screen>

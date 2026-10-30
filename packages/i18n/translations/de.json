@@ -34,7 +34,9 @@
 		"iconReady": "Rezept-Icon",
 		"accountRequired": "Für den Import brauchst du ein Konto. Du startest mit 3 Guthaben gratis. Melde dich oben an.",
 		"startersLabel": "Kostenlose Startrezepte",
-		"startersTitle": "Oder fang mit einem Gericht an"
+		"startersTitle": "Oder fang mit einem Gericht an",
+		"startersPrevious": "Vorherige Gerichte",
+		"startersNext": "Nächste Gerichte"
 	},
 	"recipe": {
 		"servings": "{count, plural, one {# Portion} other {# Portionen}}",

@@ -21,7 +21,7 @@ export async function listStarterRecipes(locale: string) {
 		where: and(eq(recipes.isCurated, true), eq(recipes.source, "curated")),
 		with: { translations: true },
 		orderBy: sql`random()`,
-		limit: 6,
+		limit: 10,
 	});
 
 	const ready = rows.flatMap((recipe) => {
