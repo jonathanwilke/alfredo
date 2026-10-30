@@ -15,12 +15,18 @@ export default async function Image({
 	params: Promise<{ locale: string; id: string }>;
 }) {
 	const { locale, id } = await params;
-	const t = await getTranslations({ locale, namespace: "home" });
-	const recipe = await loadRecipe({
-		recipeId: id,
-		locale,
-		viewerUserId: null,
-	});
+	const t = await getTranslations({ locale: "en", namespace: "home" });
+	const recipe =
+		(await loadRecipe({
+			recipeId: id,
+			locale: "en",
+			viewerUserId: null,
+		})) ??
+		(await loadRecipe({
+			recipeId: id,
+			locale,
+			viewerUserId: null,
+		}));
 	if (!recipe?.isCurated) {
 		return defaultOgResponse({
 			title: t("title"),

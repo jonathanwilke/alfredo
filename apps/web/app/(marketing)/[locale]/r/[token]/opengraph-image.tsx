@@ -15,8 +15,10 @@ export default async function Image({
 	params: Promise<{ locale: string; token: string }>;
 }) {
 	const { locale, token } = await params;
-	const t = await getTranslations({ locale, namespace: "home" });
-	const recipe = await loadSharedRecipe({ token, locale });
+	const t = await getTranslations({ locale: "en", namespace: "home" });
+	const recipe =
+		(await loadSharedRecipe({ token, locale: "en" })) ??
+		(await loadSharedRecipe({ token, locale }));
 	if (!recipe) {
 		return defaultOgResponse({
 			title: t("title"),
