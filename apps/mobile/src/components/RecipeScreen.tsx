@@ -278,6 +278,16 @@ function RecipeBody({
 		);
 	}
 
+	const recipeIcon = icons.recipe;
+	const dishPhoto =
+		recipeIcon?.status === "ready" && recipeIcon.url ? (
+			<DishImage
+				status="ready"
+				url={recipeIcon.url}
+				label={icons.labelFor("ready")}
+			/>
+		) : null;
+
 	const meta = (
 		<View style={{ gap: 16 }}>
 			<Display size={layout.isTablet ? 56 : 40}>{content.title}</Display>
@@ -474,14 +484,8 @@ function RecipeBody({
 						}}
 					>
 						<View style={{ flex: 1.1, gap: 24 }}>
+							{dishPhoto}
 							{meta}
-							<DishImage
-								status={icons.recipe?.status ?? "pending"}
-								url={icons.recipe?.url}
-								label={icons.labelFor(
-									icons.recipe?.status ?? "pending",
-								)}
-							/>
 							<Servings
 								value={servings}
 								max={maxServings}
@@ -493,14 +497,8 @@ function RecipeBody({
 					</View>
 				) : (
 					<View style={{ gap: 28 }}>
+						{dishPhoto}
 						{meta}
-						<DishImage
-							status={icons.recipe?.status ?? "pending"}
-							url={icons.recipe?.url}
-							label={icons.labelFor(
-								icons.recipe?.status ?? "pending",
-							)}
-						/>
 						<Servings
 							value={servings}
 							max={maxServings}

@@ -129,6 +129,13 @@ export function RecipeOverview({
 				</div>
 			</header>
 			<article className="flex flex-col gap-10 pb-16">
+				{dish?.status === "ready" && dish.url ? (
+					<DishImage
+						status="ready"
+						url={dish.url}
+						label={labelFor("ready")}
+					/>
+				) : null}
 				<div className="flex flex-col gap-4">
 					<h1 className="text-balance text-5xl leading-[1.05] font-semibold tracking-tight">
 						{content.title}
@@ -183,11 +190,6 @@ export function RecipeOverview({
 						</Button>
 					) : null}
 				</SaveRecipeButton>
-				<DishImage
-					status={dish?.status ?? "pending"}
-					url={dish?.url}
-					label={labelFor(dish?.status ?? "pending")}
-				/>
 				<div className="flex max-w-sm flex-col gap-3">
 					<label htmlFor="servings" className="text-lg font-semibold">
 						{t("servings", { count: servings })}
