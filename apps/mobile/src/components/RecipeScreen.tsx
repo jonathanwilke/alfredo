@@ -23,7 +23,7 @@ import type { StoredRecipe } from "@/api/types";
 import { authClient } from "@/auth/client";
 import { siteOrigin } from "@/auth/origin";
 import { useRecipeIcons } from "@/hooks/useRecipeIcons";
-import { useI18n } from "@/i18n";
+import { defaultLocale, useI18n } from "@/i18n";
 import { ingredientIconKey, type StepIngredient } from "@/lib/highlight-step";
 import {
 	formatAmount,
@@ -317,7 +317,7 @@ function RecipeBody({
 		try {
 			const owner = recipe.isOwner ?? !recipe.isCurated;
 			const path = recipe.isCurated
-				? locale === "de"
+				? locale === defaultLocale
 					? `/recipes/${recipe.recipeId}`
 					: `/${locale}/recipes/${recipe.recipeId}`
 				: owner

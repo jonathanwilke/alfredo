@@ -9,7 +9,7 @@ export const routing = defineRouting({
 		name: config.i18n.localeCookieName,
 	},
 	localePrefix: "as-needed",
-	localeDetection: true,
+	localeDetection: false,
 });
 
 export const {

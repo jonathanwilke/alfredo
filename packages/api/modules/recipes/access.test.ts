@@ -88,13 +88,13 @@ describe("canReadRecipeIcons", () => {
 });
 
 describe("share links", () => {
-	it("uses an unguessable token path and keeps the German prefix off", () => {
+	it("uses an unguessable token path and leaves the English prefix off", () => {
 		const token = createShareToken();
 		assert.match(token, /^[A-Za-z0-9_-]{24}$/);
-		assert.equal(sharedRecipePath("de", token), `/r/${token}`);
-		assert.equal(sharedRecipePath("en", token), `/en/r/${token}`);
-		assert.equal(publicRecipePath("de", "recipe"), "/recipes/recipe");
-		assert.equal(publicRecipePath("en", "recipe"), "/en/recipes/recipe");
+		assert.equal(sharedRecipePath("en", token), `/r/${token}`);
+		assert.equal(sharedRecipePath("de", token), `/de/r/${token}`);
+		assert.equal(publicRecipePath("en", "recipe"), "/recipes/recipe");
+		assert.equal(publicRecipePath("de", "recipe"), "/de/recipes/recipe");
 	});
 });
 

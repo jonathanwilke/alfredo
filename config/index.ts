@@ -4,10 +4,10 @@ export const config = {
 	appName: "ulivo",
 	i18n: {
 		locales: {
-			de: { label: "Deutsch" },
 			en: { label: "English" },
+			de: { label: "Deutsch" },
 		},
-		defaultLocale: "de",
+		defaultLocale: "en",
 		localeCookieName: "NEXT_LOCALE",
 	},
 	ui: {

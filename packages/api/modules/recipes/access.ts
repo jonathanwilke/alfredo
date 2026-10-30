@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { config } from "@repo/config";
 
 export function createShareToken() {
 	return randomBytes(18).toString("base64url");
@@ -43,7 +44,7 @@ export function canReadRecipeIcons(input: {
 }
 
 export function localePrefix(locale: string) {
-	return locale === "de" ? "" : `/${locale}`;
+	return locale === config.i18n.defaultLocale ? "" : `/${locale}`;
 }
 
 export function publicRecipePath(locale: string, recipeId: string) {

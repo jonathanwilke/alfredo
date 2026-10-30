@@ -197,7 +197,7 @@ export function Footer() {
 				accessibilityLabel={copy.footer.language}
 				style={styles.locales}
 			>
-				{(["de", "en"] as const).map((code, index) => (
+				{(["en", "de"] as const).map((code, index) => (
 					<View key={code} style={styles.localeRow}>
 						{index > 0 ? (
 							<Text style={{ color: colors.mutedForeground }}>

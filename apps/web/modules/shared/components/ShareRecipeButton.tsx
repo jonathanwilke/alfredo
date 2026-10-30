@@ -1,6 +1,7 @@
 "use client";
 
 import { Share01Icon } from "@hugeicons/core-free-icons";
+import { config } from "@repo/config";
 import { track } from "@shared/lib/analytics";
 import { api } from "@shared/lib/api";
 import { Button } from "@ui/components/button";
@@ -52,7 +53,7 @@ export function ShareRecipeButton({
 			const sharePath =
 				mode === "public"
 					? (path ??
-						(locale === "de"
+						(locale === config.i18n.defaultLocale
 							? `/recipes/${recipeId}`
 							: `/${locale}/recipes/${recipeId}`))
 					: (

@@ -36,7 +36,10 @@ export async function generateMetadata({
 
 	const title = `${config.appName} · ${recipe.content.title}`;
 	const description = recipe.content.description?.trim() || t("subtitle");
-	const path = locale === "de" ? `/r/${token}` : `/${locale}/r/${token}`;
+	const path =
+		locale === config.i18n.defaultLocale
+			? `/r/${token}`
+			: `/${locale}/r/${token}`;
 	return {
 		metadataBase: new URL(getBaseUrl()),
 		title,
@@ -78,7 +81,10 @@ export default async function SharedRecipePage({
 			share={{
 				mode: "public",
 				shared: true,
-				path: locale === "de" ? `/r/${token}` : `/${locale}/r/${token}`,
+				path:
+					locale === config.i18n.defaultLocale
+						? `/r/${token}`
+						: `/${locale}/r/${token}`,
 			}}
 		/>
 	);

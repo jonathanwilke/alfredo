@@ -1,5 +1,5 @@
 import { ORPCError } from "@orpc/server";
-import { getBaseUrl } from "@repo/config";
+import { config, getBaseUrl } from "@repo/config";
 import {
 	BillingDisabledError,
 	CheckoutUrlMissingError,
@@ -13,7 +13,7 @@ const localeSchema = z.enum(["de", "en"]);
 const packSchema = z.enum(["pack_10", "pack_20", "pack_50"]);
 
 export function billingReturnUrl(locale: "de" | "en", pack: string) {
-	const prefix = locale === "de" ? "" : `/${locale}`;
+	const prefix = locale === config.i18n.defaultLocale ? "" : `/${locale}`;
 	return `${getBaseUrl()}${prefix}/billing/return?pack=${pack}`;
 }
 

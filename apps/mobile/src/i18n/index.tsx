@@ -1,4 +1,3 @@
-import { getLocales } from "expo-localization";
 import * as SecureStore from "expo-secure-store";
 import {
 	createContext,
@@ -12,6 +11,7 @@ import {
 export type Locale = "de" | "en";
 
 const STORAGE_KEY = "ulivo.locale";
+export const defaultLocale: Locale = "en";
 
 type Copy = ReturnType<typeof createCopy>;
 
@@ -21,10 +21,6 @@ const I18nContext = createContext<{
 	ready: boolean;
 	setLocale: (locale: Locale) => void;
 } | null>(null);
-
-function deviceLocale(): Locale {
-	return getLocales()[0]?.languageCode === "de" ? "de" : "en";
-}
 
 function formatCount(locale: Locale, count: number) {
 	return new Intl.NumberFormat(locale).format(count);
@@ -261,7 +257,7 @@ function createCopy(locale: Locale) {
 }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-	const [locale, setLocaleState] = useState<Locale>(deviceLocale);
+	const [locale, setLocaleState] = useState<Locale>(defaultLocale);
 	const [ready, setReady] = useState(false);
 
 	useEffect(() => {
