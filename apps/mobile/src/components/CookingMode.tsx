@@ -138,7 +138,6 @@ export function CookingMode({
 	const alert = useTimerAlert();
 	const [index, setIndex] = useState(0);
 	const [viewport, setViewport] = useState(0);
-	const [trayHeight, setTrayHeight] = useState(0);
 	const [banner, setBanner] = useState<string | null>(null);
 	const [reduceMotion, setReduceMotion] = useState(false);
 	const scrollRef = useRef<ScrollViewInstance>(null);
@@ -148,12 +147,6 @@ export function CookingMode({
 	const fontSize = isTablet ? 40 : 30;
 	const lineHeight = isTablet ? 52 : 40;
 	const step = steps[index];
-
-	useEffect(() => {
-		if (timers.length === 0) {
-			setTrayHeight(0);
-		}
-	}, [timers.length]);
 
 	useEffect(() => {
 		void activateKeepAwakeAsync(KEEP_AWAKE);
@@ -295,66 +288,63 @@ export function CookingMode({
 					</Text>
 				</View>
 			) : null}
-			<View style={[styles.body, split ? styles.bodySplit : null]}>
-				{split ? (
-					<IngredientColumn
-						ingredients={step.ingredients}
-						iconsByKey={iconsByKey}
-						title={copy.recipe.stepIngredients}
-					/>
-				) : null}
-				<ScrollView
-					ref={scrollRef}
-					style={styles.stepScroll}
-					onLayout={(event) =>
-						setViewport(event.nativeEvent.layout.height)
-					}
-					scrollEventThrottle={16}
-					onScroll={(event) => {
-						if (focusing.current || viewport === 0) {
-							return;
-						}
-						const next = closestStep(
-							event.nativeEvent.contentOffset.y,
-							viewport,
-							layouts.current,
-						);
-						setIndex((current) =>
-							current === next ? current : next,
-						);
-					}}
-					contentContainerStyle={{
-						paddingTop: Math.max(24, viewport * 0.12),
-						paddingBottom: viewport * 0.62 + trayHeight,
-						paddingHorizontal: pagePadding,
-					}}
-				>
-					{steps.map((item, stepIndex) => (
-						<StepBlock
-							key={item.id}
-							step={item}
-							index={stepIndex}
-							active={active}
-							fontSize={fontSize}
-							lineHeight={lineHeight}
-							locale={locale}
-							label={copy.recipe.stepLabel(stepIndex + 1)}
-							alertBody={copy.recipe.timerDone}
+			<View style={styles.stage}>
+				<View style={[styles.body, split ? styles.bodySplit : null]}>
+					{split ? (
+						<IngredientColumn
+							ingredients={step.ingredients}
 							iconsByKey={iconsByKey}
-							onFocus={focusStep}
-							onLayout={(layout) => {
-								layouts.current[stepIndex] = layout;
-							}}
+							title={copy.recipe.stepIngredients}
 						/>
-					))}
-				</ScrollView>
+					) : null}
+					<ScrollView
+						ref={scrollRef}
+						style={styles.stepScroll}
+						onLayout={(event) =>
+							setViewport(event.nativeEvent.layout.height)
+						}
+						scrollEventThrottle={16}
+						onScroll={(event) => {
+							if (focusing.current || viewport === 0) {
+								return;
+							}
+							const next = closestStep(
+								event.nativeEvent.contentOffset.y,
+								viewport,
+								layouts.current,
+							);
+							setIndex((current) =>
+								current === next ? current : next,
+							);
+						}}
+						contentContainerStyle={{
+							paddingTop: Math.max(24, viewport * 0.12),
+							paddingBottom: viewport * 0.62,
+							paddingHorizontal: pagePadding,
+						}}
+					>
+						{steps.map((item, stepIndex) => (
+							<StepBlock
+								key={item.id}
+								step={item}
+								index={stepIndex}
+								active={active}
+								fontSize={fontSize}
+								lineHeight={lineHeight}
+								locale={locale}
+								label={copy.recipe.stepLabel(stepIndex + 1)}
+								alertBody={copy.recipe.timerDone}
+								iconsByKey={iconsByKey}
+								onFocus={focusStep}
+								onLayout={(layout) => {
+									layouts.current[stepIndex] = layout;
+								}}
+							/>
+						))}
+					</ScrollView>
+				</View>
+				<TimerTray timers={timers} now={now} inset={pagePadding} />
 			</View>
-			<TimerTray
-				timers={timers}
-				now={now}
-				paddingBottom={Math.max(insets.bottom, 12)}
-				onLayout={setTrayHeight}
-			/>
 		</View>
 	);
 }
@@ -647,13 +637,11 @@ function IngredientColumn({
 function TimerTray({
 	timers,
 	now,
-	paddingBottom,
-	onLayout,
+	inset,
 }: {
 	timers: ReturnType<typeof useTimerClock>["timers"];
 	now: number;
-	paddingBottom: number;
-	onLayout: (height: number) => void;
+	inset: number;
 }) {
 	const { copy } = useI18n();
 	if (timers.length === 0) {
@@ -661,15 +649,8 @@ function TimerTray({
 	}
 	return (
 		<View
-			onLayout={(event) => onLayout(event.nativeEvent.layout.height)}
-			style={[
-				styles.tray,
-				{
-					paddingBottom,
-					backgroundColor: colors.card,
-					borderColor: colors.border,
-				},
-			]}
+			pointerEvents="box-none"
+			style={[styles.floatWrap, { left: inset, right: inset }]}
 		>
 			<ScrollView
 				style={styles.trayScroll}
@@ -686,29 +667,35 @@ function TimerTray({
 							? copy.recipe.timerResume
 							: copy.recipe.timerPause;
 					return (
-						<View key={timer.id} style={styles.trayRow}>
+						<View
+							key={timer.id}
+							style={[
+								styles.trayRow,
+								{ backgroundColor: `${colors.timer}1A` },
+							]}
+						>
+							<Timer
+								color={colors.timer}
+								size={20}
+								strokeWidth={2.25}
+							/>
 							<View style={styles.trayCopy}>
-								<Text
-									style={[
-										styles.trayTime,
-										{
-											color:
-												timer.status === "done"
-													? colors.timer
-													: colors.foreground,
-										},
-									]}
-								>
-									{clock}
-								</Text>
 								<Text
 									numberOfLines={1}
 									style={[
-										styles.trayLabel,
-										{ color: colors.mutedForeground },
+										styles.trayTime,
+										{ color: colors.timer },
 									]}
 								>
-									{timer.label}
+									{clock}
+									<Text
+										style={[
+											styles.trayLabel,
+											{ color: colors.foreground },
+										]}
+									>
+										{`  ${timer.label}`}
+									</Text>
 								</Text>
 							</View>
 							{timer.status === "done" ? null : (
@@ -724,7 +711,7 @@ function TimerTray({
 									}}
 									style={[
 										styles.trayButton,
-										{ borderColor: colors.border },
+										{ backgroundColor: colors.background },
 									]}
 								>
 									<Text
@@ -743,7 +730,7 @@ function TimerTray({
 								onPress={() => void addCookMinute(timer.id)}
 								style={[
 									styles.trayButton,
-									{ borderColor: colors.border },
+									{ backgroundColor: colors.background },
 								]}
 							>
 								<Text
@@ -802,6 +789,9 @@ const styles = StyleSheet.create({
 	bannerText: {
 		fontFamily: fonts.label,
 		fontSize: 16,
+	},
+	stage: {
+		flex: 1,
 	},
 	body: {
 		flex: 1,
@@ -884,25 +874,38 @@ const styles = StyleSheet.create({
 		fontFamily: fonts.body,
 		fontSize: 16,
 	},
-	tray: {
-		borderTopWidth: 1,
-		paddingTop: 8,
-		paddingHorizontal: 16,
+	floatWrap: {
+		position: "absolute",
+		top: 8,
+		alignItems: "center",
+		zIndex: 20,
 	},
 	trayScroll: {
-		maxHeight: 180,
+		maxHeight: 220,
+		width: "100%",
 	},
 	trayList: {
 		gap: 8,
+		alignItems: "center",
 	},
 	trayRow: {
 		flexDirection: "row",
 		alignItems: "center",
 		gap: 8,
 		minHeight: 44,
+		maxWidth: "100%",
+		borderRadius: 999,
+		paddingVertical: 6,
+		paddingLeft: 12,
+		paddingRight: 8,
+		shadowColor: "#1A1D14",
+		shadowOpacity: 0.16,
+		shadowRadius: 12,
+		shadowOffset: { width: 0, height: 6 },
+		elevation: 4,
 	},
 	trayCopy: {
-		flex: 1,
+		flexShrink: 1,
 		minWidth: 0,
 	},
 	trayTime: {
@@ -914,7 +917,6 @@ const styles = StyleSheet.create({
 		fontSize: 14,
 	},
 	trayButton: {
-		borderWidth: 1,
 		borderRadius: 999,
 		paddingHorizontal: 12,
 		paddingVertical: 6,

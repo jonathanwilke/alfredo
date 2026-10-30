@@ -277,101 +277,111 @@ export function CookingGuide({
 					{t("timerDone")}
 				</p>
 			) : null}
-			<div className="flex min-h-0 flex-1">
-				<aside className="hidden w-80 shrink-0 overflow-y-auto border-r border-border px-6 py-8 lg:block">
-					<h2 className="font-heading text-3xl">
-						{t("stepIngredients")}
-					</h2>
-					{step.ingredients.length === 0 ? (
-						<p className="mt-4 text-lg text-muted-foreground">—</p>
-					) : (
-						<ul className="mt-5 flex flex-col gap-4">
-							{step.ingredients.map((ingredient) => {
-								const key = ingredient.canonicalKey
-									? ingredientIconKey(ingredient.canonicalKey)
-									: null;
-								const iconUrl = key ? iconsByKey[key] : null;
-								const amount = [
-									ingredient.scaledQuantity,
-									ingredient.scaledUnit ?? ingredient.unit,
-								]
-									.filter(Boolean)
-									.join(" ");
-								return (
-									<li
-										key={ingredient.id}
-										className="flex items-center gap-3"
-									>
-										{iconUrl ? (
-											// biome-ignore lint/performance/noImgElement: icon URLs are stored objects, not next/image assets
-											<img
-												src={iconUrl}
-												alt=""
-												className="size-12 rounded-2xl object-cover"
-											/>
-										) : (
-											<span className="size-12 rounded-2xl bg-accent" />
-										)}
-										<span className="min-w-0">
-											<span className="block text-lg">
-												{ingredient.name}
-											</span>
-											{amount ? (
-												<span className="block text-base text-muted-foreground">
-													{amount}
+			<div className="relative flex min-h-0 flex-1">
+				<TimerTray timers={timers} now={now} />
+				<div className="flex min-h-0 flex-1">
+					<aside className="hidden w-80 shrink-0 overflow-y-auto border-r border-border px-6 py-8 lg:block">
+						<h2 className="font-heading text-3xl">
+							{t("stepIngredients")}
+						</h2>
+						{step.ingredients.length === 0 ? (
+							<p className="mt-4 text-lg text-muted-foreground">
+								—
+							</p>
+						) : (
+							<ul className="mt-5 flex flex-col gap-4">
+								{step.ingredients.map((ingredient) => {
+									const key = ingredient.canonicalKey
+										? ingredientIconKey(
+												ingredient.canonicalKey,
+											)
+										: null;
+									const iconUrl = key
+										? iconsByKey[key]
+										: null;
+									const amount = [
+										ingredient.scaledQuantity,
+										ingredient.scaledUnit ??
+											ingredient.unit,
+									]
+										.filter(Boolean)
+										.join(" ");
+									return (
+										<li
+											key={ingredient.id}
+											className="flex items-center gap-3"
+										>
+											{iconUrl ? (
+												// biome-ignore lint/performance/noImgElement: icon URLs are stored objects, not next/image assets
+												<img
+													src={iconUrl}
+													alt=""
+													className="size-12 rounded-2xl object-cover"
+												/>
+											) : (
+												<span className="size-12 rounded-2xl bg-accent" />
+											)}
+											<span className="min-w-0">
+												<span className="block text-lg">
+													{ingredient.name}
 												</span>
-											) : null}
-										</span>
-									</li>
+												{amount ? (
+													<span className="block text-base text-muted-foreground">
+														{amount}
+													</span>
+												) : null}
+											</span>
+										</li>
+									);
+								})}
+							</ul>
+						)}
+					</aside>
+					<div
+						ref={scrollerRef}
+						onScroll={updateActive}
+						className="min-h-0 flex-1 overflow-y-auto px-5 sm:px-8"
+					>
+						<div className="mx-auto w-full max-w-3xl pt-[12vh] pb-[62vh]">
+							{steps.map((item, stepIndex) => {
+								const distance = Math.abs(index - stepIndex);
+								return (
+									// biome-ignore lint/a11y/useKeyWithClickEvents: arrow keys and the step label handle the keyboard
+									<article
+										key={item.id}
+										ref={(element) => {
+											stepRefs.current[stepIndex] =
+												element;
+										}}
+										onClick={() => focusStep(stepIndex)}
+										className="scroll-mt-[18vh] cursor-pointer py-8 transition-opacity duration-300 motion-reduce:transition-none"
+										style={{
+											opacity: distance === 0 ? 1 : 0.32,
+										}}
+									>
+										<button
+											type="button"
+											onClick={() => focusStep(stepIndex)}
+											className="mb-3 font-sans text-[13px] font-semibold tracking-[0.14em] uppercase"
+										>
+											{t("stepLabel", {
+												step: stepIndex + 1,
+											})}
+										</button>
+										<StepCopy
+											step={item}
+											locale={locale}
+											iconsByKey={iconsByKey}
+											alertBody={t("timerDone")}
+											stepIndex={stepIndex}
+										/>
+									</article>
 								);
 							})}
-						</ul>
-					)}
-				</aside>
-				<div
-					ref={scrollerRef}
-					onScroll={updateActive}
-					className="min-h-0 flex-1 overflow-y-auto px-5 sm:px-8"
-				>
-					<div className="mx-auto w-full max-w-3xl pt-[12vh] pb-[62vh]">
-						{steps.map((item, stepIndex) => {
-							const distance = Math.abs(index - stepIndex);
-							return (
-								// biome-ignore lint/a11y/useKeyWithClickEvents: arrow keys and the step label handle the keyboard
-								<article
-									key={item.id}
-									ref={(element) => {
-										stepRefs.current[stepIndex] = element;
-									}}
-									onClick={() => focusStep(stepIndex)}
-									className="scroll-mt-[18vh] cursor-pointer py-8 transition-opacity duration-300 motion-reduce:transition-none"
-									style={{
-										opacity: distance === 0 ? 1 : 0.32,
-									}}
-								>
-									<button
-										type="button"
-										onClick={() => focusStep(stepIndex)}
-										className="mb-3 font-sans text-[13px] font-semibold tracking-[0.14em] uppercase"
-									>
-										{t("stepLabel", {
-											step: stepIndex + 1,
-										})}
-									</button>
-									<StepCopy
-										step={item}
-										locale={locale}
-										iconsByKey={iconsByKey}
-										alertBody={t("timerDone")}
-										stepIndex={stepIndex}
-									/>
-								</article>
-							);
-						})}
+						</div>
 					</div>
 				</div>
 			</div>
-			<TimerTray timers={timers} now={now} />
 		</main>
 	);
 }
@@ -483,8 +493,8 @@ function TimerTray({
 		return null;
 	}
 	return (
-		<div className="max-h-52 shrink-0 overflow-y-auto border-t border-border bg-card px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-			<ul className="mx-auto flex w-full max-w-3xl flex-col gap-2">
+		<div className="pointer-events-none absolute inset-x-0 top-3 z-30 flex justify-center px-4">
+			<ul className="pointer-events-auto flex max-h-[46vh] w-max max-w-full flex-col items-center gap-2 overflow-y-auto">
 				{timers.map((timer) => {
 					const remaining = remainingSeconds(timer, now);
 					const clock =
@@ -496,17 +506,21 @@ function TimerTray({
 							? t("timerResume")
 							: t("timerPause");
 					return (
-						<li key={timer.id} className="flex items-center gap-2">
-							<div className="min-w-0 flex-1">
-								<p
-									className={`font-semibold text-lg tabular-nums ${timer.status === "done" ? "text-timer" : "text-foreground"}`}
-								>
-									{clock}
-								</p>
-								<p className="truncate text-sm text-muted-foreground">
+						<li
+							key={timer.id}
+							className="flex items-center gap-2 rounded-full bg-timer/10 px-3 py-1.5 text-timer shadow-lg"
+						>
+							<Timer
+								aria-hidden
+								strokeWidth={2.25}
+								className="size-5 shrink-0"
+							/>
+							<p className="min-w-0 font-semibold text-lg tabular-nums">
+								{clock}
+								<span className="ml-2 font-normal text-base text-foreground/80">
 									{timer.label}
-								</p>
-							</div>
+								</span>
+							</p>
 							{timer.status === "done" ? null : (
 								<button
 									type="button"
@@ -517,7 +531,7 @@ function TimerTray({
 										}
 										pauseCookTimer(timer.id);
 									}}
-									className="rounded-full border border-border px-3 py-1.5 font-semibold text-sm"
+									className="rounded-full bg-background/70 px-3 py-1 font-semibold text-sm text-foreground"
 								>
 									{toggle}
 								</button>
@@ -525,7 +539,7 @@ function TimerTray({
 							<button
 								type="button"
 								onClick={() => addCookMinute(timer.id)}
-								className="rounded-full border border-border px-3 py-1.5 font-semibold text-sm"
+								className="rounded-full bg-background/70 px-3 py-1 font-semibold text-sm text-foreground"
 							>
 								{t("timerAdd")}
 							</button>
@@ -533,11 +547,9 @@ function TimerTray({
 								type="button"
 								aria-label={t("timerCancel")}
 								onClick={() => cancelCookTimer(timer.id)}
+								className="grid size-8 place-items-center rounded-full text-foreground/80"
 							>
-								<X
-									aria-hidden
-									className="size-5 text-muted-foreground"
-								/>
+								<X aria-hidden className="size-5" />
 							</button>
 						</li>
 					);
