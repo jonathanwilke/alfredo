@@ -25,10 +25,10 @@ export default async function LoginPage({
 	searchParams,
 }: {
 	params: Promise<{ locale: string }>;
-	searchParams: Promise<{ next?: string; error?: string }>;
+	searchParams: Promise<{ next?: string; error?: string; sig?: string }>;
 }) {
 	const { locale } = await params;
-	const { next, error } = await searchParams;
+	const { next, error, sig } = await searchParams;
 	setRequestLocale(locale);
 	const t = await getTranslations("home");
 	const google =
@@ -56,6 +56,7 @@ export default async function LoginPage({
 					next={typeof next === "string" ? next : null}
 					google={google}
 					googleError={typeof error === "string"}
+					oauthFlow={typeof sig === "string"}
 				/>
 			</section>
 			<SiteFooter />

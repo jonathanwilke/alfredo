@@ -12,8 +12,11 @@
 		"type-check": "tsc --noEmit"
 	},
 	"dependencies": {
+		"@better-auth/cimd": "^1.7.14",
 		"@better-auth/drizzle-adapter": "^1.7.14",
 		"@better-auth/expo": "^1.7.14",
+		"@better-auth/mcp": "^1.7.14",
+		"@better-auth/oauth-provider": "^1.7.14",
 		"@repo/config": "workspace:*",
 		"@repo/database": "workspace:*",
 		"@repo/payments": "workspace:*",

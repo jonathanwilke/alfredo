@@ -3,6 +3,15 @@ import { generateOpenApiSpec } from "./lib/openapi";
 import { openApiHandler, rpcHandler } from "./orpc/handler";
 
 export { generateOpenApiSpec } from "./lib/openapi";
+export type { ToolResult } from "./modules/mcp/tools";
+export {
+	createRecipeFromLink,
+	createRecipeFromText,
+	getRecipe,
+	listRecipes,
+	resolveToolLocale,
+	toolDescriptions,
+} from "./modules/mcp/tools";
 export { readyDishUrl } from "./modules/recipes/dish-url";
 export type { StoredRecipe } from "./modules/recipes/import-recipe";
 export {

@@ -54,10 +54,12 @@ export function LoginForm({
 	next,
 	google,
 	googleError,
+	oauthFlow = false,
 }: {
 	next: string | null;
 	google: boolean;
 	googleError: boolean;
+	oauthFlow?: boolean;
 }) {
 	const t = useTranslations("home");
 	const locale = useLocale();
@@ -75,10 +77,15 @@ export function LoginForm({
 	const [failed, setFailed] = useState(googleError);
 
 	useEffect(() => {
-		if (session) {
-			router.replace(destination);
+		if (!session) {
+			return;
 		}
-	}, [session, router, destination]);
+		if (oauthFlow) {
+			window.location.assign(`/oauth/consent${window.location.search}`);
+			return;
+		}
+		router.replace(destination);
+	}, [session, router, destination, oauthFlow]);
 
 	async function sendLink(event: FormEvent) {
 		event.preventDefault();
@@ -90,10 +97,9 @@ export function LoginForm({
 		setPending(true);
 		setNotice(null);
 		setFailed(false);
-		const callback = new URL(
-			withLocale(destination, locale),
-			window.location.origin,
-		);
+		const callback = oauthFlow
+			? new URL(window.location.href)
+			: new URL(withLocale(destination, locale), window.location.origin);
 		const { error } = await authClient.signIn.magicLink({
 			email: address,
 			callbackURL: callback.toString(),
@@ -116,14 +122,12 @@ export function LoginForm({
 		setGooglePending(true);
 		setNotice(null);
 		setFailed(false);
-		const callback = new URL(
-			withLocale(destination, locale),
-			window.location.origin,
-		);
-		const errorUrl = new URL(
-			withLocale("/login", locale),
-			window.location.origin,
-		);
+		const callback = oauthFlow
+			? new URL(window.location.href)
+			: new URL(withLocale(destination, locale), window.location.origin);
+		const errorUrl = oauthFlow
+			? new URL(window.location.href)
+			: new URL(withLocale("/login", locale), window.location.origin);
 		if (next) {
 			errorUrl.searchParams.set("next", next);
 		}

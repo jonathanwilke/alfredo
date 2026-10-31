@@ -249,6 +249,24 @@ function createCopy(locale: Locale) {
 					? `${countLabel(locale, count, "Guthaben", "Guthaben")} abgezogen`
 					: `${countLabel(locale, count, "credit removed", "credits removed")}`,
 		},
+		connect: {
+			menu: de ? "KI-Assistenten" : "AI assistants",
+			title: de
+				? "Mit KI-Assistenten verbinden"
+				: "Connect to AI assistants",
+			lead: de
+				? "Füg diese Adresse in Claude, Cursor oder ChatGPT ein. Melde dich im Browser mit deinem ulivo-Konto an. Ein neues Rezept kostet ein Guthaben. Lesen ist gratis."
+				: "Paste this address into Claude, Cursor, or ChatGPT. Sign in with your ulivo account in the browser. A new recipe uses one credit. Reading is free.",
+			claude: de
+				? "Claude: Connector hinzufügen und die Adresse einfügen."
+				: "Claude: add a custom connector and paste the address.",
+			cursor: de
+				? "Cursor: Einstellungen, MCP, Server hinzufügen."
+				: "Cursor: Settings, MCP, add a server.",
+			chatgpt: de
+				? "ChatGPT: Connector hinzufügen und die Adresse einfügen."
+				: "ChatGPT: add a connector and paste the address.",
+		},
 		footer: {
 			language: de ? "Sprache" : "Language",
 			builtBy: de ? "Gebaut von" : "Built by",

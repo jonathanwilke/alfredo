@@ -113,6 +113,33 @@
 		"backHome": "Back to cooking",
 		"tryAgain": "Choose a pack again"
 	},
+	"connect": {
+		"menu": "AI assistants",
+		"title": "Connect to AI assistants",
+		"lead": "Paste one address into Claude, Cursor, or ChatGPT. Sign in with your ulivo account in the browser. Creating a recipe uses one credit, the same as importing a link. Reading your recipes is free.",
+		"urlLabel": "MCP address",
+		"urlBody": "This is the only address the assistant needs.",
+		"copy": "Copy",
+		"copied": "Copied",
+		"claudeTitle": "Claude",
+		"claudeBody": "In Claude Desktop or Claude.ai, add a custom connector and paste the address. Or add this block to claude_desktop_config.json.",
+		"claudeCodeTitle": "Claude Code",
+		"claudeCodeBody": "From a terminal, add the remote server with this command.",
+		"cursorTitle": "Cursor",
+		"cursorBody": "In Cursor, open Settings, then MCP, and add a server. Or put this in .cursor/mcp.json.",
+		"chatgptTitle": "ChatGPT",
+		"chatgptBody": "In ChatGPT, add a connector and paste the address."
+	},
+	"consent": {
+		"title": "Connect an assistant",
+		"lead": "{name} wants to read and create recipes in your ulivo account.",
+		"unknownClient": "An AI assistant",
+		"allow": "Allow",
+		"deny": "Deny",
+		"loading": "Checking this connection.",
+		"expired": "This connection request expired. Start again from the assistant.",
+		"failed": "The connection could not be completed. Try again from the assistant."
+	},
 	"footer": {
 		"language": "Language"
 	}

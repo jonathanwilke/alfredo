@@ -10,7 +10,7 @@
 	},
 	"scripts": {
 		"type-check": "tsc --noEmit",
-		"test": "node --import tsx --test modules/recipes/copy-recipe.test.ts modules/recipes/access.test.ts"
+		"test": "node --import tsx --test modules/recipes/copy-recipe.test.ts modules/recipes/access.test.ts modules/mcp/tools.test.ts"
 	},
 	"dependencies": {
 		"@orpc/client": "^1.16.1",

@@ -34,3 +34,8 @@ export function getBaseUrl() {
 
 	return "http://localhost:3000";
 }
+
+/** Canonical MCP resource identifier. One URL clients paste in. */
+export function mcpResourceUrl() {
+	return `${getBaseUrl().replace(/\/$/, "")}/api/mcp`;
+}

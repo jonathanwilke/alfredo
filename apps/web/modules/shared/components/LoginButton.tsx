@@ -4,6 +4,7 @@ import {
 	Bookmark01Icon,
 	Coins01Icon,
 	Logout01Icon,
+	SparklesIcon,
 	UserIcon,
 } from "@hugeicons/core-free-icons";
 import { LocaleLink, useLocalePathname } from "@i18n/routing";
@@ -22,6 +23,7 @@ function subscribe() {
 
 export function LoginButton() {
 	const t = useTranslations("home");
+	const connect = useTranslations("connect");
 	const pathname = useLocalePathname();
 	const { data: session, isPending } = authClient.useSession();
 	const mounted = useSyncExternalStore(
@@ -111,6 +113,19 @@ export function LoginButton() {
 								className="shrink-0"
 							/>
 							{t("recipeCredits")}
+						</LocaleLink>
+						<LocaleLink
+							href="/connect"
+							role="menuitem"
+							className="flex items-center gap-3 rounded-full px-4 py-2.5 text-base text-foreground no-underline hover:bg-muted"
+							onClick={() => setOpen(false)}
+						>
+							<Icon
+								icon={SparklesIcon}
+								aria-hidden
+								className="shrink-0"
+							/>
+							{connect("menu")}
 						</LocaleLink>
 						<LocaleLink
 							href="/saved"

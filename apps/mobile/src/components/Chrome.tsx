@@ -3,6 +3,7 @@ import {
 	Coins01Icon,
 	Logout01Icon,
 	Moon02Icon,
+	SparklesIcon,
 	Sun03Icon,
 	UserIcon,
 } from "@hugeicons/core-free-icons";
@@ -123,6 +124,19 @@ export function Header({ home }: { home?: boolean }) {
 							onPress={() => {
 								setOpen(false);
 								router.push("/credits");
+							}}
+						/>
+						<MenuItem
+							label={copy.connect.menu}
+							icon={
+								<Icon
+									icon={SparklesIcon}
+									color={colors.foreground}
+								/>
+							}
+							onPress={() => {
+								setOpen(false);
+								router.push("/connect");
 							}}
 						/>
 						<MenuItem

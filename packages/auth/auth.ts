@@ -1,10 +1,27 @@
+import { cimd } from "@better-auth/cimd";
+import { fetchClientMetadataResource } from "@better-auth/cimd/node";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { expo } from "@better-auth/expo";
-import { config, getBaseUrl } from "@repo/config";
-import { account, db, session, user, verification } from "@repo/database";
+import { mcp } from "@better-auth/mcp";
+import { config, getBaseUrl, mcpResourceUrl } from "@repo/config";
+import {
+	account,
+	db,
+	jwks,
+	oauthAccessToken,
+	oauthClient,
+	oauthClientAssertion,
+	oauthClientResource,
+	oauthConsent,
+	oauthRefreshToken,
+	oauthResource,
+	session,
+	user,
+	verification,
+} from "@repo/database";
 import { grantWelcomeCreditsForUser } from "@repo/payments";
 import { betterAuth } from "better-auth";
-import { magicLink } from "better-auth/plugins";
+import { jwt, magicLink } from "better-auth/plugins";
 import { sendMagicLinkEmail } from "./email";
 
 function authSecret() {
@@ -40,6 +57,14 @@ export const auth = betterAuth({
 			session,
 			account,
 			verification,
+			jwks,
+			oauthClient,
+			oauthResource,
+			oauthClientResource,
+			oauthRefreshToken,
+			oauthAccessToken,
+			oauthConsent,
+			oauthClientAssertion,
 		},
 	}),
 	session: {
@@ -85,6 +110,22 @@ export const auth = betterAuth({
 		},
 	},
 	plugins: [
+		jwt(),
+		mcp({
+			loginPage: "/login",
+			consentPage: "/oauth/consent",
+			resource: mcpResourceUrl(),
+			scopes: ["openid", "profile", "email", "offline_access", "recipes"],
+			// Cursor and older Claude clients still register with DCR and use
+			// localhost or custom-scheme redirects. CIMD covers current clients.
+			allowDynamicClientRegistration: true,
+			allowUnauthenticatedClientRegistration: true,
+			clientRegistrationDefaultApplicationType: "infer",
+		}),
+		cimd({
+			fetchClientMetadataResource,
+			metadataProfile: "mcp-2026-07-28",
+		}),
 		expo(),
 		magicLink({
 			disableSignUp: false,

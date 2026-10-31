@@ -32,6 +32,7 @@ import {
 	normalizeRecipeUrl,
 	recipeDomain,
 } from "./source";
+import { textRecipeSourceUrl } from "./text-source";
 
 export interface StoredRecipe {
 	recipeId: string;
@@ -43,6 +44,18 @@ export interface StoredRecipe {
 	shared?: boolean;
 }
 
+async function saveRecipeForUser(userId: string, recipeId: string) {
+	await db
+		.insert(savedRecipes)
+		.values({
+			userId,
+			recipeId,
+		})
+		.onConflictDoNothing({
+			target: [savedRecipes.userId, savedRecipes.recipeId],
+		});
+}
+
 async function saveForSignedInUser(input: {
 	headers: Headers;
 	recipeId: string;
@@ -52,15 +65,7 @@ async function saveForSignedInUser(input: {
 		return;
 	}
 
-	await db
-		.insert(savedRecipes)
-		.values({
-			userId: session.user.id,
-			recipeId: input.recipeId,
-		})
-		.onConflictDoNothing({
-			target: [savedRecipes.userId, savedRecipes.recipeId],
-		});
+	await saveRecipeForUser(session.user.id, input.recipeId);
 }
 
 async function queueIcons(recipeId: string, content: ExtractedRecipe) {
@@ -236,6 +241,7 @@ export async function importRecipeFromUrl(input: {
 	url: string;
 	locale: string;
 	headers: Headers;
+	userId?: string;
 }): Promise<StoredRecipe> {
 	const url = normalizeRecipeUrl(input.url);
 	const sourceUrl = url.href;
@@ -274,11 +280,13 @@ export async function importRecipeFromUrl(input: {
 		throw new ImportError("not_a_recipe");
 	}
 
-	const session = await auth.api.getSession({ headers: input.headers });
-	if (!session) {
+	const userId =
+		input.userId ??
+		(await auth.api.getSession({ headers: input.headers }))?.user.id;
+	if (!userId) {
 		throw new ImportError("account_required");
 	}
-	await assertCreditsAvailable(session.user.id);
+	await assertCreditsAvailable(userId);
 
 	try {
 		const allowed = await recipeUrlLooksLegitimate(sourceUrl);
@@ -337,8 +345,6 @@ export async function importRecipeFromUrl(input: {
 	) {
 		throw new ImportError("not_a_recipe");
 	}
-
-	const userId = session.user.id;
 
 	const stored = await db.transaction(async (tx) => {
 		const insertedRecipe = await tx
@@ -429,12 +435,180 @@ export async function importRecipeFromUrl(input: {
 	});
 
 	if (decision.reason === "import") {
-		await saveForSignedInUser({
-			headers: input.headers,
-			recipeId: stored.recipeId,
-		});
+		if (input.userId) {
+			await saveRecipeForUser(input.userId, stored.recipeId);
+		} else {
+			await saveForSignedInUser({
+				headers: input.headers,
+				recipeId: stored.recipeId,
+			});
+		}
 	}
 
+	await queueIcons(stored.recipeId, stored.content);
+	return stored;
+}
+
+const MAX_RECIPE_TEXT = 40_000;
+
+/**
+ * Same credit rule as a link import: one credit for a new generation, free
+ * when this user already stored the same text in this language. There is no
+ * shared URL cache, so another account's identical text is a separate recipe.
+ */
+export async function importRecipeFromText(input: {
+	text: string;
+	locale: string;
+	userId: string;
+}): Promise<StoredRecipe> {
+	const text = input.text.trim();
+	if (text.length < 12) {
+		throw new ImportError("not_a_recipe");
+	}
+	if (text.length > MAX_RECIPE_TEXT) {
+		throw new ImportError("extract_failed");
+	}
+
+	const sourceUrl = textRecipeSourceUrl(input.userId, input.locale, text);
+	const existing = await db.query.recipes.findFirst({
+		where: eq(recipes.sourceUrl, sourceUrl),
+		with: { translations: true },
+	});
+	const decision = resolveRecipeCharge({
+		existing: existing
+			? {
+					isCurated: existing.isCurated,
+					locales: existing.translations.map(
+						(translation) => translation.locale,
+					),
+				}
+			: null,
+		requestedLocale: input.locale,
+	});
+
+	if (decision.action === "serve") {
+		const translation = existing?.translations.find(
+			(item) => item.locale === decision.locale,
+		);
+		if (!existing || !translation) {
+			throw new ImportError("not_a_recipe");
+		}
+		await saveRecipeForUser(input.userId, existing.id);
+		await queueIcons(existing.id, translation.content);
+		return storedFrom(existing, translation);
+	}
+
+	await assertCreditsAvailable(input.userId);
+
+	let content: ExtractedRecipe;
+	let usage: {
+		model: string;
+		inputTokens: number;
+		outputTokens: number;
+	};
+	try {
+		const extracted = await extractRecipe({
+			sourceText: text,
+			locale: input.locale,
+		});
+		if (!extracted) {
+			throw new ImportError("extract_failed");
+		}
+		content = extracted.recipe;
+		usage = extracted.usage;
+	} catch (error) {
+		if (error instanceof ImportError) {
+			throw error;
+		}
+		const message = error instanceof Error ? error.message : "";
+		if (message.includes("AI_GATEWAY")) {
+			throw new ImportError("not_configured");
+		}
+		throw new ImportError("extract_failed");
+	}
+
+	if (
+		!content.title.trim() ||
+		(content.ingredients.length === 0 && content.steps.length === 0)
+	) {
+		throw new ImportError("not_a_recipe");
+	}
+
+	const userId = input.userId;
+	const stored = await db.transaction(async (tx) => {
+		const insertedRecipe = await tx
+			.insert(recipes)
+			.values(userImportedRecipeValues(sourceUrl, userId))
+			.onConflictDoNothing({ target: recipes.sourceUrl })
+			.returning({ id: recipes.id });
+
+		const recipe =
+			insertedRecipe[0] != null
+				? {
+						id: insertedRecipe[0].id,
+						sourceUrl,
+						isCurated: false,
+					}
+				: await tx.query.recipes.findFirst({
+						where: eq(recipes.sourceUrl, sourceUrl),
+						with: { translations: true },
+					});
+		if (!recipe) {
+			throw new ImportError("extract_failed");
+		}
+
+		const inserted = await tx
+			.insert(recipeTranslations)
+			.values({
+				recipeId: recipe.id,
+				locale: input.locale,
+				content,
+			})
+			.onConflictDoNothing({
+				target: [
+					recipeTranslations.recipeId,
+					recipeTranslations.locale,
+				],
+			})
+			.returning({ id: recipeTranslations.id });
+
+		if (!inserted[0]) {
+			const cached = await tx.query.recipeTranslations.findFirst({
+				where: and(
+					eq(recipeTranslations.recipeId, recipe.id),
+					eq(recipeTranslations.locale, input.locale),
+				),
+			});
+			if (!cached) {
+				throw new ImportError("extract_failed");
+			}
+			return storedFrom(
+				{ id: recipe.id, sourceUrl, isCurated: false },
+				cached,
+			);
+		}
+
+		await debitRecipeCredit(tx, {
+			userId,
+			recipeId: recipe.id,
+			locale: input.locale,
+			importType: "import",
+			usage: {
+				model: usage.model,
+				inputTokens: usage.inputTokens,
+				outputTokens: usage.outputTokens,
+				estimatedCostMicroUsd:
+					estimateGenerationCost(usage).estimatedCostMicroUsd,
+			},
+		});
+
+		return storedFrom(
+			{ id: recipe.id, sourceUrl, isCurated: false },
+			{ locale: input.locale, content },
+		);
+	});
+
+	await saveRecipeForUser(userId, stored.recipeId);
 	await queueIcons(stored.recipeId, stored.content);
 	return stored;
 }

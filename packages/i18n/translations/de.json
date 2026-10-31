@@ -113,6 +113,33 @@
 		"backHome": "Weiter kochen",
 		"tryAgain": "Paket erneut wählen"
 	},
+	"connect": {
+		"menu": "KI-Assistenten",
+		"title": "Mit KI-Assistenten verbinden",
+		"lead": "Füg eine Adresse in Claude, Cursor oder ChatGPT ein. Melde dich im Browser mit deinem ulivo-Konto an. Ein neues Rezept kostet ein Guthaben, genau wie ein Link-Import. Rezepte lesen ist gratis.",
+		"urlLabel": "MCP-Adresse",
+		"urlBody": "Diese Adresse reicht dem Assistenten.",
+		"copy": "Kopieren",
+		"copied": "Kopiert",
+		"claudeTitle": "Claude",
+		"claudeBody": "Füg in Claude Desktop oder Claude.ai einen eigenen Connector hinzu und füg die Adresse ein. Oder setz diesen Block in die claude_desktop_config.json.",
+		"claudeCodeTitle": "Claude Code",
+		"claudeCodeBody": "Im Terminal fügst du den Server mit diesem Befehl hinzu.",
+		"cursorTitle": "Cursor",
+		"cursorBody": "Öffne in Cursor die Einstellungen, dann MCP, und füg einen Server hinzu. Oder leg das in die .cursor/mcp.json.",
+		"chatgptTitle": "ChatGPT",
+		"chatgptBody": "Füg in ChatGPT einen Connector hinzu und füg die Adresse ein."
+	},
+	"consent": {
+		"title": "Assistent verbinden",
+		"lead": "{name} möchte Rezepte in deinem ulivo-Konto lesen und anlegen.",
+		"unknownClient": "Ein KI-Assistent",
+		"allow": "Erlauben",
+		"deny": "Ablehnen",
+		"loading": "Die Verbindung wird geprüft.",
+		"expired": "Diese Verbindungsanfrage ist abgelaufen. Starte sie im Assistenten neu.",
+		"failed": "Die Verbindung hat nicht geklappt. Versuch es im Assistenten noch einmal."
+	},
 	"footer": {
 		"language": "Sprache"
 	}
