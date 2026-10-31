@@ -1,0 +1,1 @@
+COMMENT ON COLUMN "recipe_translations"."content" IS 'Extracted recipe JSON. steps[].ingredientIds lists the ingredients used in that step. steps[].uses may set a partial quantity and unit; a missing quantity means the full ingredient amount.';

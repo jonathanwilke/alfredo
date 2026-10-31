@@ -16,6 +16,15 @@ export const stepSchema = z.object({
 	id: z.string(),
 	text: z.string(),
 	ingredientIds: z.array(z.string()),
+	uses: z
+		.array(
+			z.object({
+				ingredientId: z.string(),
+				quantity: z.number().nullable().optional(),
+				unit: z.string().nullable().optional(),
+			}),
+		)
+		.optional(),
 	timerSeconds: z.number().int().positive().nullable().optional(),
 });
 

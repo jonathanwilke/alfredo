@@ -57,6 +57,13 @@
       "when": 1793381062492,
       "tag": "0007_old_namorita",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793395200000,
+      "tag": "0008_step_ingredient_uses",
+      "breakpoints": true
     }
   ]
 }

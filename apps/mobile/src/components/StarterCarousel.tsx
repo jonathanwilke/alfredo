@@ -236,9 +236,13 @@ function StarterTile({
 					event.stopPropagation();
 					router.push(`/recipes/${recipe.recipeId}?cook=1`);
 				}}
-			style={[styles.spoon, { backgroundColor: colors.accent }]}
-		>
-			<Icon icon={SpoonIcon} size={20} color={colors.accentForeground} />
+				style={[styles.spoon, { backgroundColor: colors.accent }]}
+			>
+				<Icon
+					icon={SpoonIcon}
+					size={20}
+					color={colors.accentForeground}
+				/>
 			</Pressable>
 		</View>
 	);

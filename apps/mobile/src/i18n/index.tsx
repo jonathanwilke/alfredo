@@ -112,6 +112,7 @@ function createCopy(locale: Locale) {
 		},
 		recipe: {
 			ingredients: de ? "Zutaten" : "Ingredients",
+			steps: de ? "Schritte" : "Steps",
 			prep: de ? "Vorbereiten" : "Prep",
 			cook: de ? "Kochen" : "Cook",
 			start: de ? "Kochen starten" : "Start cooking",

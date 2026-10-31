@@ -5,6 +5,7 @@ import {
 	SpoonIcon,
 } from "@hugeicons/core-free-icons";
 import Slider from "@react-native-community/slider";
+import { resolveStepUses, stepIngredientLine } from "@repo/cooking";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
@@ -260,33 +261,42 @@ function RecipeBody({
 	const steps: CookingStep[] = content.steps.map((step) => ({
 		id: step.id,
 		text: step.text,
-		timerSeconds: step.timerSeconds ?? null,
-		ingredients: step.ingredientIds.flatMap((id) => {
-			const ingredient = content.ingredients.find(
-				(item) => item.id === id,
-			);
-			if (!ingredient) {
-				return [];
-			}
-			const scaled =
-				ingredient.quantity == null
-					? null
-					: scaleMeasure(
-							ingredient.quantity * factor,
-							ingredient.unit,
-							locale,
-						);
-			const row: StepIngredient = {
-				id: ingredient.id,
-				name: ingredient.name,
-				quantity: ingredient.quantity,
-				unit: ingredient.unit,
-				scaledQuantity: scaled?.quantity ?? null,
-				scaledUnit: scaled?.unitChanged ? scaled.unit : null,
-				canonicalKey: ingredient.canonicalKey ?? null,
-			};
-			return [row];
+		line: stepIngredientLine({
+			ingredients: content.ingredients,
+			step,
+			factor,
+			format: (quantity, unit) => formatAmount(quantity, unit, locale),
 		}),
+		timerSeconds: step.timerSeconds ?? null,
+		ingredients: resolveStepUses(step, content.ingredients).flatMap(
+			(use) => {
+				const id = use.ingredientId;
+				const ingredient = content.ingredients.find(
+					(item) => item.id === id,
+				);
+				if (!ingredient) {
+					return [];
+				}
+				const scaled =
+					ingredient.quantity == null
+						? null
+						: scaleMeasure(
+								ingredient.quantity * factor,
+								ingredient.unit,
+								locale,
+							);
+				const row: StepIngredient = {
+					id: ingredient.id,
+					name: ingredient.name,
+					quantity: ingredient.quantity,
+					unit: ingredient.unit,
+					scaledQuantity: scaled?.quantity ?? null,
+					scaledUnit: scaled?.unitChanged ? scaled.unit : null,
+					canonicalKey: ingredient.canonicalKey ?? null,
+				};
+				return [row];
+			},
+		),
 	}));
 
 	if (cooking) {
@@ -561,6 +571,51 @@ function RecipeBody({
 		</View>
 	);
 
+	const method = (
+		<View style={{ gap: 20 }}>
+			<Display size={layout.isTablet ? 36 : 30}>
+				{copy.recipe.steps}
+			</Display>
+			{content.steps.map((step, index) => {
+				const line = stepIngredientLine({
+					ingredients: content.ingredients,
+					step,
+					factor,
+					format: (quantity, unit) =>
+						formatAmount(quantity, unit, locale),
+				});
+				return (
+					<View key={step.id} style={{ gap: 4 }}>
+						<Text
+							style={{
+								fontFamily: fonts.label,
+								fontSize: 13,
+								letterSpacing: 1.4,
+								textTransform: "uppercase",
+								color: colors.foreground,
+							}}
+						>
+							{copy.recipe.stepLabel(index + 1)}
+						</Text>
+						{line ? (
+							<Text
+								style={{
+									fontFamily: fonts.body,
+									fontSize: 14,
+									lineHeight: 20,
+									color: colors.mutedForeground,
+								}}
+							>
+								{line}
+							</Text>
+						) : null}
+						<Body>{step.text}</Body>
+					</View>
+				);
+			})}
+		</View>
+	);
+
 	return (
 		<Screen>
 			<Header />
@@ -607,6 +662,7 @@ function RecipeBody({
 						{ingredients}
 					</View>
 				)}
+				{content.steps.length > 0 ? method : null}
 				<Footer />
 			</ScrollView>
 		</Screen>

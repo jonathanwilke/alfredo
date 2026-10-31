@@ -1,4 +1,12 @@
 export {
+	applyStepIngredients,
+	resolveStepUses,
+	type StepIngredientInput,
+	type StepIngredientRef,
+	type StepIngredientUse,
+	stepIngredientLine,
+} from "./step-ingredients";
+export {
 	type DurationSpan,
 	decorateStep,
 	findAllDurations,

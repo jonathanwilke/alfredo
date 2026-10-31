@@ -463,6 +463,9 @@ importers:
       '@repo/config':
         specifier: workspace:*
         version: link:../../config
+      '@repo/cooking':
+        specifier: workspace:*
+        version: link:../cooking
       '@repo/database':
         specifier: workspace:*
         version: link:../database
@@ -552,6 +555,9 @@ importers:
       '@repo/ai':
         specifier: workspace:*
         version: link:../ai
+      '@repo/cooking':
+        specifier: workspace:*
+        version: link:../cooking
       '@vercel/functions':
         specifier: ^3.10.5
         version: 3.10.5(@aws-sdk/credential-provider-web-identity@3.972.85)(ws@8.22.0)

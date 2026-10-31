@@ -54,6 +54,7 @@ export interface CookingStep {
 	id: string;
 	text: string;
 	ingredients: StepIngredient[];
+	line: string | null;
 	timerSeconds: number | null;
 }
 
@@ -477,10 +478,21 @@ function StepBlock({
 				accessibilityRole="button"
 				accessibilityLabel={label}
 				onPress={() => onFocus(index)}
+				style={{ marginBottom: step.line ? 0 : 10 }}
 			>
 				<Text style={[styles.stepLabel, { color: colors.foreground }]}>
 					{label}
 				</Text>
+				{step.line ? (
+					<Text
+						style={[
+							styles.stepIngredients,
+							{ color: colors.mutedForeground },
+						]}
+					>
+						{step.line}
+					</Text>
+				) : null}
 			</Pressable>
 			<StepCopy
 				pieces={pieces}
@@ -817,6 +829,12 @@ const styles = StyleSheet.create({
 		fontSize: 13,
 		letterSpacing: 1.4,
 		textTransform: "uppercase",
+	},
+	stepIngredients: {
+		fontFamily: fonts.body,
+		fontSize: 14,
+		lineHeight: 20,
+		marginTop: 4,
 		marginBottom: 10,
 	},
 	copy: {

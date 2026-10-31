@@ -11,6 +11,7 @@
 		"test": "pnpm --filter @repo/payments test && pnpm --filter @repo/database test && pnpm --filter @repo/cooking test && pnpm --filter @repo/icons test && pnpm --filter @repo/api test",
 		"icons:regenerate": "dotenv -c -- pnpm --filter @repo/icons regenerate",
 		"seed:curated": "dotenv -c -- pnpm --filter @repo/database seed:curated",
+		"recipes:backfill-step-ingredients": "dotenv -c -- pnpm --filter @repo/database backfill:step-ingredients",
 		"clean": "turbo clean"
 	},
 	"engines": {

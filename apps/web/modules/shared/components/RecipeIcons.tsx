@@ -25,7 +25,10 @@ export function useRecipeIcons(recipeId: string) {
 		let timer = 0;
 
 		async function load() {
-			const result = await api.icons.list({ recipeId });
+			const result = await api.icons.list({ recipeId }).catch(() => null);
+			if (!result) {
+				return;
+			}
 			if (stopped) {
 				return;
 			}

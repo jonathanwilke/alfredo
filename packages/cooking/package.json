@@ -8,7 +8,7 @@
 		".": "./index.ts"
 	},
 	"scripts": {
-		"test": "tsx --test durations.test.ts",
+		"test": "tsx --test durations.test.ts step-ingredients.test.ts",
 		"type-check": "tsc --noEmit"
 	},
 	"devDependencies": {

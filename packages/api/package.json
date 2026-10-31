@@ -20,6 +20,7 @@
 		"@repo/ai": "workspace:*",
 		"@repo/auth": "workspace:*",
 		"@repo/config": "workspace:*",
+		"@repo/cooking": "workspace:*",
 		"@repo/database": "workspace:*",
 		"@repo/icons": "workspace:*",
 		"@repo/payments": "workspace:*",

@@ -7,6 +7,7 @@ import {
 	recipeUrlLooksLegitimate,
 } from "@repo/ai";
 import { auth } from "@repo/auth";
+import { applyStepIngredients } from "@repo/cooking";
 import {
 	db,
 	imports,
@@ -318,7 +319,7 @@ export async function importRecipeFromUrl(input: {
 		if (!extracted) {
 			throw new ImportError("extract_failed");
 		}
-		content = extracted.recipe;
+		content = applyStepIngredients(extracted.recipe);
 		usage = extracted.usage;
 	} catch (error) {
 		if (error instanceof ImportError) {

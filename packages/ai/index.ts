@@ -25,10 +25,32 @@ export const ingredientSchema = z.object({
 		),
 });
 
+export const stepUseSchema = z.object({
+	ingredientId: z.string().describe("Id of an ingredient used in this step."),
+	quantity: z
+		.number()
+		.nullable()
+		.optional()
+		.describe(
+			"Amount used in this step when it is only part of the ingredient. Null when the step uses the full amount.",
+		),
+	unit: z.string().nullable().optional(),
+});
+
 export const stepSchema = z.object({
 	id: z.string(),
 	text: z.string(),
-	ingredientIds: z.array(z.string()),
+	ingredientIds: z
+		.array(z.string())
+		.describe(
+			"Ids of the ingredients used in this step, in the order they are needed.",
+		),
+	uses: z
+		.array(stepUseSchema)
+		.optional()
+		.describe(
+			"Same ingredients as ingredientIds. Set quantity only for a partial amount.",
+		),
 	timerSeconds: z
 		.number()
 		.int()
@@ -96,6 +118,8 @@ export async function extractRecipe(input: {
 			"Write description as one or two short sentences about what the dish is. Do not put the method or the ingredient list there.",
 			"Use seconds for every duration.",
 			"Give each ingredient a stable id and reference those ids from steps.",
+			"For each step, set ingredientIds to every ingredient that step uses, in the order they are needed.",
+			"Set uses to those same ids. Leave quantity and unit null when the step uses the full listed amount. Set them only when the step uses part of it, such as half the cream or 100 g of a 200 g pasta portion.",
 			"In each step, use the ingredient's name exactly as written in the ingredient list.",
 			'Name is only the base ingredient. Put size, origin, variety, and preparation in form, in base form. "mittelgroße Zwiebel" is name "Zwiebel" and form "mittelgroß". "italienischer Pancetta" is name "Pancetta" and form "italienisch". "gehackte Petersilie" is name "Petersilie" and form "gehackt". Use null when there is no attribute.',
 			"Set canonicalKey to one English singular lowercase word or short hyphenated phrase, the same for every language.",

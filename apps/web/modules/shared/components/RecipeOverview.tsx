@@ -2,6 +2,7 @@
 
 import { Pot01Icon, SpoonIcon } from "@hugeicons/core-free-icons";
 import { LocaleLink } from "@i18n/routing";
+import { resolveStepUses, stepIngredientLine } from "@repo/cooking";
 import { track } from "@shared/lib/analytics";
 import { Button } from "@ui/components/button";
 import { useLocale, useTranslations } from "next-intl";
@@ -42,6 +43,11 @@ interface RecipeContent {
 		id: string;
 		text: string;
 		ingredientIds: string[];
+		uses?: {
+			ingredientId: string;
+			quantity?: number | null;
+			unit?: string | null;
+		}[];
 		timerSeconds?: number | null;
 	}[];
 }
@@ -134,9 +140,21 @@ function RecipeOverviewContent({
 				steps={content.steps.map((step) => ({
 					id: step.id,
 					text: step.text,
+					line: stepIngredientLine({
+						ingredients: content.ingredients,
+						step,
+						factor,
+						format: (quantity, unit) =>
+							formatAmount(quantity, unit, locale),
+					}),
 					timerSeconds: step.timerSeconds ?? null,
-					ingredients: step.ingredientIds.flatMap((id) => {
-						const ingredient = ingredientsById.get(id);
+					ingredients: resolveStepUses(
+						step,
+						content.ingredients,
+					).flatMap((use) => {
+						const ingredient = ingredientsById.get(
+							use.ingredientId,
+						);
 						if (!ingredient) {
 							return [];
 						}
@@ -354,6 +372,41 @@ function RecipeOverviewContent({
 						})}
 					</ul>
 				</section>
+				{content.steps.length > 0 ? (
+					<section className="flex flex-col gap-6">
+						<h2 className="text-3xl font-semibold tracking-tight">
+							{t("steps")}
+						</h2>
+						<ol className="flex flex-col gap-6">
+							{content.steps.map((step, index) => {
+								const line = stepIngredientLine({
+									ingredients: content.ingredients,
+									step,
+									factor,
+									format: (quantity, unit) =>
+										formatAmount(quantity, unit, locale),
+								});
+								return (
+									<li key={step.id} className="flex flex-col">
+										<h3 className="font-sans text-[13px] font-semibold tracking-[0.14em] uppercase">
+											{t("stepLabel", {
+												step: index + 1,
+											})}
+										</h3>
+										{line ? (
+											<p className="mt-1 text-sm leading-snug text-muted-foreground">
+												{line}
+											</p>
+										) : null}
+										<p className="mt-2 text-lg leading-relaxed">
+											{step.text}
+										</p>
+									</li>
+								);
+							})}
+						</ol>
+					</section>
+				) : null}
 			</article>
 			<SiteFooter />
 		</main>

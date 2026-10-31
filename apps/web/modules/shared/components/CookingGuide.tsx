@@ -34,6 +34,7 @@ interface CookingStep {
 	id: string;
 	text: string;
 	ingredients: StepIngredient[];
+	line: string | null;
 	timerSeconds: number | null;
 }
 
@@ -319,12 +320,19 @@ export function CookingGuide({
 									<button
 										type="button"
 										onClick={() => focusStep(stepIndex)}
-										className="mb-3 font-sans text-[13px] font-semibold tracking-[0.14em] uppercase"
+										className="font-sans text-[13px] font-semibold tracking-[0.14em] uppercase"
 									>
 										{t("stepLabel", {
 											step: stepIndex + 1,
 										})}
 									</button>
+									{item.line ? (
+										<p className="mt-1 mb-3 text-sm leading-snug text-muted-foreground">
+											{item.line}
+										</p>
+									) : (
+										<div className="mb-3" />
+									)}
 									<StepCopy
 										step={item}
 										locale={locale}
