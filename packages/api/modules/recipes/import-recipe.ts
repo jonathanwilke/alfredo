@@ -7,7 +7,7 @@ import {
 	recipeUrlLooksLegitimate,
 } from "@repo/ai";
 import { auth } from "@repo/auth";
-import { applyStepIngredients } from "@repo/cooking";
+import { applyStepIngredients, sourceCredit } from "@repo/cooking";
 import {
 	db,
 	imports,
@@ -42,6 +42,7 @@ export interface StoredRecipe {
 	servedLocale: string;
 	isOwner?: boolean;
 	shared?: boolean;
+	attributionUrl: string | null;
 }
 
 async function saveForSignedInUser(input: {
@@ -97,7 +98,23 @@ function storedFrom(
 			...translation.content,
 			title: dishName(translation.content.title),
 		},
+		attributionUrl: sourceCredit(recipe.sourceUrl)?.href ?? null,
 	};
+}
+
+async function attributionFor(recipe: {
+	sourceUrl: string;
+	sourceRecipeId?: string | null;
+}) {
+	const own = sourceCredit(recipe.sourceUrl)?.href ?? null;
+	if (own || !recipe.sourceRecipeId) {
+		return own;
+	}
+	const parent = await db.query.recipes.findFirst({
+		where: eq(recipes.id, recipe.sourceRecipeId),
+		columns: { sourceUrl: true },
+	});
+	return sourceCredit(parent?.sourceUrl)?.href ?? null;
 }
 
 export async function viewerOwnsRecipe(
@@ -167,6 +184,7 @@ export async function loadRecipe(input: {
 		...storedFrom(recipe, translation),
 		isOwner: owns,
 		shared: owns && Boolean(recipe.shareToken),
+		attributionUrl: await attributionFor(recipe),
 	};
 }
 
@@ -192,6 +210,7 @@ export async function loadSharedRecipe(input: {
 		...storedFrom(recipe, translation),
 		isOwner: false,
 		shared: false,
+		attributionUrl: await attributionFor(recipe),
 	};
 }
 

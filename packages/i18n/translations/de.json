@@ -42,6 +42,7 @@
 		"servings": "{count, plural, one {# Portion} other {# Portionen}}",
 		"ingredients": "Zutaten",
 		"steps": "Schritte",
+		"source": "Quelle",
 		"prep": "Vorbereiten",
 		"cook": "Kochen",
 		"minutes": "{count} Min.",

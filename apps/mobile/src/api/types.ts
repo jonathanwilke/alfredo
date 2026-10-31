@@ -47,6 +47,7 @@ export const storedRecipeSchema = z.object({
 	servedLocale: z.string(),
 	isOwner: z.boolean().optional(),
 	shared: z.boolean().optional(),
+	attributionUrl: z.string().nullable().optional(),
 });
 
 export const starterSchema = z.object({

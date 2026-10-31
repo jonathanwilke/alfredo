@@ -5,9 +5,14 @@ import {
 	SpoonIcon,
 } from "@hugeicons/core-free-icons";
 import Slider from "@react-native-community/slider";
-import { resolveStepUses, stepIngredientLine } from "@repo/cooking";
+import {
+	resolveStepUses,
+	sourceCredit,
+	stepIngredientLine,
+} from "@repo/cooking";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import * as WebBrowser from "expo-web-browser";
 import { useEffect, useState } from "react";
 import {
 	ActivityIndicator,
@@ -664,9 +669,56 @@ function RecipeBody({
 					</View>
 				)}
 				{content.steps.length > 0 ? method : null}
+				<RecipeSource
+					sourceUrl={recipe.attributionUrl}
+					label={copy.recipe.source}
+					color={colors.mutedForeground}
+					link={colors.foreground}
+				/>
 				<Footer />
 			</ScrollView>
 		</Screen>
+	);
+}
+
+function RecipeSource({
+	sourceUrl,
+	label,
+	color,
+	link,
+}: {
+	sourceUrl?: string | null;
+	label: string;
+	color: string;
+	link: string;
+}) {
+	const credit = sourceCredit(sourceUrl);
+	if (!credit) {
+		return null;
+	}
+
+	return (
+		<Pressable
+			accessibilityRole="link"
+			onPress={() => {
+				void WebBrowser.openBrowserAsync(credit.href);
+			}}
+		>
+			<Text
+				style={{
+					fontFamily: fonts.body,
+					fontSize: 14,
+					lineHeight: 20,
+					color,
+				}}
+			>
+				{label}
+				{": "}
+				<Text style={{ color: link, textDecorationLine: "underline" }}>
+					{credit.label}
+				</Text>
+			</Text>
+		</Pressable>
 	);
 }
 

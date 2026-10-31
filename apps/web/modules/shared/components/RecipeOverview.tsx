@@ -2,7 +2,11 @@
 
 import { Pot01Icon, SpoonIcon } from "@hugeicons/core-free-icons";
 import { LocaleLink } from "@i18n/routing";
-import { resolveStepUses, stepIngredientLine } from "@repo/cooking";
+import {
+	resolveStepUses,
+	sourceCredit,
+	stepIngredientLine,
+} from "@repo/cooking";
 import { track } from "@shared/lib/analytics";
 import { Button } from "@ui/components/button";
 import { useLocale, useTranslations } from "next-intl";
@@ -69,6 +73,7 @@ export function RecipeOverview(props: {
 	content: RecipeContent;
 	notice?: string | null;
 	dishUrl?: string | null;
+	sourceUrl?: string | null;
 	share?: {
 		mode: "public" | "owner";
 		shared: boolean;
@@ -88,11 +93,13 @@ function RecipeOverviewContent({
 	notice,
 	share,
 	dishUrl = null,
+	sourceUrl = null,
 }: {
 	recipeId: string;
 	content: RecipeContent;
 	notice?: string | null;
 	dishUrl?: string | null;
+	sourceUrl?: string | null;
 	share?: {
 		mode: "public" | "owner";
 		shared: boolean;
@@ -387,7 +394,10 @@ function RecipeOverviewContent({
 										formatAmount(quantity, unit, locale),
 								});
 								return (
-									<li key={step.id} className="flex min-w-0 flex-col">
+									<li
+										key={step.id}
+										className="flex min-w-0 flex-col"
+									>
 										<h3 className="font-sans text-[13px] font-semibold tracking-[0.14em] uppercase">
 											{t("stepLabel", {
 												step: index + 1,
@@ -410,8 +420,37 @@ function RecipeOverviewContent({
 						</ol>
 					</section>
 				) : null}
+				<RecipeSource sourceUrl={sourceUrl} label={t("source")} />
 			</article>
 			<SiteFooter />
 		</main>
+	);
+}
+
+function RecipeSource({
+	sourceUrl,
+	label,
+}: {
+	sourceUrl?: string | null;
+	label: string;
+}) {
+	const credit = sourceCredit(sourceUrl);
+	if (!credit) {
+		return null;
+	}
+
+	return (
+		<p className="mt-10 text-sm text-muted-foreground">
+			{label}
+			{": "}
+			<a
+				href={credit.href}
+				target="_blank"
+				rel="noopener noreferrer nofollow"
+				className="underline decoration-border underline-offset-4 hover:text-foreground"
+			>
+				{credit.label}
+			</a>
+		</p>
 	);
 }

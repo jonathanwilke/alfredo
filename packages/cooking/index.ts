@@ -1,3 +1,4 @@
+export { sourceCredit } from "./source-credit";
 export {
 	applyStepIngredients,
 	resolveStepUses,

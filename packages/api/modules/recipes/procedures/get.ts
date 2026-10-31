@@ -29,6 +29,7 @@ export const getRecipe = publicProcedure
 				servedLocale: z.string(),
 				isOwner: z.boolean(),
 				shared: z.boolean(),
+				attributionUrl: z.string().nullable(),
 			})
 			.nullable(),
 	)

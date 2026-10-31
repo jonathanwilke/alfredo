@@ -105,6 +105,7 @@ export default async function RecipePage({
 			content={recipe.content}
 			notice={notice}
 			dishUrl={dishUrl}
+			sourceUrl={recipe.attributionUrl}
 			share={{
 				mode: recipe.isCurated ? "public" : "owner",
 				shared: recipe.shared ?? false,

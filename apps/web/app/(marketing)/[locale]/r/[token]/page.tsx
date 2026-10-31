@@ -78,6 +78,7 @@ export default async function SharedRecipePage({
 			recipeId={recipe.recipeId}
 			content={recipe.content}
 			dishUrl={dishUrl}
+			sourceUrl={recipe.attributionUrl}
 			share={{
 				mode: "public",
 				shared: true,

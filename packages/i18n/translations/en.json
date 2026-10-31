@@ -42,6 +42,7 @@
 		"servings": "{count, plural, one {# serving} other {# servings}}",
 		"ingredients": "Ingredients",
 		"steps": "Steps",
+		"source": "Source",
 		"prep": "Prep",
 		"cook": "Cook",
 		"minutes": "{count} min",
