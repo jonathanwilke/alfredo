@@ -327,7 +327,10 @@ export function CookingGuide({
 										})}
 									</button>
 									{item.line ? (
-										<p className="mt-1 mb-3 text-sm leading-snug text-muted-foreground">
+										<p
+											title={item.line}
+											className="mt-1 mb-3 truncate text-sm text-muted-foreground"
+										>
 											{item.line}
 										</p>
 									) : (

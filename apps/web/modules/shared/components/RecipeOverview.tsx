@@ -387,14 +387,17 @@ function RecipeOverviewContent({
 										formatAmount(quantity, unit, locale),
 								});
 								return (
-									<li key={step.id} className="flex flex-col">
+									<li key={step.id} className="flex min-w-0 flex-col">
 										<h3 className="font-sans text-[13px] font-semibold tracking-[0.14em] uppercase">
 											{t("stepLabel", {
 												step: index + 1,
 											})}
 										</h3>
 										{line ? (
-											<p className="mt-1 text-sm leading-snug text-muted-foreground">
+											<p
+												title={line}
+												className="mt-1 truncate text-sm text-muted-foreground"
+											>
 												{line}
 											</p>
 										) : null}

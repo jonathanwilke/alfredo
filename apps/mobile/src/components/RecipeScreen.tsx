@@ -599,6 +599,7 @@ function RecipeBody({
 						</Text>
 						{line ? (
 							<Text
+								numberOfLines={1}
 								style={{
 									fontFamily: fonts.body,
 									fontSize: 14,

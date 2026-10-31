@@ -485,6 +485,7 @@ function StepBlock({
 				</Text>
 				{step.line ? (
 					<Text
+						numberOfLines={1}
 						style={[
 							styles.stepIngredients,
 							{ color: colors.mutedForeground },
